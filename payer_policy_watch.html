@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payer Policy Change Watch</title>
+    <style>
+        :root {
+            --bg: #eef3f8;
+            --card: #ffffff;
+            --ink: #1f3448;
+            --muted: #66788a;
+            --brand: #1f7ea2;
+            --accent: #2ca287;
+            --warn: #d97706;
+            --danger: #c2410c;
+            --line: #d8e2ec;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--ink);
+        }
+
+        .container {
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .title {
+            margin: 0;
+            font-size: 1.9rem;
+            color: #13455f;
+        }
+
+        .back-link {
+            color: #2e6f9c;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 430px 1fr;
+            gap: 1rem;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .card h3 {
+            margin: 0 0 0.8rem;
+            color: #174c63;
+            font-size: 1.1rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.55rem;
+        }
+
+        .input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.58rem;
+            border: 1px solid #c9d7e5;
+            border-radius: 8px;
+            font-size: 0.92rem;
+            font-family: inherit;
+            background: #fff;
+        }
+
+        textarea {
+            min-height: 70px;
+            resize: vertical;
+        }
+
+        .actions {
+            display: flex;
+            gap: 0.55rem;
+            flex-wrap: wrap;
+            margin-top: 0.65rem;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 8px;
+            padding: 0.58rem 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--brand);
+            color: #fff;
+        }
+
+        .btn-accent {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .btn-muted {
+            background: #e7edf3;
+            color: #355069;
+        }
+
+        .watch-item {
+            border: 1px solid #d8e2ec;
+            border-radius: 10px;
+            padding: 0.65rem;
+            margin-bottom: 0.55rem;
+            background: #fbfdff;
+        }
+
+        .watch-item .name {
+            font-weight: 700;
+            color: #194a61;
+        }
+
+        .watch-item .url {
+            font-size: 0.83rem;
+            color: #5d7185;
+            word-break: break-all;
+            margin-top: 0.22rem;
+        }
+
+        .watch-item .meta {
+            font-size: 0.78rem;
+            color: #637588;
+            margin-top: 0.22rem;
+        }
+
+        .watch-item .controls {
+            margin-top: 0.35rem;
+        }
+
+        .watch-item .remove {
+            border: none;
+            padding: 0.3rem 0.55rem;
+            border-radius: 7px;
+            background: #fee2e2;
+            color: #9a3412;
+            cursor: pointer;
+            font-size: 0.76rem;
+            font-weight: 700;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.6rem;
+            margin-bottom: 1rem;
+        }
+
+        .metric {
+            background: #fff;
+            border: 1px solid #d8e2ec;
+            border-radius: 10px;
+            padding: 0.7rem;
+        }
+
+        .metric .label {
+            font-size: 0.8rem;
+            color: #637588;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .metric .value {
+            font-size: 1.5rem;
+            color: #13455f;
+            font-weight: 800;
+        }
+
+        .status-badge {
+            display: inline-block;
+            border-radius: 999px;
+            padding: 0.15rem 0.55rem;
+            font-size: 0.74rem;
+            font-weight: 700;
+        }
+
+        .status-new {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-changed {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-unchanged {
+            background: #ecfeff;
+            color: #155e75;
+        }
+
+        .status-error {
+            background: #fee2e2;
+            color: #9a3412;
+        }
+
+        .alerts-list {
+            margin: 0;
+            padding-left: 1rem;
+            color: #4a5f72;
+        }
+
+        .alerts-list li {
+            margin-bottom: 0.45rem;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 0.6rem;
+            border-bottom: 1px solid #e3eaf2;
+            font-size: 0.9rem;
+            vertical-align: top;
+        }
+
+        th {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: #547086;
+            background: #f8fbff;
+        }
+
+        .small {
+            font-size: 0.78rem;
+            color: #6d8297;
+        }
+
+        .link {
+            color: #2f6f9c;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .muted {
+            color: var(--muted);
+        }
+
+        @media (max-width: 980px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="topbar">
+            <h1 class="title">Payer Policy Change Watch</h1>
+            <a href="/pilot.html" class="back-link">← Back to Main Dashboard</a>
+        </div>
+
+        <div class="grid">
+            <div>
+                <div class="card">
+                    <h3>Add Policy Watch</h3>
+                    <div class="form-grid">
+                        <input class="input" id="payerInput" placeholder="Payer (e.g., Aetna, Medicare)">
+                        <input class="input" id="urlInput" placeholder="Policy URL (https://...)">
+                        <input class="input" id="procInput" placeholder="Procedures/CPTs (comma-separated)">
+                        <input class="input" id="keywordInput"
+                            placeholder="Keywords to monitor (comma-separated)">
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-primary" id="addWatchBtn">Add Watch</button>
+                        <button class="btn btn-muted" id="loadSampleBtn">Load Sample Watchlist</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Watchlist</h3>
+                    <div id="watchlistBox"></div>
+                    <div class="actions">
+                        <button class="btn btn-accent" id="scanBtn">Run Policy Scan</button>
+                        <button class="btn btn-muted" id="saveWatchBtn">Save Watchlist</button>
+                        <button class="btn btn-muted" id="clearHistoryBtn">Clear History</button>
+                    </div>
+                    <p class="small" id="scanMeta">No scans yet.</p>
+                </div>
+            </div>
+
+            <div>
+                <div class="metrics" id="metricsRow"></div>
+
+                <div class="card">
+                    <h3>High-Impact Alerts</h3>
+                    <ul class="alerts-list" id="alertsList"></ul>
+                </div>
+
+                <div class="card">
+                    <h3>Latest Scan Results</h3>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Payer</th>
+                                    <th>Status</th>
+                                    <th>Policy Page</th>
+                                    <th>Effective Date</th>
+                                    <th>Matched Terms</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultsTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Change Timeline (Recent)</h3>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Scanned At</th>
+                                    <th>Payer</th>
+                                    <th>Status</th>
+                                    <th>Title</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE = {
+            watchlist: 'policy_watch_watchlist',
+            snapshots: 'policy_watch_snapshots',
+            history: 'policy_watch_history',
+            latest: 'policy_watch_latest'
+        };
+
+        const IMPACT_TERMS = [
+            'prior authorization',
+            'medical necessity',
+            'documentation',
+            'coverage determination',
+            'reimbursement',
+            'denial',
+            'appeal',
+            'effective date',
+            'billing'
+        ];
+
+        let watchlist = [];
+        let snapshots = {};
+        let historyRows = [];
+        let latestRows = [];
+
+        function loadState() {
+            try {
+                watchlist = JSON.parse(localStorage.getItem(STORAGE.watchlist) || '[]');
+                snapshots = JSON.parse(localStorage.getItem(STORAGE.snapshots) || '{}');
+                historyRows = JSON.parse(localStorage.getItem(STORAGE.history) || '[]');
+                latestRows = JSON.parse(localStorage.getItem(STORAGE.latest) || '[]');
+            } catch (e) {
+                watchlist = [];
+                snapshots = {};
+                historyRows = [];
+                latestRows = [];
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem(STORAGE.watchlist, JSON.stringify(watchlist));
+            localStorage.setItem(STORAGE.snapshots, JSON.stringify(snapshots));
+            localStorage.setItem(STORAGE.history, JSON.stringify(historyRows.slice(0, 200)));
+            localStorage.setItem(STORAGE.latest, JSON.stringify(latestRows));
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = String(text || '');
+            return div.innerHTML;
+        }
+
+        function normalizeList(text) {
+            return String(text || '')
+                .split(',')
+                .map(v => v.trim())
+                .filter(Boolean);
+        }
+
+        function addWatchItem() {
+            const payer = document.getElementById('payerInput').value.trim();
+            const url = document.getElementById('urlInput').value.trim();
+            const procedures = normalizeList(document.getElementById('procInput').value);
+            const keywords = normalizeList(document.getElementById('keywordInput').value);
+
+            if (!payer || !url) {
+                alert('Payer and URL are required.');
+                return;
+            }
+
+            watchlist.push({ payer, url, procedures, keywords });
+            document.getElementById('payerInput').value = '';
+            document.getElementById('urlInput').value = '';
+            document.getElementById('procInput').value = '';
+            document.getElementById('keywordInput').value = '';
+            saveState();
+            renderWatchlist();
+        }
+
+        function removeWatchItem(idx) {
+            watchlist.splice(idx, 1);
+            saveState();
+            renderWatchlist();
+        }
+
+        function renderWatchlist() {
+            const box = document.getElementById('watchlistBox');
+            if (!watchlist.length) {
+                box.innerHTML = '<p class="muted">No policy watches added yet.</p>';
+                return;
+            }
+
+            box.innerHTML = watchlist.map((item, idx) => `
+                <div class="watch-item">
+                    <div class="name">${escapeHtml(item.payer)}</div>
+                    <div class="url">${escapeHtml(item.url)}</div>
+                    <div class="meta">Procedures: ${escapeHtml((item.procedures || []).join(', ') || '—')}</div>
+                    <div class="meta">Keywords: ${escapeHtml((item.keywords || []).join(', ') || '—')}</div>
+                    <div class="controls">
+                        <button class="remove" onclick="removeWatchItem(${idx})">Remove</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function statusInfo(status) {
+            if (status === 'new') return { cls: 'status-new', label: 'New' };
+            if (status === 'changed') return { cls: 'status-changed', label: 'Changed' };
+            if (status === 'no_change') return { cls: 'status-unchanged', label: 'No Change' };
+            return { cls: 'status-error', label: 'Error' };
+        }
+
+        function isHighImpact(row) {
+            if (row.status === 'error') return false;
+            const terms = [...(row.matchedKeywords || []), ...(row.matchedProcedures || [])].join(' ').toLowerCase();
+            const impactTermHit = IMPACT_TERMS.some(term => terms.includes(term));
+            return row.status !== 'no_change' && (impactTermHit || !!row.effectiveDate);
+        }
+
+        function deriveStatus(result) {
+            if (result.status === 'error') return 'error';
+            const prev = snapshots[result.url];
+            if (!prev) return 'new';
+            return prev.hash === result.hash ? 'no_change' : 'changed';
+        }
+
+        function applySnapshots(results, scannedAt) {
+            for (const row of results) {
+                if (row.status !== 'ok') continue;
+                snapshots[row.url] = {
+                    hash: row.hash,
+                    title: row.title || '',
+                    scannedAt
+                };
+            }
+        }
+
+        function renderMetrics(rows) {
+            const counts = {
+                total: rows.length,
+                new: rows.filter(r => r.status === 'new').length,
+                changed: rows.filter(r => r.status === 'changed').length,
+                unchanged: rows.filter(r => r.status === 'no_change').length,
+                errors: rows.filter(r => r.status === 'error').length
+            };
+
+            const metrics = [
+                ['Total Tracked', counts.total],
+                ['New', counts.new],
+                ['Changed', counts.changed],
+                ['No Change', counts.unchanged],
+                ['Errors', counts.errors],
+            ];
+
+            document.getElementById('metricsRow').innerHTML = metrics.map(([label, value]) => `
+                <div class="metric">
+                    <div class="label">${label}</div>
+                    <div class="value">${value}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderAlerts(rows) {
+            const alerts = rows.filter(isHighImpact);
+            const list = document.getElementById('alertsList');
+            if (!alerts.length) {
+                list.innerHTML = '<li>No high-impact policy changes detected in latest scan.</li>';
+                return;
+            }
+
+            list.innerHTML = alerts.map(row => `
+                <li>
+                    <strong>${escapeHtml(row.payer)}</strong>:
+                    ${escapeHtml(row.title || row.url)}
+                    (${row.status === 'changed' ? 'changed' : 'new'})${row.effectiveDate ? `, effective ${escapeHtml(row.effectiveDate)}` : ''}
+                </li>
+            `).join('');
+        }
+
+        function renderLatest(rows) {
+            const table = document.getElementById('resultsTable');
+            if (!rows.length) {
+                table.innerHTML = '<tr><td colspan="5" class="muted">No scan data available.</td></tr>';
+                return;
+            }
+
+            table.innerHTML = rows.map(row => {
+                const st = statusInfo(row.status);
+                const terms = [...(row.matchedKeywords || []), ...(row.matchedProcedures || [])];
+                return `
+                    <tr>
+                        <td>${escapeHtml(row.payer)}</td>
+                        <td><span class="status-badge ${st.cls}">${st.label}</span></td>
+                        <td>
+                            ${row.url ? `<a class="link" href="${row.url}" target="_blank">${escapeHtml((row.title || row.url).slice(0, 80))}</a>` : '—'}
+                            ${row.error ? `<div class="small">${escapeHtml(row.error)}</div>` : ''}
+                        </td>
+                        <td>${escapeHtml(row.effectiveDate || '—')}</td>
+                        <td class="small">${escapeHtml(terms.join(', ') || '—')}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderHistory() {
+            const table = document.getElementById('historyTable');
+            const rows = historyRows.slice(0, 50);
+            if (!rows.length) {
+                table.innerHTML = '<tr><td colspan="4" class="muted">No history yet.</td></tr>';
+                return;
+            }
+
+            table.innerHTML = rows.map(row => {
+                const st = statusInfo(row.status);
+                return `
+                    <tr>
+                        <td>${new Date(row.scannedAt).toLocaleString()}</td>
+                        <td>${escapeHtml(row.payer)}</td>
+                        <td><span class="status-badge ${st.cls}">${st.label}</span></td>
+                        <td>${escapeHtml((row.title || row.url || '—').slice(0, 85))}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function runScan() {
+            if (!watchlist.length) {
+                alert('Add at least one watch item first.');
+                return;
+            }
+
+            const scanBtn = document.getElementById('scanBtn');
+            scanBtn.disabled = true;
+            scanBtn.textContent = 'Scanning...';
+
+            try {
+                const response = await fetch('/api/policy-watch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ watchlist })
+                });
+
+                const json = await response.json();
+                if (!response.ok) {
+                    throw new Error(json.error || 'Policy scan failed');
+                }
+
+                const scannedAt = json.scannedAt || new Date().toISOString();
+                latestRows = (json.results || []).map(row => ({
+                    ...row,
+                    status: deriveStatus(row)
+                }));
+
+                applySnapshots(json.results || [], scannedAt);
+
+                historyRows = [
+                    ...latestRows.map(r => ({
+                        scannedAt,
+                        payer: r.payer,
+                        status: r.status,
+                        title: r.title || '',
+                        url: r.url || ''
+                    })),
+                    ...historyRows
+                ].slice(0, 200);
+
+                document.getElementById('scanMeta').textContent = `Last scanned: ${new Date(scannedAt).toLocaleString()}`;
+
+                saveState();
+                renderAll();
+            } catch (error) {
+                alert('Scan failed: ' + error.message);
+            } finally {
+                scanBtn.disabled = false;
+                scanBtn.textContent = 'Run Policy Scan';
+            }
+        }
+
+        function loadSampleWatchlist() {
+            if (watchlist.length > 0) return;
+            watchlist = [
+                {
+                    payer: 'CMS / Medicare',
+                    url: 'https://www.cms.gov/medicare/coverage',
+                    procedures: ['SCS', 'Epidural', 'RFA'],
+                    keywords: ['prior authorization', 'coverage', 'documentation']
+                },
+                {
+                    payer: 'Aetna',
+                    url: 'https://www.aetna.com/health-care-professionals/clinical-policy-bulletins.html',
+                    procedures: ['SI Joint Fusion', 'PNS'],
+                    keywords: ['medical necessity', 'coverage criteria', 'reimbursement']
+                }
+            ];
+            saveState();
+            renderWatchlist();
+        }
+
+        function clearHistory() {
+            historyRows = [];
+            latestRows = [];
+            saveState();
+            renderAll();
+        }
+
+        function renderAll() {
+            renderWatchlist();
+            renderMetrics(latestRows);
+            renderAlerts(latestRows);
+            renderLatest(latestRows);
+            renderHistory();
+        }
+
+        document.getElementById('addWatchBtn').addEventListener('click', addWatchItem);
+        document.getElementById('loadSampleBtn').addEventListener('click', loadSampleWatchlist);
+        document.getElementById('scanBtn').addEventListener('click', runScan);
+        document.getElementById('saveWatchBtn').addEventListener('click', () => {
+            saveState();
+            alert('Watchlist saved');
+        });
+        document.getElementById('clearHistoryBtn').addEventListener('click', clearHistory);
+
+        loadState();
+        renderAll();
+    </script>
+</body>
+
+</html>

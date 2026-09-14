@@ -1,0 +1,101 @@
+═══════════════════════════════════════════════════════════════
+  MAC USERS - GET LINKEDIN COOKIE IN 30 SECONDS
+═══════════════════════════════════════════════════════════════
+
+🍎 FOR MAC - CHROME (EASIEST)
+
+1. Open Chrome
+2. Go to: linkedin.com (make sure you're logged in)
+3. Press: Cmd + Option + I  (⌘ + ⌥ + I)
+4. Click: "Application" tab at the top
+5. Left side: Click "Cookies" → "https://www.linkedin.com"
+6. Find: "li_at" in the Name column
+7. Copy: The Value (long string)
+
+═══════════════════════════════════════════════════════════════
+
+🍎 FOR MAC - SAFARI
+
+1. First enable Developer menu:
+   Safari → Preferences → Advanced
+   ✓ Check "Show Develop menu in menu bar"
+
+2. Go to: linkedin.com (logged in)
+3. Press: Cmd + Option + I
+4. Click: "Storage" tab
+5. Click: "Cookies" → "https://www.linkedin.com"
+6. Find: "li_at"
+7. Copy: The Value
+
+═══════════════════════════════════════════════════════════════
+
+🍎 QUICK CONSOLE METHOD (ANY BROWSER)
+
+1. Go to: linkedin.com (logged in)
+2. Press: Cmd + Option + J  (opens Console)
+3. Paste this and press Enter:
+
+   document.cookie.split(';').find(c => c.includes('li_at'))
+
+4. You'll see: "li_at=AQEDATXxxx..."
+5. Copy: Everything after "li_at=" (the long string)
+
+═══════════════════════════════════════════════════════════════
+
+❓ WHY IS THIS NEEDED?
+
+LinkedIn doesn't have a public API for searching posts.
+The scraper needs to authenticate as you to search LinkedIn.
+This is the ONLY way to automate LinkedIn searches.
+
+Think of it like: You're giving the scraper permission to 
+browse LinkedIn as you would manually.
+
+═══════════════════════════════════════════════════════════════
+
+🔒 IS THIS SAFE?
+
+✅ Cookie only works while you're logged in
+✅ Expires when you log out
+✅ You can revoke it anytime
+⚠️ Keep it private (like a password)
+⚠️ Only use in this dashboard
+
+═══════════════════════════════════════════════════════════════
+
+😰 UNCOMFORTABLE WITH THIS?
+
+Option 1: Use Demo Mode
+→ Open: linkedin-pain-management-dashboard.html
+→ No credentials needed
+→ Sample data only
+
+Option 2: Manual Search
+→ Search LinkedIn yourself
+→ No automation
+→ No cookie needed
+
+═══════════════════════════════════════════════════════════════
+
+🎯 WHAT THE COOKIE LOOKS LIKE
+
+AQEDATXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+Long string (100+ characters)
+Usually starts with "AQEDAT" or similar
+
+═══════════════════════════════════════════════════════════════
+
+✅ ONCE YOU HAVE IT
+
+1. Open: linkedin-dashboard-auto.html
+2. Paste cookie in "LinkedIn Session Cookie" field
+3. Enter your Apify token
+4. Click "Start Auto Search"
+5. Done!
+
+═══════════════════════════════════════════════════════════════
+
+Need more help? Read: MAC_COOKIE_GUIDE.md
+
+═══════════════════════════════════════════════════════════════

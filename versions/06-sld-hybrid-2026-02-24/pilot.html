@@ -1,0 +1,2249 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PainMed-PA Social Listening Dashboard v4.0</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2E5C9A 0%, #1e4278 100%);
+            color: white;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-bottom: 4px solid #4DAFA7;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header .subtitle {
+            color: #E0E7EF;
+            font-size: 0.95rem;
+        }
+
+        .cred-btn {
+            position: absolute;
+            top: 1.5rem;
+            right: 2rem;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 0.5rem 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            backdrop-filter: blur(4px);
+            transition: background 0.2s;
+        }
+
+        .cred-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #2E5C9A;
+        }
+
+        .panel h3 {
+            color: #2E5C9A;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 1rem;
+        }
+
+        .filter-group label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #2E5C9A;
+            font-size: 0.9rem;
+        }
+
+        .filter-group textarea,
+        .filter-group input {
+            padding: 0.6rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .filter-group textarea:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: #4DAFA7;
+        }
+
+        .source-toggles {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .source-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: 2px solid #ddd;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #aaa;
+            transition: all 0.2s;
+            user-select: none;
+            background: white;
+        }
+
+        .source-toggle input {
+            display: none;
+        }
+
+        .source-toggle.active-yt {
+            border-color: #FF0000;
+            color: #FF0000;
+            background: #ff000010;
+        }
+
+        .source-toggle.active-li {
+            border-color: #0077b5;
+            color: #0077b5;
+            background: #0077b510;
+        }
+
+        .source-toggle.active-rd {
+            border-color: #FF4500;
+            color: #FF4500;
+            background: #ff450010;
+        }
+
+        .source-toggle.active-tw {
+            border-color: #1DA1F2;
+            color: #1DA1F2;
+            background: #1da1f210;
+        }
+
+        .source-toggle.active-news {
+            border-color: #6c757d;
+            color: #6c757d;
+            background: #6c757d10;
+        }
+
+        .btn {
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4DAFA7, #3d8f88);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(77, 175, 167, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .chips-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            min-height: 32px;
+            margin-bottom: 0.5rem;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: #FF450018;
+            border: 1px solid #FF4500;
+            color: #FF4500;
+            padding: 0.25rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .chip-x {
+            cursor: pointer;
+            font-size: 1rem;
+            line-height: 1;
+            opacity: 0.7;
+        }
+
+        .chip-x:hover {
+            opacity: 1;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: #e8f5f3;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4DAFA7, #2E5C9A);
+            width: 0%;
+            transition: width 0.4s;
+        }
+
+        .status-text {
+            font-size: 0.9rem;
+            color: #4DAFA7;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid #ddd;
+            border-top-color: #4DAFA7;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #4DAFA7;
+        }
+
+        .metric-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #2E5C9A;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2rem;
+            border-top: 3px solid #4DAFA7;
+        }
+
+        .chart-card h3 {
+            margin-bottom: 1rem;
+            color: #2E5C9A;
+        }
+
+        .posts-feed {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .post-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.25rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #4DAFA7;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .post-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 0.75rem;
+        }
+
+        .platform-badge {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .platform-badge.youtube {
+            background: #fff0f0;
+            color: #FF0000;
+        }
+
+        .platform-badge.linkedin {
+            background: #e8f4fb;
+            color: #0077b5;
+        }
+
+        .platform-badge.reddit {
+            background: #fff1ec;
+            color: #FF4500;
+        }
+
+        .platform-badge.twitter {
+            background: #e8f5fe;
+            color: #1DA1F2;
+        }
+
+        .platform-badge.news {
+            background: #f8f9fa;
+            color: #6c757d;
+        }
+
+        .sentiment-badge {
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .sentiment-badge.positive {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .sentiment-badge.neutral {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        .sentiment-badge.negative {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .post-author {
+            font-weight: 600;
+            color: #2E5C9A;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .post-author:hover {
+            text-decoration: underline;
+        }
+
+        .post-title {
+            color: #2c3e50;
+            line-height: 1.5;
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
+        }
+
+        .post-meta {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.75rem;
+        }
+
+        .tag {
+            padding: 0.2rem 0.5rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #E0F2F1;
+            color: #2E5C9A;
+        }
+
+        .post-stats {
+            display: flex;
+            gap: 0.75rem;
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-bottom: 0.75rem;
+        }
+
+        .post-link {
+            display: inline-block;
+            color: #4DAFA7;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .post-link:hover {
+            text-decoration: underline;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-tab {
+            padding: 0.5rem 1rem;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #6c757d;
+            transition: all 0.2s;
+        }
+
+        .filter-tab.active {
+            border-color: #4DAFA7;
+            background: #E0F2F1;
+            color: #2E5C9A;
+        }
+
+        .cred-drawer {
+            display: none;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #ddd;
+        }
+
+        .cred-drawer.open {
+            display: block;
+        }
+
+        .cred-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .warning-banner {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: #856404;
+            font-size: 0.9rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            padding: 0.75rem;
+            text-align: left;
+            font-size: 0.85rem;
+            color: #2E5C9A;
+            font-weight: 600;
+            text-transform: uppercase;
+            background: #f8f9fa;
+        }
+
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #ecf0f1;
+            font-size: 0.9rem;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>PainMed-PA Social Listening Dashboard v4.0</h1>
+        <p class="subtitle">Real-time Multi-Source Analytics | YouTube · LinkedIn · Reddit · X/Twitter · News | Pain
+            Management Intelligence</p>
+        <button class="cred-btn" onclick="toggleCreds()">⚙️ Credentials</button>
+    </div>
+
+    <div class="container">
+        <!-- SECTION 1: SEARCH & CONFIG -->
+        <div class="panel" id="searchPanel">
+            <h3>🔍 Search & Configuration</h3>
+
+            <!-- Credentials Drawer -->
+            <div class="cred-drawer" id="credDrawer">
+                <div class="warning-banner"
+                    style="background:#e8f4fb;border-color:#0077b5;color:#004a7c;margin-bottom:1rem;">
+                    <strong>ℹ️ About Apify Token:</strong><br>
+                    • Required for LinkedIn and X/Twitter<br>
+                    • Free tier available at <a href="https://console.apify.com/sign-up" target="_blank"
+                        style="color:#0077b5;font-weight:600;">console.apify.com</a><br>
+                    • LinkedIn works on free tier, Twitter first tries Apify then proxy fallback<br>
+                    • Check your credits at <a href="https://console.apify.com/billing" target="_blank"
+                        style="color:#0077b5;font-weight:600;">Billing Dashboard</a>
+                </div>
+                <div class="cred-grid">
+                    <div class="filter-group">
+                        <label>Apify Token (LinkedIn + Twitter, optional for Twitter)</label>
+                        <input type="password" id="apifyToken" placeholder="apify_api_...">
+                        <small style="color:#6c757d;margin-top:0.25rem;">Get at <a
+                                href="https://console.apify.com/account/integrations" target="_blank"
+                                style="color:#4DAFA7;">console.apify.com</a></small>
+                        <button onclick="testApifyToken()"
+                            style="margin-top:0.5rem;padding:0.4rem 0.8rem;background:#6c757d;color:white;border:none;border-radius:4px;cursor:pointer;font-size:0.85rem;">🔍
+                            Test Token</button>
+                    </div>
+                    <div class="filter-group">
+                        <label>LinkedIn Cookie (li_at)</label>
+                        <input type="password" id="liCookie" placeholder="Your li_at value">
+                        <small style="color:#6c757d;margin-top:0.25rem;">F12 → Application → Cookies → linkedin.com →
+                            li_at</small>
+                    </div>
+                    <div class="filter-group">
+                        <label>YouTube API Key</label>
+                        <input type="password" id="ytKey" placeholder="AIza...">
+                        <small style="color:#6c757d;margin-top:0.25rem;">Get at <a
+                                href="https://console.cloud.google.com" target="_blank"
+                                style="color:#4DAFA7;">console.cloud.google.com</a></small>
+                    </div>
+                    <div class="filter-group">
+                        <label>Reddit Client ID (optional)</label>
+                        <input type="password" id="redditClientId" placeholder="Client ID">
+                    </div>
+                    <div class="filter-group">
+                        <label>Reddit Secret (optional)</label>
+                        <input type="password" id="redditSecret" placeholder="Secret">
+                    </div>
+                    <div class="filter-group">
+                        <label>NewsAPI Key (optional localhost fallback)</label>
+                        <input type="password" id="newsApiKey" placeholder="Used only if proxy is unavailable">
+                        <small style="color:#6c757d;margin-top:0.25rem;">Get at <a href="https://newsapi.org"
+                                target="_blank" style="color:#4DAFA7;">newsapi.org</a>. Preferred setup: Netlify env
+                            <code>NEWSAPI_KEY</code></small>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="saveCreds()" style="margin-top:1rem;">💾 Save
+                    Credentials</button>
+            </div>
+
+            <!-- Keywords -->
+            <div class="filter-group">
+                <label>Search Keywords (one per line - exact match)</label>
+                <textarea id="keywords" rows="6" placeholder="prior authorization pain management
+interventional pain billing
+spinal cord stimulator denials
+Medicare pain procedures
+peer to peer appeals">prior authorization pain management
+interventional pain billing
+spinal cord stimulator denials
+Medicare pain procedures
+peer to peer appeals</textarea>
+            </div>
+
+            <!-- Localhost Warning -->
+            <div id="localhostWarning"
+                style="display:none;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:1rem;margin-bottom:1rem;color:#856404;font-size:0.9rem;">
+                <strong>⚠️ Not Running on Localhost</strong><br>
+                Reddit and News require a local server. Run:<br>
+                <code
+                    style="background:rgba(0,0,0,0.1);padding:0.2rem 0.5rem;border-radius:4px;font-family:monospace;">python3 -m http.server 8080</code><br>
+                Then open: <code
+                    style="background:rgba(0,0,0,0.1);padding:0.2rem 0.5rem;border-radius:4px;font-family:monospace;">http://localhost:8080/pilot.html</code><br>
+                <small>Or uncheck Reddit and News to use YouTube only</small>
+            </div>
+
+            <!-- Source Toggles -->
+            <div class="filter-group">
+                <label>Select Data Sources</label>
+                <div class="source-toggles">
+                    <label class="source-toggle active-yt" id="tog-yt">
+                        <input type="checkbox" id="src-yt" checked>
+                        ▶️ YouTube
+                    </label>
+                    <label class="source-toggle active-li" id="tog-li">
+                        <input type="checkbox" id="src-li" checked>
+                        💼 LinkedIn
+                    </label>
+                    <label class="source-toggle active-rd" id="tog-rd">
+                        <input type="checkbox" id="src-rd" checked>
+                        🤖 Reddit
+                    </label>
+                    <label class="source-toggle" id="tog-tw">
+                        <input type="checkbox" id="src-tw">
+                        🐦 X/Twitter <small style="font-weight:400;opacity:0.7;">(paid)</small>
+                    </label>
+                    <label class="source-toggle active-news" id="tog-news">
+                        <input type="checkbox" id="src-news" checked>
+                        📰 News <small style="font-weight:400;opacity:0.7;">(proxy)</small>
+                    </label>
+                </div>
+            </div>
+
+
+            <!-- Fetch Button -->
+            <button class="btn btn-primary" id="fetchBtn" onclick="fetchAndAnalyze()"
+                style="width:100%;margin-top:1rem;">
+                🚀 Fetch & Analyze
+            </button>
+
+            <!-- Progress -->
+            <div id="progressSection" style="display:none;margin-top:1rem;">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="status-text" id="statusText">
+                    <div class="spinner"></div>
+                    <span>Starting...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: ANALYTICS PANEL -->
+        <div id="analyticsPanel" style="display:none;">
+
+            <!-- Advanced Filters & Segmentation -->
+            <div class="panel" style="margin-bottom:2rem;">
+                <h3>🔍 Filters & Segmentation</h3>
+                <div
+                    style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;align-items:end;">
+                    <div class="filter-group" style="margin-bottom:0;">
+                        <label style="font-size:0.85rem;">Platform</label>
+                        <select id="filterPlatform"
+                            style="padding:0.5rem;border:1px solid #ddd;border-radius:6px;font-size:0.9rem;width:100%;">
+                            <option value="all">All Platforms</option>
+                            <option value="youtube">YouTube</option>
+                            <option value="linkedin">LinkedIn</option>
+                            <option value="reddit">Reddit</option>
+                            <option value="twitter">X/Twitter</option>
+                            <option value="news">News</option>
+                        </select>
+                    </div>
+                    <div class="filter-group" style="margin-bottom:0;">
+                        <label style="font-size:0.85rem;">Payer Type</label>
+                        <select id="filterPayer"
+                            style="padding:0.5rem;border:1px solid #ddd;border-radius:6px;font-size:0.9rem;width:100%;">
+                            <option value="all">All Payers</option>
+                            <option value="Medicare">Medicare</option>
+                            <option value="Medicaid">Medicaid</option>
+                            <option value="UnitedHealth">UnitedHealth</option>
+                            <option value="Aetna">Aetna</option>
+                            <option value="Cigna">Cigna</option>
+                            <option value="BCBS">Blue Cross</option>
+                            <option value="Humana">Humana</option>
+                            <option value="Anthem">Anthem</option>
+                        </select>
+                    </div>
+                    <div class="filter-group" style="margin-bottom:0;">
+                        <label style="font-size:0.85rem;">Procedure / Device</label>
+                        <select id="filterProcedure"
+                            style="padding:0.5rem;border:1px solid #ddd;border-radius:6px;font-size:0.9rem;width:100%;">
+                            <option value="all">All Procedures</option>
+                            <option value="SCS">SCS (Spinal Cord Stim)</option>
+                            <option value="SI Joint Fusion">SI Joint Fusion</option>
+                            <option value="Kyphoplasty">Kyphoplasty</option>
+                            <option value="Intracept">Intracept</option>
+                            <option value="PNS">PNS (Peripheral Nerve)</option>
+                            <option value="RFA">RFA (Radiofrequency)</option>
+                            <option value="Epidural">Epidural</option>
+                            <option value="Facet Injection">Facet Injection</option>
+                        </select>
+                    </div>
+                    <div class="filter-group" style="margin-bottom:0;">
+                        <label style="font-size:0.85rem;">Topic Focus</label>
+                        <select id="filterTopic"
+                            style="padding:0.5rem;border:1px solid #ddd;border-radius:6px;font-size:0.9rem;width:100%;">
+                            <option value="all">All Topics</option>
+                            <option value="Prior Auth">Prior Auth</option>
+                            <option value="Billing & Denials">Billing & Denials</option>
+                            <option value="Payer Behavior">Payer Behavior</option>
+                            <option value="Procedures/Devices">Procedures/Devices</option>
+                            <option value="Appeals & P2P">Appeals & P2P</option>
+                            <option value="WISeR / CMS">WISeR / CMS</option>
+                            <option value="General Pain">General Pain</option>
+                        </select>
+                    </div>
+                    <div class="filter-group" style="margin-bottom:0;">
+                        <label style="font-size:0.85rem;">Date Range</label>
+                        <input type="date" id="filterStartDate"
+                            style="padding:0.5rem;border:1px solid #ddd;border-radius:6px;font-size:0.9rem;width:100%;">
+                    </div>
+                    <div class="filter-group" style="margin-bottom:0;">
+                        <label style="font-size:0.85rem;">&nbsp;</label>
+                        <input type="date" id="filterEndDate"
+                            style="padding:0.5rem;border:1px solid #ddd;border-radius:6px;font-size:0.9rem;width:100%;">
+                    </div>
+                    <div style="display:flex;gap:0.5rem;">
+                        <button class="btn btn-primary" onclick="applyAdvancedFilters()"
+                            style="padding:0.5rem 1.5rem;white-space:nowrap;">Apply Filters</button>
+                        <button class="btn" onclick="resetAdvancedFilters()"
+                            style="padding:0.5rem 1rem;background:#6c757d;color:white;white-space:nowrap;">Reset
+                            All</button>
+                    </div>
+                </div>
+                <div id="filterSummary"
+                    style="margin-top:1rem;padding:0.75rem;background:#E0F2F1;border-radius:6px;font-size:0.85rem;color:#2E5C9A;display:none;">
+                    <strong>Active Filters:</strong> <span id="filterSummaryText"></span>
+                </div>
+            </div>
+
+            <!-- Metrics -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Total Mentions</div>
+                    <div class="metric-value" id="totalMentions">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Unique Authors</div>
+                    <div class="metric-value" id="uniqueAuthors">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Total Engagement</div>
+                    <div class="metric-value" id="totalEngagement">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Avg Sentiment</div>
+                    <div class="metric-value" id="avgSentiment" style="font-size:2rem;">—</div>
+                </div>
+            </div>
+
+            <!-- Charts Row 1 -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:2rem;">
+                <div class="chart-card">
+                    <h3>📊 Mention Volume by Topic</h3>
+                    <canvas id="topicChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>💭 Sentiment by Platform</h3>
+                    <canvas id="sentimentChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Charts Row 2 -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:2rem;">
+                <div class="chart-card">
+                    <h3>📱 Volume by Platform</h3>
+                    <canvas id="platformChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>📈 Timeline - Posts per Week</h3>
+                    <canvas id="timelineChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Charts Row 3 -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:2rem;">
+                <div class="chart-card">
+                    <h3>🏥 Payer Mentions</h3>
+                    <canvas id="payerChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>💉 Procedure Mentions</h3>
+                    <canvas id="procedureChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Top Authors Table -->
+            <div class="chart-card">
+                <h3>👥 Top Authors</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Author</th>
+                            <th>Platform</th>
+                            <th>Posts</th>
+                            <th>Profile</th>
+                        </tr>
+                    </thead>
+                    <tbody id="topAuthorsTable"></tbody>
+                </table>
+            </div>
+
+            <!-- Trending Posts -->
+            <div class="chart-card">
+                <h3>🔥 Trending Posts (Top 5 by Engagement)</h3>
+                <div id="trendingPosts"></div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: POSTS FEED -->
+        <div id="postsPanel" style="display:none;">
+            <div class="panel">
+                <h3>💬 Posts Feed</h3>
+                <div class="filter-tabs" id="filterTabs"></div>
+                <div class="posts-feed" id="postsFeed"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ══════════════════════════════════════════════════════
+        // STATE
+        // ══════════════════════════════════════════════════════
+        let allPosts = [];
+        let currentFilter = 'all';
+        let charts = {};
+
+        // Default subreddits
+        const DEFAULT_SUBS = ['chronicpain', 'healthcareadmin', 'medicine', 'insurance', 'medicalbilling'];
+        let selectedSubs = [...DEFAULT_SUBS];
+
+        // Subreddit suggestion map
+        const SUBREDDIT_MAP = [
+            { keywords: ['pain', 'chronic', 'neuropathy', 'fibromyalgia', 'back'], subs: ['chronicpain', 'backpain', 'Fibromyalgia'] },
+            { keywords: ['prior auth', 'authorization', 'preauth', 'pa denial'], subs: ['healthcareadmin', 'insurance'] },
+            { keywords: ['billing', 'rcm', 'revenue', 'claims', 'cpt', 'icd'], subs: ['medicalbilling', 'AskMedicalCoding'] },
+            { keywords: ['insurance', 'denial', 'appeal', 'peer to peer'], subs: ['insurance', 'HealthInsurance'] },
+            { keywords: ['medicare', 'medicaid', 'cms', 'wiser'], subs: ['medicare', 'healthcareadmin'] },
+            { keywords: ['scs', 'spinal cord stimulator', 'neuromodulation'], subs: ['spinalcordstimulation', 'chronicpain'] },
+            { keywords: ['kyphoplasty', 'vertebroplasty', 'fusion', 'si joint'], subs: ['backpain', 'SpineRecovery'] },
+            { keywords: ['doctor', 'physician', 'practice', 'clinic'], subs: ['medicine', 'Residency'] },
+            { keywords: ['nurse', 'np', 'pa', 'provider'], subs: ['nursing', 'physicianassistant'] },
+            { keywords: ['surgery', 'procedure', 'anesthesia', 'epidural'], subs: ['surgery', 'chronicpain'] },
+            { keywords: ['medical', 'health', 'healthcare', 'patient'], subs: ['medicine', 'AskDocs', 'medical'] },
+            { keywords: ['hospital', 'emergency', 'er', 'icu'], subs: ['medicine', 'nursing', 'emergencymedicine'] },
+            { keywords: ['pharmacy', 'medication', 'drug', 'prescription'], subs: ['pharmacy', 'AskDocs'] },
+            { keywords: ['mental', 'depression', 'anxiety', 'therapy'], subs: ['mentalhealth', 'depression', 'anxiety'] },
+            { keywords: ['cancer', 'oncology', 'chemotherapy', 'radiation'], subs: ['cancer', 'medicine'] },
+            { keywords: ['diabetes', 'blood sugar', 'insulin'], subs: ['diabetes', 'medicine'] },
+            { keywords: ['heart', 'cardiac', 'cardiology'], subs: ['medicine', 'AskDocs'] },
+            { keywords: ['radiology', 'imaging', 'mri', 'ct scan', 'xray'], subs: ['Radiology', 'medicine'] }
+        ];
+
+        // ══════════════════════════════════════════════════════
+        // INIT
+        // ══════════════════════════════════════════════════════
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCreds();
+            setupSourceToggles();
+            checkLocalhost();
+        });
+
+        function checkLocalhost() {
+            const isLocalServer = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+            const isFileProtocol = location.protocol === 'file:';
+
+            // Runtime guidance based on protocol/environment.
+            if (isFileProtocol) {
+                document.getElementById('localhostWarning').style.display = 'block';
+                document.getElementById('localhostWarning').innerHTML = `
+                    <strong>ℹ️ Running as Local File</strong><br>
+                    News and Reddit are <strong>disabled</strong> because <code>file://</code> blocks required network behavior.<br>
+                    To use all sources, run with Netlify dev:
+                    <code style="background:rgba(0,0,0,0.1);padding:0.2rem 0.5rem;border-radius:4px;font-family:monospace;">netlify dev</code>
+                `;
+
+                // Auto-uncheck News and Reddit
+                ['news', 'rd'].forEach(src => {
+                    const checkbox = document.getElementById('src-' + src);
+                    const toggle = document.getElementById('tog-' + src);
+                    if (checkbox && checkbox.checked) {
+                        checkbox.checked = false;
+                        toggle.classList.remove('active-' + src);
+                    }
+                });
+            } else if (isLocalServer) {
+                document.getElementById('localhostWarning').style.display = 'block';
+                document.getElementById('localhostWarning').innerHTML = `
+                    <strong>ℹ️ Localhost mode</strong><br>
+                    News prefers <code>/.netlify/functions/news-proxy</code>.<br>
+                    If proxy is unavailable (plain Python server), it will fallback to direct NewsAPI using your News key.
+                `;
+            } else {
+                document.getElementById('localhostWarning').style.display = 'none';
+            }
+        }
+
+        function setupSourceToggles() {
+            ['yt', 'li', 'rd', 'tw', 'news'].forEach(src => {
+                const toggle = document.getElementById('tog-' + src);
+                const checkbox = document.getElementById('src-' + src);
+                toggle.addEventListener('click', () => {
+                    checkbox.checked = !checkbox.checked;
+                    toggle.classList.toggle('active-' + src, checkbox.checked);
+                });
+            });
+        }
+
+        // ══════════════════════════════════════════════════════
+        // CREDENTIALS
+        // ══════════════════════════════════════════════════════
+        function toggleCreds() {
+            document.getElementById('credDrawer').classList.toggle('open');
+        }
+
+        function getStoredCreds() {
+            try {
+                const raw = localStorage.getItem('painmed_creds');
+                return raw ? JSON.parse(raw) : {};
+            } catch {
+                return {};
+            }
+        }
+
+        function saveCreds() {
+            const creds = {
+                apifyToken: document.getElementById('apifyToken').value.trim(),
+                liCookie: document.getElementById('liCookie').value.trim(),
+                ytKey: document.getElementById('ytKey').value.trim(),
+                redditClientId: document.getElementById('redditClientId').value.trim(),
+                redditSecret: document.getElementById('redditSecret').value.trim(),
+                newsApiKey: document.getElementById('newsApiKey').value.trim()
+            };
+
+            // Validate Apify token format
+            if (creds.apifyToken && !creds.apifyToken.startsWith('apify_api_')) {
+                alert('⚠️ Warning: Apify token should start with "apify_api_"\n\nYour token: ' + creds.apifyToken.substring(0, 20) + '...\n\nPlease verify it\'s correct.');
+            }
+
+            localStorage.setItem('painmed_creds', JSON.stringify(creds));
+            // Keep a direct key for resilient fallback even if legacy JSON is malformed later.
+            localStorage.setItem('painmed_news_api_key', creds.newsApiKey || '');
+            alert('✓ Credentials saved');
+            toggleCreds();
+        }
+
+        async function testApifyToken() {
+            const token = document.getElementById('apifyToken').value.trim();
+
+            if (!token) {
+                alert('Please enter an Apify token first');
+                return;
+            }
+
+            // Check format
+            if (!token.startsWith('apify_api_')) {
+                alert('❌ Token format incorrect\n\nShould start with: apify_api_\nYour token starts with: ' + token.substring(0, 15) + '...\n\nPlease copy the full token from Apify console.');
+                return;
+            }
+
+            // Test with Apify API
+            try {
+                console.log('Testing token with Apify API...');
+                const res = await fetch(`https://api.apify.com/v2/users/me?token=${token}`);
+
+                if (res.ok) {
+                    const data = await res.json();
+                    const user = data.data || {};
+
+                    // Check credits
+                    let creditInfo = '';
+                    if (user.plan) {
+                        creditInfo = `\nPlan: ${user.plan.name || 'Unknown'}`;
+                    }
+
+                    alert('✅ Token is VALID!\n\nUser: ' + (user.username || 'Unknown') + creditInfo + '\n\nYou can now use LinkedIn and Twitter sources.\n\nNote: Make sure you have available credits at:\nconsole.apify.com/billing');
+                } else if (res.status === 401 || res.status === 403) {
+                    const error = await res.json().catch(() => ({}));
+                    const errorMsg = error.error?.message || 'Authentication failed';
+
+                    console.error('Token test failed:', error);
+
+                    alert('❌ Token is INVALID\n\nError: ' + errorMsg + '\n\nThis is the SAME error you\'re getting!\n\nPlease:\n1. Go to console.apify.com/account/integrations\n2. Click "Regenerate token" button\n3. Copy the NEW token\n4. Paste it here and test again\n\nOR check if:\n• Your account email is verified\n• Your account is not suspended\n• You have credits available');
+                } else {
+                    alert('⚠️ Unexpected response: ' + res.status + '\n\nToken may be valid but API returned an error.\n\nCheck console (F12) for details.');
+                }
+            } catch (e) {
+                console.error('Token test error:', e);
+                alert('❌ Test failed\n\nError: ' + e.message + '\n\nCheck your internet connection.');
+            }
+        }
+
+        function loadCreds() {
+            const creds = getStoredCreds();
+            if (creds.apifyToken) document.getElementById('apifyToken').value = creds.apifyToken.trim();
+            if (creds.liCookie) document.getElementById('liCookie').value = creds.liCookie.trim();
+            if (creds.ytKey) document.getElementById('ytKey').value = creds.ytKey.trim();
+            if (creds.redditClientId) document.getElementById('redditClientId').value = creds.redditClientId.trim();
+            if (creds.redditSecret) document.getElementById('redditSecret').value = creds.redditSecret.trim();
+
+            const directNewsKey = String(localStorage.getItem('painmed_news_api_key') || '').trim();
+            const jsonNewsKey = String(creds.newsApiKey || '').trim();
+            const restoredNewsKey = jsonNewsKey || directNewsKey;
+            if (restoredNewsKey) document.getElementById('newsApiKey').value = restoredNewsKey;
+        }
+
+        // ══════════════════════════════════════════════════════
+        // SUBREDDIT MANAGEMENT
+        // ══════════════════════════════════════════════════════
+
+        // ══════════════════════════════════════════════════════
+        // PROGRESS
+        // ══════════════════════════════════════════════════════
+        function setProgress(pct, msg) {
+            document.getElementById('progressSection').style.display = 'block';
+            document.getElementById('progressFill').style.width = pct + '%';
+            if (msg) {
+                document.getElementById('statusText').innerHTML = `<div class="spinner"></div><span>${msg}</span>`;
+            }
+        }
+
+        function hideProgress() {
+            document.getElementById('progressSection').style.display = 'none';
+        }
+
+        // ══════════════════════════════════════════════════════
+        // MAIN FETCH ORCHESTRATOR
+        // ══════════════════════════════════════════════════════
+        async function fetchAndAnalyze() {
+            const kwText = document.getElementById('keywords').value.trim();
+            if (!kwText) {
+                alert('Please enter at least one keyword');
+                return;
+            }
+
+            const keywords = kwText.split('\n').map(k => k.trim()).filter(Boolean);
+            const sources = {
+                yt: document.getElementById('src-yt').checked,
+                li: document.getElementById('src-li').checked,
+                rd: document.getElementById('src-rd').checked,
+                tw: document.getElementById('src-tw').checked,
+                news: document.getElementById('src-news').checked
+            };
+
+            if (!Object.values(sources).some(v => v)) {
+                alert('Please select at least one data source');
+                return;
+            }
+
+            // Validate credentials for selected sources
+            const warnings = [];
+            if (sources.yt && !document.getElementById('ytKey').value.trim()) {
+                warnings.push('• YouTube: API key missing');
+            }
+            if (sources.li) {
+                if (!document.getElementById('apifyToken').value.trim()) {
+                    warnings.push('• LinkedIn: Apify token missing');
+                }
+                if (!document.getElementById('liCookie').value.trim()) {
+                    warnings.push('• LinkedIn: li_at cookie missing');
+                }
+            }
+            if (warnings.length > 0) {
+                const proceed = confirm(
+                    'Missing credentials:\n\n' + warnings.join('\n') +
+                    '\n\nThese sources will be skipped.\n\nContinue with available sources?'
+                );
+                if (!proceed) return;
+            }
+
+            allPosts = [];
+            document.getElementById('fetchBtn').disabled = true;
+            setProgress(5, 'Starting fetch...');
+
+            const total = Object.values(sources).filter(Boolean).length;
+            const step = Math.floor(85 / total);
+            let progress = 10;
+
+            try {
+                // YouTube
+                if (sources.yt) {
+                    setProgress(progress, 'Fetching YouTube...');
+                    const ytKey = document.getElementById('ytKey').value.trim();
+                    if (ytKey) {
+                        const posts = await fetchYouTube(keywords, ytKey);
+                        allPosts.push(...posts);
+                    }
+                    progress += step;
+                }
+
+                // LinkedIn
+                if (sources.li) {
+                    setProgress(progress, 'Fetching LinkedIn...');
+                    const token = document.getElementById('apifyToken').value.trim();
+                    const cookie = document.getElementById('liCookie').value.trim();
+                    if (token && cookie) {
+                        try {
+                            const posts = await fetchLinkedIn(keywords, token, cookie);
+                            allPosts.push(...posts);
+                        } catch (e) {
+                            console.error('LinkedIn error:', e);
+                            alert('LinkedIn fetch failed:\n' + e.message + '\n\nContinuing with other sources...');
+                        }
+                    } else {
+                        alert('LinkedIn requires both Apify Token and LinkedIn Cookie (li_at).\nSkipping LinkedIn...');
+                    }
+                    progress += step;
+                }
+
+                // Reddit
+                if (sources.rd && location.protocol !== 'file:') {
+                    setProgress(progress, 'Fetching Reddit...');
+                    try {
+                        const redditResult = await fetchReddit(keywords);
+                        allPosts.push(...redditResult.posts);
+                        if (redditResult.error) {
+                            alert('Reddit fetch warning:\n' + redditResult.error + '\n\nContinuing with other sources...');
+                        }
+                    } catch (e) {
+                        console.error('Reddit error:', e);
+                        alert('Reddit fetch failed:\n' + e.message + '\n\nContinuing with other sources...');
+                    }
+                    progress += step;
+                }
+
+                // Twitter
+                if (sources.tw) {
+                    setProgress(progress, 'Fetching X/Twitter...');
+                    const token = document.getElementById('apifyToken').value.trim();
+                    try {
+                        const posts = await fetchTwitter(keywords, token);
+                        allPosts.push(...posts);
+                    } catch (e) {
+                        console.error('Twitter error:', e);
+                        alert('X/Twitter fetch failed:\n' + e.message + '\n\nContinuing with other sources...');
+                    }
+                    progress += step;
+                }
+
+                // News
+                if (sources.news && location.protocol !== 'file:') {
+                    setProgress(progress, 'Fetching News...');
+                    try {
+                        const posts = await fetchNews(keywords);
+                        allPosts.push(...posts);
+                    } catch (e) {
+                        console.error('News error:', e);
+                        alert('News fetch failed:\n' + e.message + '\n\nContinuing with other sources...');
+                    }
+                    progress += step;
+                }
+
+                setProgress(95, 'Processing data...');
+
+                // Enrich posts
+                allPosts.forEach(post => {
+                    post.topic = assignTopic(post.title);
+                    post.sentiment = analyzeSentiment(post.title);
+                    post.payer = detectPayer(post.title);
+                    post.procedure = detectProcedure(post.title);
+                });
+
+                setProgress(100, 'Complete!');
+                setTimeout(() => {
+                    hideProgress();
+                    showResults();
+                }, 500);
+
+            } catch (e) {
+                console.error('Fetch error:', e);
+                alert('Error: ' + e.message);
+                hideProgress();
+            } finally {
+                document.getElementById('fetchBtn').disabled = false;
+            }
+        }
+
+        // ══════════════════════════════════════════════════════
+        // YOUTUBE FETCHER
+        // ══════════════════════════════════════════════════════
+        async function fetchYouTube(keywords, apiKey) {
+            const posts = [];
+            const seen = new Set();
+
+            for (const kw of keywords) {
+                // Two passes: shorts first, then any duration
+                for (const duration of ['short', 'any']) {
+                    try {
+                        const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(kw)}&type=video&maxResults=10&order=relevance&videoDuration=${duration}&key=${apiKey}`;
+                        const res = await fetch(url);
+                        const data = await res.json();
+
+                        if (data.error) {
+                            console.error('YouTube API error:', data.error);
+                            continue;
+                        }
+
+                        for (const item of (data.items || [])) {
+                            const vid = item.id?.videoId;
+                            if (!vid || seen.has(vid)) continue;
+                            seen.add(vid);
+
+                            const s = item.snippet;
+                            const isShort = duration === 'short';
+
+                            // Get video statistics (views, likes, comments)
+                            let stats = { viewCount: 0, likeCount: 0, commentCount: 0 };
+                            try {
+                                const statsUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${vid}&key=${apiKey}`;
+                                const statsRes = await fetch(statsUrl);
+                                const statsData = await statsRes.json();
+                                if (statsData.items && statsData.items[0]) {
+                                    stats = statsData.items[0].statistics;
+                                }
+                            } catch (e) {
+                                console.warn('Could not fetch video stats:', e);
+                            }
+
+                            posts.push({
+                                id: 'yt_' + vid,
+                                platform: 'youtube',
+                                title: s.title + ' — ' + (s.description || '').substring(0, 200),
+                                author: s.channelTitle,
+                                authorUrl: `https://www.youtube.com/channel/${s.channelId}`,
+                                url: isShort ? `https://www.youtube.com/shorts/${vid}` : `https://www.youtube.com/watch?v=${vid}`,
+                                date: s.publishedAt,
+                                keyword: kw,
+                                likes: parseInt(stats.likeCount) || 0,
+                                comments: parseInt(stats.commentCount) || 0,
+                                shares: 0,
+                                platform_meta: {
+                                    isShort,
+                                    thumbnail: s.thumbnails?.medium?.url,
+                                    channelId: s.channelId,
+                                    videoId: vid,
+                                    viewCount: parseInt(stats.viewCount) || 0,
+                                    description: s.description || '',
+                                    publishedAt: s.publishedAt
+                                }
+                            });
+                        }
+                        await sleep(150);
+                    } catch (e) {
+                        console.error('YouTube error:', e);
+                    }
+                }
+            }
+            return posts;
+        }
+
+        // ══════════════════════════════════════════════════════
+        // LINKEDIN FETCHER
+        // ══════════════════════════════════════════════════════
+        async function fetchLinkedIn(keywords, token, liCookie) {
+            const searchUrls = keywords.map(kw =>
+                `https://www.linkedin.com/search/results/content/?keywords=${encodeURIComponent(kw)}&origin=GLOBAL_SEARCH_HEADER&sortBy=date_posted`
+            );
+
+            const run = await apifyStart(token, 'kfiWbq3boy3dWKbiL', {
+                cookie: getCookieArray(liCookie),
+                urls: searchUrls,
+                limitPerSource: Math.max(5, Math.ceil(50 / searchUrls.length)),
+                deepScrape: false,
+                minDelay: 2,
+                maxDelay: 8,
+                maxRequestRetries: 1,
+                userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+                proxy: { useApifyProxy: true, apifyProxyCountry: 'US' }
+            });
+
+            await apifyWait(token, run.id, msg => setProgress(null, 'LinkedIn: ' + msg));
+            const raw = await apifyDataset(token, run.defaultDatasetId);
+
+            return raw.map((item, idx) => {
+                const author = item.authorName ||
+                    (item.author ? `${item.author.firstName || ''} ${item.author.lastName || ''}`.trim() : '') || 'Unknown';
+                const pubId = item.author?.publicId || item.authorPublicId || '';
+                const authorUrl = item.authorProfileUrl || (pubId ? `https://www.linkedin.com/in/${pubId}` : '#');
+
+                let url = item.url || item.postUrl || item.postLink || item.link || '';
+
+                if (!url) {
+                    const urn = item.urn || item.activityUrn || item.entityUrn || '';
+                    if (urn) {
+                        const id = urn.split(':').pop();
+                        url = `https://www.linkedin.com/feed/update/urn:li:activity:${id}/`;
+                    }
+                }
+
+                if (!url && item.authorProfileUrl && item.id) {
+                    // Fallback for some actors that only give author and post ID
+                    url = `${item.authorProfileUrl.replace(/\/$/, '')}/recent-activity/shares/`;
+                }
+
+                // Find matching keyword
+                const src = item.query || item.searchUrl || '';
+                let keyword = keywords[0];
+                for (const kw of keywords) {
+                    if (src.includes(encodeURIComponent(kw))) {
+                        keyword = kw;
+                        break;
+                    }
+                }
+
+                return {
+                    id: 'li_' + (item.id || idx),
+                    platform: 'linkedin',
+                    title: (item.text || item.content || item.commentary || '').substring(0, 500),
+                    author,
+                    authorUrl,
+                    url: url || '#',
+                    date: item.postedAtISO || item.postedAt || item.createdAt || new Date().toISOString(),
+                    keyword,
+                    likes: Number(item.numLikes || item.likes || 0),
+                    comments: Number(item.numComments || item.comments || 0),
+                    shares: Number(item.numShares || item.shares || 0),
+                    platform_meta: {}
+                };
+            });
+        }
+
+        function getCookieArray(liAt) {
+            return [
+                { domain: '.linkedin.com', name: 'lang', value: 'v=2&lang=en-us', path: '/', secure: true, httpOnly: false },
+                { domain: '.linkedin.com', name: 'bcookie', value: '"v=2&e54d18a5-c177-497e-8ab9-6c60bf330702"', path: '/', secure: true, httpOnly: false },
+                { domain: '.www.linkedin.com', name: 'li_at', value: liAt, path: '/', secure: true, httpOnly: true },
+                { domain: '.www.linkedin.com', name: 'JSESSIONID', value: '"ajax:7160386635290813687"', path: '/', secure: true, httpOnly: false }
+            ];
+        }
+
+        // ══════════════════════════════════════════════════════
+        // REDDIT FETCHER
+        // ══════════════════════════════════════════════════════
+        async function fetchReddit(keywords) {
+            const posts = [];
+            const seen = new Set();
+            let terminalError = '';
+
+            // Check for file:// protocol
+            if (location.protocol === 'file:') {
+                console.warn('Reddit requires server - file:// protocol detected');
+                return { posts, error: '' };
+            }
+
+            for (const kw of keywords) {
+                if (terminalError) break;
+                for (const sub of selectedSubs) {
+                    if (terminalError) break;
+                    try {
+                        const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.protocol === 'file:';
+
+                        let url;
+                        if (isLocal) {
+                            url = `https://www.reddit.com/r/${sub}/search.json?q=${encodeURIComponent(kw)}&sort=new&limit=20&t=month&restrict_sr=true`;
+                        } else {
+                            url = `/.netlify/functions/reddit-proxy?sub=${encodeURIComponent(sub)}&q=${encodeURIComponent(kw)}`;
+                            console.log('Using Netlify Proxy for Reddit fetch:', sub);
+                        }
+
+                        const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+                        if (!res.ok) {
+                            let payload = {};
+                            try {
+                                payload = await res.json();
+                            } catch {
+                                payload = {};
+                            }
+
+                            const code = payload?.code || '';
+                            const message = payload?.message || `HTTP ${res.status}`;
+                            console.warn('Reddit fetch failed for:', sub, res.status, code, message);
+
+                            // Avoid log storms when Reddit blocks all requests.
+                            if (res.status === 403 || res.status === 429 || code === 'redditOAuthFailed' || code === 'redditForbiddenMissingOAuth') {
+                                terminalError = formatRedditApiError(res.status, payload);
+                            }
+                            continue;
+                        }
+
+                        const json = await res.json();
+                        for (const child of (json?.data?.children || [])) {
+                            const d = child.data;
+                            if (seen.has(d.id)) continue;
+                            seen.add(d.id);
+
+                            posts.push({
+                                id: 'rd_' + d.id,
+                                platform: 'reddit',
+                                title: (d.title || '') + ' ' + (d.selftext || '').substring(0, 300),
+                                author: 'u/' + (d.author || 'unknown'),
+                                authorUrl: `https://www.reddit.com/user/${d.author}`,
+                                url: `https://www.reddit.com${d.permalink}`,
+                                date: new Date(d.created_utc * 1000).toISOString(),
+                                keyword: kw,
+                                likes: d.score || 0,
+                                comments: d.num_comments || 0,
+                                shares: 0,
+                                platform_meta: { subreddit: d.subreddit }
+                            });
+                        }
+                        await sleep(300);
+                    } catch (e) {
+                        console.error('Reddit error:', sub, kw, e);
+                    }
+                }
+            }
+            return { posts, error: terminalError };
+        }
+
+        function formatRedditApiError(status, payload = {}) {
+            const code = payload.code || '';
+            const message = payload.message || payload.error || 'Unknown Reddit error.';
+            if (status === 404) {
+                return 'Reddit proxy endpoint not found. Start locally with "netlify dev" or deploy to Netlify.';
+            }
+            if (status === 429) {
+                return 'Reddit rate limit reached. Wait and retry.';
+            }
+            if (code === 'proxyMissingRedditOAuth') {
+                return 'Reddit proxy is missing OAuth credentials. Set REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET in Netlify environment variables, then redeploy.';
+            }
+            if (code === 'redditAnonymousBlocked' || code === 'redditForbiddenMissingOAuth') {
+                return 'Reddit blocked anonymous proxy requests from this host. You can keep running without env vars, but some subreddits/queries may fail.';
+            }
+            if (code === 'redditOAuthFailed') {
+                return 'Reddit OAuth token request failed. Verify REDDIT_CLIENT_ID/REDDIT_CLIENT_SECRET (and optional REDDIT_USER_AGENT) in Netlify env vars.';
+            }
+            if (status === 403) {
+                return 'Reddit rejected the request from this host (403). Configure OAuth credentials in the proxy and retry.';
+            }
+            return `Reddit API error (${status}): ${message}`;
+        }
+
+        // ══════════════════════════════════════════════════════
+        // TWITTER FETCHER
+        // ══════════════════════════════════════════════════════
+        async function fetchTwitter(keywords, token) {
+            const searchTerms = keywords.slice(0, 3).map(k => k.trim()).filter(Boolean);
+            let apifyError = '';
+
+            if (token) {
+                try {
+                    const apifyPosts = await fetchTwitterViaApify(searchTerms, token);
+                    if (apifyPosts.length > 0) return apifyPosts;
+                } catch (error) {
+                    apifyError = error?.message || 'Apify Twitter run failed.';
+                    console.warn('Twitter Apify path failed, trying proxy fallback:', apifyError);
+                }
+            }
+
+            const proxyResult = await fetchTwitterViaProxy(searchTerms);
+            if (proxyResult.posts.length > 0) {
+                if (apifyError) {
+                    console.warn('Twitter proxy fallback succeeded after Apify error:', apifyError);
+                }
+                return proxyResult.posts;
+            }
+
+            const reasons = [];
+            if (apifyError) reasons.push(`Apify: ${apifyError}`);
+            if (proxyResult.error) reasons.push(`Proxy fallback: ${proxyResult.error}`);
+            if (reasons.length === 0) reasons.push('No results returned from any Twitter source.');
+            throw new Error(reasons.join('\n\n'));
+        }
+
+        async function fetchTwitterViaApify(searchTerms, token) {
+            const run = await apifyStart(token, '61RPP7dywgiy0JPD0', {
+                searchTerms,
+                maxItems: 30,
+                sort: 'Latest',
+                tweetLanguage: 'en'
+            });
+
+            await apifyWait(token, run.id, msg => setProgress(null, 'Twitter/Apify: ' + msg));
+            const raw = await apifyDataset(token, run.defaultDatasetId);
+            const validTweets = raw.filter(item => !item.noResults);
+            if (validTweets.length === 0) {
+                throw new Error('Twitter search returned no results from Apify.');
+            }
+
+            return validTweets.map((item, i) => {
+                const text = item.text || item.full_text || '';
+                const screen = item.author?.userName || item.author?.username || item.user?.screen_name || item.username || '';
+                const tweetId = item.id || item.id_str || item.tweetId || '';
+
+                let tweetUrl = item.url || item.twitterUrl || item.link || '';
+                if (!tweetUrl && screen && tweetId) {
+                    tweetUrl = `https://x.com/${screen}/status/${tweetId}`;
+                } else if (!tweetUrl && tweetId) {
+                    tweetUrl = `https://x.com/i/status/${tweetId}`;
+                }
+
+                if (!tweetUrl) tweetUrl = '#';
+                const authorUrl = screen ? `https://x.com/${screen}` : '#';
+
+                return {
+                    id: 'tw_' + (tweetId || i),
+                    platform: 'twitter',
+                    title: text.substring(0, 500),
+                    author: screen ? '@' + screen : 'Unknown',
+                    authorUrl,
+                    url: tweetUrl,
+                    date: item.createdAt || item.created_at || new Date().toISOString(),
+                    keyword: searchTerms[0] || 'twitter',
+                    likes: Number(item.likeCount || item.favorite_count || 0),
+                    comments: Number(item.replyCount || 0),
+                    shares: Number(item.retweetCount || item.retweet_count || 0),
+                    platform_meta: { source: 'apify' }
+                };
+            });
+        }
+
+        async function fetchTwitterViaProxy(searchTerms) {
+            const posts = [];
+            const seen = new Set();
+            let terminalError = '';
+
+            for (const term of searchTerms) {
+                try {
+                    const url = `/.netlify/functions/twitter-proxy?q=${encodeURIComponent(term)}&limit=20`;
+                    const res = await fetch(url, { headers: { 'Accept': 'application/json' }, signal: AbortSignal.timeout(12000) });
+                    const payload = await res.json().catch(() => ({}));
+                    if (!res.ok) {
+                        terminalError = payload?.message || payload?.details || `Twitter proxy error (${res.status})`;
+                        continue;
+                    }
+
+                    for (const item of (payload?.items || [])) {
+                        if (!item?.id || seen.has(item.id)) continue;
+                        seen.add(item.id);
+
+                        const authorRaw = String(item.author || '').trim();
+                        const author = authorRaw.startsWith('@') ? authorRaw : (authorRaw ? `@${authorRaw}` : 'Unknown');
+                        const screen = author.replace(/^@/, '');
+
+                        posts.push({
+                            id: item.id,
+                            platform: 'twitter',
+                            title: String(item.title || '').substring(0, 500),
+                            author,
+                            authorUrl: screen ? `https://x.com/${screen}` : '#',
+                            url: item.url || '#',
+                            date: item.date || new Date().toISOString(),
+                            keyword: term,
+                            likes: Number(item.likes || 0),
+                            comments: Number(item.comments || 0),
+                            shares: Number(item.shares || 0),
+                            platform_meta: { source: payload?.source || 'twitter-proxy' }
+                        });
+                    }
+                } catch (error) {
+                    terminalError = error?.message || 'Twitter proxy fetch failed.';
+                }
+            }
+
+            return { posts, error: terminalError };
+        }
+
+        // ══════════════════════════════════════════════════════
+        // NEWS FETCHER
+        // ══════════════════════════════════════════════════════
+        function buildNewsQuery(keywords) {
+            const cleaned = [...new Set(keywords.map(k => k.trim()).filter(Boolean))].slice(0, 8);
+            return cleaned.map(k => `"${k.replace(/"/g, '')}"`).join(' OR ');
+        }
+
+        function inferNewsKeyword(article, keywords) {
+            const blob = `${article.title || ''} ${article.description || ''}`.toLowerCase();
+            for (const kw of keywords) {
+                if (blob.includes(kw.toLowerCase())) return kw;
+            }
+            return 'multi-keyword';
+        }
+
+        function formatNewsApiError(status, payload = {}) {
+            const code = payload.code || '';
+            const message = payload.message || payload.error || 'Unknown NewsAPI error.';
+
+            if (status === 404) {
+                return 'News proxy endpoint not found. Start locally with "netlify dev" or deploy to Netlify.';
+            }
+            if (status === 429 || code === 'rateLimited') {
+                return 'NewsAPI rate limit reached. Wait before retrying or reduce request frequency.';
+            }
+            if (code === 'apiKeyInvalid') {
+                return 'Configured NewsAPI key is invalid. Update NEWSAPI_KEY in Netlify environment variables.';
+            }
+            if (code === 'apiKeyExhausted') {
+                return 'NewsAPI quota exhausted for this key.';
+            }
+            if (code === 'developmentMode') {
+                return 'NewsAPI Developer plan key is blocked in this environment. Use a supported plan for production domains.';
+            }
+            if (code === 'googleNewsFallbackFailed') {
+                return 'News proxy fallback feed is temporarily unavailable. Retry in a minute.';
+            }
+            if (code === 'proxyMissingApiKey') {
+                return 'Server is missing NEWSAPI_KEY and fallback feed could not be loaded.';
+            }
+            return `NewsAPI error (${status}): ${message}`;
+        }
+
+        async function fetchNews(keywords) {
+            const posts = [];
+            const seen = new Set();
+            const query = buildNewsQuery(keywords);
+            if (!query) return posts;
+
+            const browserNewsKey = document.getElementById('newsApiKey').value.trim() ||
+                String(getStoredCreds().newsApiKey || '').trim() ||
+                String(localStorage.getItem('painmed_news_api_key') || '').trim();
+
+            const params = new URLSearchParams({
+                q: query,
+                language: 'en',
+                sortBy: 'publishedAt',
+                pageSize: '50'
+            });
+
+            const url = `/.netlify/functions/news-proxy?${params.toString()}`;
+
+            let res;
+            try {
+                res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+            } catch (error) {
+                res = null;
+            }
+
+            let data = null;
+            if (res) {
+                try {
+                    data = await res.json();
+                } catch {
+                    data = null;
+                }
+            }
+
+            // Fallback path: use browser key when proxy is unavailable or server key is missing.
+            const isLocalServer = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+            const shouldTryBrowserKey =
+                !res ||
+                res.status === 404 ||
+                data?.code === 'proxyMissingApiKey';
+
+            if (shouldTryBrowserKey) {
+                if (browserNewsKey) {
+                    const directParams = new URLSearchParams({
+                        q: query,
+                        language: 'en',
+                        sortBy: 'publishedAt',
+                        pageSize: '50',
+                        apiKey: browserNewsKey
+                    });
+                    const directUrl = `https://newsapi.org/v2/everything?${directParams.toString()}`;
+                    const directRes = await fetch(directUrl, { headers: { 'Accept': 'application/json' } });
+                    const directData = await directRes.json().catch(() => ({}));
+                    if (!directRes.ok || directData.status !== 'ok') {
+                        throw new Error(formatNewsApiError(directRes.status, directData));
+                    }
+                    data = directData;
+                } else {
+                    if (isLocalServer) {
+                        throw new Error(`News proxy is unavailable on ${location.origin}. Add NewsAPI key in Credentials for localhost fallback or run "netlify dev".`);
+                    }
+                    throw new Error('Server is missing NEWSAPI_KEY and no browser NewsAPI key is saved. Add one in Credentials or set NEWSAPI_KEY in Netlify.');
+                }
+            } else if (!res.ok || !data || data.status !== 'ok') {
+                throw new Error(formatNewsApiError(res.status, data || {}));
+            }
+
+            for (const article of (data.articles || [])) {
+                const id = article.url;
+                if (!id || seen.has(id)) continue;
+                seen.add(id);
+
+                posts.push({
+                    id: 'news_' + encodeURIComponent(id).replace(/%/g, '').substring(0, 24),
+                    platform: 'news',
+                    title: article.title + ' — ' + (article.description || '').substring(0, 200),
+                    author: article.source?.name || article.author || 'Unknown',
+                    authorUrl: article.url || '#',
+                    url: article.url,
+                    date: article.publishedAt,
+                    keyword: inferNewsKeyword(article, keywords),
+                    likes: 0,
+                    comments: 0,
+                    shares: 0,
+                    platform_meta: { source: article.source?.name, urlToImage: article.urlToImage }
+                });
+            }
+
+            return posts;
+        }
+
+        // ══════════════════════════════════════════════════════
+        // APIFY HELPERS
+        // ══════════════════════════════════════════════════════
+        async function apifyStart(token, actorId, input) {
+            // Debug: Log token format (first/last 10 chars only for security)
+            console.log('Apify token format check:', {
+                starts_with: token.substring(0, 10),
+                ends_with: token.substring(token.length - 10),
+                length: token.length,
+                has_spaces: token.includes(' '),
+                has_newlines: token.includes('\n')
+            });
+
+            const res = await fetch(`https://api.apify.com/v2/acts/${actorId}/runs?token=${token}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(input)
+            });
+
+            if (!res.ok) {
+                let errorMsg = `Apify error (${res.status})`;
+                let errorDetails = null;
+
+                try {
+                    errorDetails = await res.json();
+                    errorMsg = errorDetails.error?.message || errorMsg;
+                    console.error('Apify error details:', errorDetails);
+                } catch (e) {
+                    console.error('Could not parse error response');
+                }
+
+                if (res.status === 403) {
+                    const specificError = errorDetails?.error?.message || 'Authentication failed';
+                    throw new Error(`Apify 403 Error: ${specificError}\n\nPossible causes:\n• Token is invalid or expired\n• Token doesn't have "Run actors" permission\n• Account has no credits (check: console.apify.com/billing)\n• Account is suspended or not verified\n\nSolutions:\n1. Test token with "🔍 Test Token" button\n2. Get fresh token: console.apify.com/account/integrations\n3. Check credits: console.apify.com/billing\n4. Or skip LinkedIn and use YouTube + Reddit + News instead`);
+                } else if (res.status === 401) {
+                    throw new Error('Apify token is invalid or missing. Please add your token in Credentials.');
+                } else if (res.status === 402) {
+                    throw new Error('Apify account has insufficient credits. Please add credits at: https://console.apify.com/billing');
+                }
+                throw new Error(errorMsg);
+            }
+            return (await res.json()).data;
+        }
+
+        async function apifyWait(token, runId, callback, maxMs = 300000) {
+            const start = Date.now();
+            while (Date.now() - start < maxMs) {
+                await sleep(3500);
+                const res = await fetch(`https://api.apify.com/v2/actor-runs/${runId}?token=${token}`);
+                const run = (await res.json()).data;
+                const elapsed = Math.floor((Date.now() - start) / 1000);
+                callback(`${run.status} (${elapsed}s)`);
+                if (run.status === 'SUCCEEDED') return run;
+                if (['FAILED', 'ABORTED'].includes(run.status)) throw new Error('Run ' + run.status);
+            }
+            throw new Error('Timeout');
+        }
+
+        async function apifyDataset(token, datasetId) {
+            const res = await fetch(`https://api.apify.com/v2/datasets/${datasetId}/items?token=${token}&format=json`);
+            if (!res.ok) throw new Error('Dataset fetch failed');
+            return res.json();
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // ══════════════════════════════════════════════════════
+        // TOPIC ASSIGNMENT
+        // ══════════════════════════════════════════════════════
+        function assignTopic(text) {
+            const lower = text.toLowerCase();
+
+            if (/prior auth|prior authorization|preauth|pa request/.test(lower)) return 'Prior Auth';
+            if (/denial|denied|billing|cpt|icd|claim|reimbursement/.test(lower)) return 'Billing & Denials';
+            if (/unitedhealth|aetna|cigna|bcbs|blue cross|medicare|medicaid|payer/.test(lower)) return 'Payer Behavior';
+            if (/scs|spinal cord stimulator|si joint|kyphoplasty|intracept|pns|vertebroplasty/.test(lower)) return 'Procedures/Devices';
+            if (/appeal|peer to peer|p2p|utilization management|um|overturn/.test(lower)) return 'Appeals & P2P';
+            if (/wiser|cms|medicare automation|lcd|ncd|policy/.test(lower)) return 'WISeR / CMS';
+
+            return 'General Pain';
+        }
+
+        // ══════════════════════════════════════════════════════
+        // SENTIMENT ANALYSIS
+        // ══════════════════════════════════════════════════════
+        function analyzeSentiment(text) {
+            const lower = text.toLowerCase();
+            const negWords = ['denied', 'denial', 'rejected', 'frustrating', 'unfair', 'wrong', 'terrible',
+                'broken', 'failed', 'problem', 'delay', 'refused', 'nightmare', 'impossible', 'harmful'];
+            const posWords = ['approved', 'won', 'success', 'overturned', 'helpful', 'great', 'excellent',
+                'improved', 'effective', 'resolved', 'passed', 'covered', 'positive', 'working'];
+
+            let score = 0;
+            posWords.forEach(w => { if (lower.includes(w)) score++; });
+            negWords.forEach(w => { if (lower.includes(w)) score--; });
+
+            return score > 0 ? 'positive' : score < 0 ? 'negative' : 'neutral';
+        }
+
+        // ══════════════════════════════════════════════════════
+        // PAYER DETECTION
+        // ══════════════════════════════════════════════════════
+        function detectPayer(text) {
+            const lower = text.toLowerCase();
+            const payers = ['Medicare', 'Medicaid', 'UnitedHealth', 'United Healthcare', 'UHC', 'Aetna',
+                'Cigna', 'BCBS', 'Blue Cross', 'Humana', 'Anthem', 'Centene', 'Molina'];
+
+            for (const payer of payers) {
+                if (lower.includes(payer.toLowerCase())) return payer;
+            }
+            return null;
+        }
+
+        // ══════════════════════════════════════════════════════
+        // PROCEDURE DETECTION
+        // ══════════════════════════════════════════════════════
+        function detectProcedure(text) {
+            const lower = text.toLowerCase();
+            const procedures = {
+                'SCS': ['scs', 'spinal cord stimulator'],
+                'SI Joint Fusion': ['si joint fusion', 'si joint', 'sacroiliac'],
+                'Kyphoplasty': ['kyphoplasty'],
+                'Intracept': ['intracept'],
+                'PNS': ['pns', 'peripheral nerve stimulation'],
+                'Vertebroplasty': ['vertebroplasty'],
+                'RFA': ['radiofrequency ablation', 'rfa'],
+                'Epidural': ['epidural'],
+                'Facet Injection': ['facet injection']
+            };
+
+            for (const [name, terms] of Object.entries(procedures)) {
+                if (terms.some(t => lower.includes(t))) return name;
+            }
+            return null;
+        }
+
+        // ══════════════════════════════════════════════════════
+        // SHOW RESULTS
+        // ══════════════════════════════════════════════════════
+        function showResults() {
+            if (allPosts.length === 0) {
+                alert('No posts found. Try different keywords or check credentials.');
+                return;
+            }
+
+            document.getElementById('analyticsPanel').style.display = 'block';
+            document.getElementById('postsPanel').style.display = 'block';
+
+            updateMetrics();
+            updateCharts();
+            updateTopAuthors();
+            updateTrendingPosts();
+            setupFilterTabs();
+            renderPosts('all');
+        }
+
+        // ══════════════════════════════════════════════════════
+        // METRICS
+        // ══════════════════════════════════════════════════════
+        function updateMetrics() {
+            document.getElementById('totalMentions').textContent = allPosts.length.toLocaleString();
+            document.getElementById('uniqueAuthors').textContent = new Set(allPosts.map(p => p.author)).size.toLocaleString();
+
+            const totalEng = allPosts.reduce((sum, p) => sum + (p.likes + p.comments + p.shares), 0);
+            document.getElementById('totalEngagement').textContent = totalEng.toLocaleString();
+
+            const sentiments = allPosts.map(p => p.sentiment);
+            const posCount = sentiments.filter(s => s === 'positive').length;
+            const negCount = sentiments.filter(s => s === 'negative').length;
+            const avgSent = posCount > negCount ? '😊 Positive' : negCount > posCount ? '😟 Negative' : '😐 Neutral';
+            document.getElementById('avgSentiment').textContent = avgSent;
+            document.getElementById('avgSentiment').style.fontSize = '1.5rem';
+        }
+
+        // ══════════════════════════════════════════════════════
+        // CHARTS
+        // ══════════════════════════════════════════════════════
+        function updateCharts() {
+            updateTopicChart();
+            updateSentimentChart();
+            updatePlatformChart();
+            updateTimelineChart();
+            updatePayerChart();
+            updateProcedureChart();
+        }
+
+        function updateTopicChart() {
+            const topics = {};
+            allPosts.forEach(p => {
+                topics[p.topic] = (topics[p.topic] || 0) + 1;
+            });
+
+            const sorted = Object.entries(topics).sort((a, b) => b[1] - a[1]);
+
+            if (charts.topic) charts.topic.destroy();
+            charts.topic = new Chart(document.getElementById('topicChart'), {
+                type: 'bar',
+                data: {
+                    labels: sorted.map(s => s[0]),
+                    datasets: [{
+                        label: 'Mentions',
+                        data: sorted.map(s => s[1]),
+                        backgroundColor: '#4DAFA7'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        function updateSentimentChart() {
+            const platforms = [...new Set(allPosts.map(p => p.platform))];
+            const sentiments = ['positive', 'neutral', 'negative'];
+            const colors = { positive: '#4DAFA7', neutral: '#95a5a6', negative: '#E85D75' };
+
+            const datasets = sentiments.map(sent => ({
+                label: sent.charAt(0).toUpperCase() + sent.slice(1),
+                data: platforms.map(plat =>
+                    allPosts.filter(p => p.platform === plat && p.sentiment === sent).length
+                ),
+                backgroundColor: colors[sent]
+            }));
+
+            if (charts.sentiment) charts.sentiment.destroy();
+            charts.sentiment = new Chart(document.getElementById('sentimentChart'), {
+                type: 'bar',
+                data: { labels: platforms, datasets },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
+                }
+            });
+        }
+
+        function updatePlatformChart() {
+            const platforms = {};
+            allPosts.forEach(p => {
+                platforms[p.platform] = (platforms[p.platform] || 0) + 1;
+            });
+
+            const colors = {
+                youtube: '#FF0000',
+                linkedin: '#0077b5',
+                reddit: '#FF4500',
+                twitter: '#1DA1F2',
+                news: '#6c757d'
+            };
+
+            if (charts.platform) charts.platform.destroy();
+            charts.platform = new Chart(document.getElementById('platformChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(platforms),
+                    datasets: [{
+                        data: Object.values(platforms),
+                        backgroundColor: Object.keys(platforms).map(p => colors[p])
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        function updateTimelineChart() {
+            const weeks = {};
+            allPosts.forEach(p => {
+                const date = new Date(p.date);
+                const weekStart = getWeekStart(date);
+                const key = weekStart.toISOString().split('T')[0];
+                weeks[key] = (weeks[key] || 0) + 1;
+            });
+
+            const sorted = Object.entries(weeks).sort((a, b) => a[0].localeCompare(b[0]));
+
+            if (charts.timeline) charts.timeline.destroy();
+            charts.timeline = new Chart(document.getElementById('timelineChart'), {
+                type: 'line',
+                data: {
+                    labels: sorted.map(s => formatWeekLabel(s[0])),
+                    datasets: [{
+                        label: 'Posts per Week',
+                        data: sorted.map(s => s[1]),
+                        borderColor: '#2E5C9A',
+                        backgroundColor: 'rgba(46, 92, 154, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        function updatePayerChart() {
+            const payers = {};
+            allPosts.forEach(p => {
+                if (p.payer) payers[p.payer] = (payers[p.payer] || 0) + 1;
+            });
+
+            const sorted = Object.entries(payers).sort((a, b) => b[1] - a[1]).slice(0, 8);
+
+            if (charts.payer) charts.payer.destroy();
+            charts.payer = new Chart(document.getElementById('payerChart'), {
+                type: 'bar',
+                data: {
+                    labels: sorted.map(s => s[0]),
+                    datasets: [{
+                        label: 'Mentions',
+                        data: sorted.map(s => s[1]),
+                        backgroundColor: '#2E5C9A'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { beginAtZero: true } }
+                }
+            });
+        }
+
+        function updateProcedureChart() {
+            const procedures = {};
+            allPosts.forEach(p => {
+                if (p.procedure) procedures[p.procedure] = (procedures[p.procedure] || 0) + 1;
+            });
+
+            const sorted = Object.entries(procedures).sort((a, b) => b[1] - a[1]).slice(0, 8);
+
+            if (charts.procedure) charts.procedure.destroy();
+            charts.procedure = new Chart(document.getElementById('procedureChart'), {
+                type: 'bar',
+                data: {
+                    labels: sorted.map(s => s[0]),
+                    datasets: [{
+                        label: 'Mentions',
+                        data: sorted.map(s => s[1]),
+                        backgroundColor: '#4DAFA7'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { beginAtZero: true } }
+                }
+            });
+        }
+
+        function getWeekStart(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            d.setDate(d.getDate() - day + (day === 0 ? -6 : 1));
+            return d;
+        }
+
+        function formatWeekLabel(weekKey) {
+            return new Date(weekKey).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        // ══════════════════════════════════════════════════════
+        // TOP AUTHORS
+        // ══════════════════════════════════════════════════════
+        function updateTopAuthors() {
+            const authors = {};
+            allPosts.forEach(p => {
+                if (!authors[p.author]) {
+                    authors[p.author] = { count: 0, platform: p.platform, url: p.authorUrl };
+                }
+                authors[p.author].count++;
+            });
+
+            const sorted = Object.entries(authors)
+                .sort((a, b) => b[1].count - a[1].count)
+                .slice(0, 10);
+
+            const tbody = document.getElementById('topAuthorsTable');
+            tbody.innerHTML = sorted.map(([author, data]) => `
+                <tr>
+                    <td>${escapeHtml(author)}</td>
+                    <td><span class="platform-badge ${data.platform}">${data.platform}</span></td>
+                    <td>${data.count}</td>
+                    <td><a href="${data.url}" target="_blank" class="post-link">View Profile →</a></td>
+                </tr>
+            `).join('');
+        }
+
+        // ══════════════════════════════════════════════════════
+        // TRENDING POSTS
+        // ══════════════════════════════════════════════════════
+        function updateTrendingPosts() {
+            const sorted = [...allPosts]
+                .sort((a, b) => (b.likes + b.comments + b.shares) - (a.likes + a.comments + a.shares))
+                .slice(0, 5);
+
+            const container = document.getElementById('trendingPosts');
+            container.innerHTML = sorted.map(post => {
+                const viewCount = post.platform === 'youtube' && post.platform_meta?.viewCount
+                    ? `<span>👁️ ${post.platform_meta.viewCount.toLocaleString()}</span>`
+                    : '';
+
+                return `
+                <div class="post-card" style="margin-bottom:1rem;">
+                    <div class="post-header">
+                        <span class="platform-badge ${post.platform}">${post.platform}</span>
+                        <span class="sentiment-badge ${post.sentiment}">${post.sentiment}</span>
+                    </div>
+                    <a href="${post.authorUrl}" target="_blank" class="post-author">${escapeHtml(post.author)}</a>
+                    <p class="post-title">${escapeHtml(post.title.substring(0, 200))}${post.title.length > 200 ? '...' : ''}</p>
+                    <div class="post-stats">
+                        ${viewCount}
+                        <span>👍 ${post.likes}</span>
+                        <span>💬 ${post.comments}</span>
+                        <span>🔄 ${post.shares}</span>
+                    </div>
+                    <a href="${post.url}" target="_blank" class="post-link">View Post →</a>
+                </div>
+            `}).join('');
+        }
+
+        // ══════════════════════════════════════════════════════
+        // POSTS FEED
+        // ══════════════════════════════════════════════════════
+        function setupFilterTabs() {
+            const platforms = ['all', ...new Set(allPosts.map(p => p.platform))];
+            const counts = {};
+            counts.all = allPosts.length;
+            platforms.forEach(p => {
+                if (p !== 'all') {
+                    counts[p] = allPosts.filter(post => post.platform === p).length;
+                }
+            });
+
+            const icons = {
+                all: '🌐',
+                youtube: '▶️',
+                linkedin: '💼',
+                reddit: '🤖',
+                twitter: '🐦',
+                news: '📰'
+            };
+
+            const tabs = document.getElementById('filterTabs');
+            tabs.innerHTML = platforms.map(p => `
+                <button class="filter-tab ${p === 'all' ? 'active' : ''}" onclick="filterPosts('${p}')">
+                    ${icons[p] || ''} ${p.charAt(0).toUpperCase() + p.slice(1)} (${counts[p]})
+                </button>
+            `).join('');
+        }
+
+        function filterPosts(platform) {
+            currentFilter = platform;
+
+            // Update tab states
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.textContent.toLowerCase().includes(platform));
+            });
+
+            renderPosts(platform);
+        }
+
+        function renderPosts(platform) {
+            const filtered = platform === 'all'
+                ? allPosts
+                : allPosts.filter(p => p.platform === platform);
+
+            const feed = document.getElementById('postsFeed');
+
+            if (filtered.length === 0) {
+                feed.innerHTML = '<p style="grid-column:1/-1;text-align:center;padding:3rem;color:#6c757d;">No posts found</p>';
+                return;
+            }
+
+            feed.innerHTML = filtered.map(post => {
+                const shortsBadge = (post.platform === 'youtube' && post.platform_meta?.isShort)
+                    ? '<span style="font-size:0.68rem;font-weight:700;background:#FF0000;color:white;padding:0.1rem 0.4rem;border-radius:3px;margin-left:0.3rem;">SHORT</span>'
+                    : '';
+
+
+                const viewCount = post.platform === 'youtube' && post.platform_meta?.viewCount
+                    ? `<span>👁️ ${post.platform_meta.viewCount.toLocaleString()}</span>`
+                    : '';
+                return `
+                <div class="post-card">
+                    <div class="post-header">
+                        <span class="platform-badge ${post.platform}">${post.platform}${shortsBadge}</span>
+                        <span class="sentiment-badge ${post.sentiment}">${post.sentiment}</span>
+                    </div>
+                    <a href="${post.authorUrl}" target="_blank" class="post-author">${escapeHtml(post.author)}</a>
+                    <p class="post-title">${escapeHtml(post.title.substring(0, 250))}${post.title.length > 250 ? '...' : ''}</p>
+                    <div class="post-meta">
+                        <span class="tag">${escapeHtml(post.topic)}</span>
+                        <span class="tag">${escapeHtml(post.keyword)}</span>
+                        ${post.payer ? `<span class="tag">🏥 ${escapeHtml(post.payer)}</span>` : ''}
+                        ${post.procedure ? `<span class="tag">💉 ${escapeHtml(post.procedure)}</span>` : ''}
+                    </div>
+                    <div class="post-stats">
+                        ${viewCount}
+                        <span>👍 ${post.likes}</span>
+                        <span>💬 ${post.comments}</span>
+                        <span>🔄 ${post.shares}</span>
+                        <span>📅 ${new Date(post.date).toLocaleDateString()}</span>
+                    </div>
+                    <a href="${post.url}" target="_blank" class="post-link">Open Post →</a>
+                </div>
+            `}).join('');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = String(text || '');
+            return div.innerHTML;
+        }
+    </script>
+</body>
+
+</html>

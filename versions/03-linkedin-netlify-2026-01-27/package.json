@@ -1,0 +1,21 @@
+{
+  "name": "linkedin-pain-management-dashboard",
+  "version": "1.0.0",
+  "description": "LinkedIn Pain Management Intelligence Dashboard - Keyword-based search and analytics",
+  "main": "index.html",
+  "scripts": {
+    "dev": "python -m http.server 8000",
+    "deploy": "netlify deploy --prod"
+  },
+  "keywords": [
+    "linkedin",
+    "dashboard",
+    "analytics",
+    "pain-management",
+    "healthcare"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {},
+  "dependencies": {}
+}

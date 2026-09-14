@@ -1,0 +1,22 @@
+{
+  "name": "linkedin-social-listening-dashboard",
+  "version": "2.0.0",
+  "description": "LinkedIn Social Listening Dashboard - Real-time analytics for pain management and healthcare discussions",
+  "main": "pilot.html",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "deploy": "netlify deploy --prod"
+  },
+  "keywords": [
+    "linkedin",
+    "dashboard",
+    "analytics",
+    "social-listening",
+    "pain-management",
+    "healthcare"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {}
+}

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Posts Feed | Social Listening Dashboard</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f8fb; color: #2b3d4f; }
+    .wrap { max-width: 1500px; margin: 0 auto; padding: 1rem; }
+    .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; }
+    .title { margin: 0; font-size: 2rem; color: #1f4860; }
+    .back { color: #2c6897; text-decoration: none; font-weight: 700; }
+    .tabs { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .tab { border: 2px solid #cfd8df; background: #fff; color: #5a6772; border-radius: 999px; padding: 0.45rem 0.9rem; font-size: 1.1rem; cursor: pointer; font-weight: 700; }
+    .tab.active { border-color: #4fb2ac; color: #208a84; background: #edfbfa; }
+    .layout { display: grid; grid-template-columns: 300px 1fr; gap: 1rem; }
+    .side { background: #fff; border: 1px solid #d9e2ea; border-radius: 12px; padding: 0.9rem; height: fit-content; }
+    .side h3 { margin: 0 0 0.6rem; color: #214d62; font-size: 1rem; }
+    .editor { width: 100%; min-height: 80px; border: 1px solid #cdd8e2; border-radius: 8px; padding: 0.55rem; resize: vertical; font-family: inherit; font-size: 0.9rem; }
+    .btn { margin-top: 0.5rem; border: none; background: #2d6298; color: #fff; border-radius: 8px; padding: 0.5rem 0.75rem; font-weight: 700; cursor: pointer; }
+    .list { margin: 0; padding-left: 1rem; color: #415162; font-size: 0.9rem; }
+    .list li { margin-bottom: 0.3rem; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1rem; }
+    .card { background: #fff; border-radius: 14px; padding: 1rem; border: 1px solid #d5e0ea; box-shadow: 0 1px 5px rgba(0, 0, 0, 0.04); border-left: 4px solid #4fb2ac; }
+    .head-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; }
+    .badge { display: inline-block; padding: 0.2rem 0.55rem; border-radius: 999px; font-size: 0.78rem; font-weight: 700; }
+    .badge.platform { background: #eef4fb; color: #2f5d95; }
+    .badge.sentiment { background: #e6e8eb; color: #444f5b; }
+    .author { color: #28558e; font-size: 1.9rem; margin: 0 0 0.35rem; font-weight: 700; line-height: 1.2; }
+    .text { color: #33465a; font-size: 2rem; line-height: 1.35; margin: 0 0 0.75rem; }
+    .meta { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.65rem; }
+    .tag { background: #dff0f2; color: #2b5f8c; padding: 0.2rem 0.45rem; border-radius: 8px; font-size: 0.75rem; font-weight: 700; }
+    .stats { color: #627180; font-size: 0.78rem; display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.7rem; }
+    .link { color: #3caeab; text-decoration: none; font-weight: 800; font-size: 0.95rem; }
+    .empty { background: #fff; border: 1px solid #d9e2ea; border-radius: 12px; padding: 1rem; color: #60707d; }
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      .cards { grid-template-columns: 1fr; }
+      .title { font-size: 1.5rem; }
+      .author { font-size: 1.2rem; }
+      .text { font-size: 1.05rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h1 class="title">💬 Posts Feed</h1>
+      <a class="back" href="/pilot.html">← Back to Dashboard</a>
+    </div>
+
+    <div class="tabs" id="tabs"></div>
+
+    <div class="layout">
+      <div class="side">
+        <h3>Edit Monitored Profiles</h3>
+        <textarea id="editor" class="editor" placeholder="one per line"></textarea>
+        <button id="saveBtn" class="btn">Save Profiles</button>
+        <h3 style="margin-top:0.9rem;">Fetched Profiles</h3>
+        <ul id="profilesList" class="list"></ul>
+      </div>
+      <div>
+        <div id="cards" class="cards"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allPosts = [];
+    let monitors = { youtube: [], linkedin: [], reddit: [], twitter: [], news: [] };
+    const params = new URLSearchParams(window.location.search);
+    let active = params.get("platform") || "all";
+    const ICONS = { all: "🌐", youtube: "▶️", linkedin: "💼", reddit: "🤖", twitter: "🐦", news: "📰" };
+
+    function load() {
+      allPosts = JSON.parse(localStorage.getItem("painmed_last_posts") || "[]");
+      const raw = JSON.parse(localStorage.getItem("painmed_monitors") || "{}");
+      monitors = {
+        youtube: Array.isArray(raw.youtube) ? raw.youtube : [],
+        linkedin: Array.isArray(raw.linkedin) ? raw.linkedin : [],
+        reddit: Array.isArray(raw.reddit) ? raw.reddit : [],
+        twitter: Array.isArray(raw.twitter) ? raw.twitter : [],
+        news: Array.isArray(raw.news) ? raw.news : []
+      };
+    }
+
+    function countByPlatform() {
+      const out = { all: allPosts.length, youtube: 0, linkedin: 0, reddit: 0, twitter: 0, news: 0 };
+      allPosts.forEach(p => out[p.platform] = (out[p.platform] || 0) + 1);
+      return out;
+    }
+
+    function renderTabs() {
+      const counts = countByPlatform();
+      const order = ["all", "youtube", "linkedin", "reddit", "twitter", "news"];
+      const tabs = document.getElementById("tabs");
+      tabs.innerHTML = order.map(p => `
+        <button class="tab ${p === active ? "active" : ""}" data-platform="${p}">
+          ${ICONS[p]} ${p.charAt(0).toUpperCase() + p.slice(1)} (${counts[p] || 0})
+        </button>
+      `).join("");
+      tabs.querySelectorAll(".tab").forEach(btn => {
+        btn.addEventListener("click", () => {
+          active = btn.dataset.platform;
+          const u = new URL(window.location.href);
+          u.searchParams.set("platform", active);
+          history.replaceState({}, "", u);
+          render();
+        });
+      });
+    }
+
+    function getDisplayPosts() {
+      return active === "all" ? allPosts : allPosts.filter(p => p.platform === active);
+    }
+
+    function renderCards() {
+      const posts = getDisplayPosts();
+      const cards = document.getElementById("cards");
+      if (!posts.length) {
+        cards.innerHTML = `<div class="empty">No posts for ${active}. Run Fetch & Analyze first.</div>`;
+        return;
+      }
+      cards.innerHTML = posts.map(post => `
+        <div class="card">
+          <div class="head-row">
+            <span class="badge platform">${post.platform}${post.platform_meta?.isShort ? " SHORT" : ""}</span>
+            <span class="badge sentiment">${post.sentiment || "neutral"}</span>
+          </div>
+          <div class="author">${escapeHtml(post.author || "Unknown")}</div>
+          <p class="text">${escapeHtml((post.title || "").substring(0, 230))}${(post.title || "").length > 230 ? "..." : ""}</p>
+          <div class="meta">
+            ${post.topic ? `<span class="tag">${escapeHtml(post.topic)}</span>` : ""}
+            ${post.keyword ? `<span class="tag">${escapeHtml(post.keyword)}</span>` : ""}
+          </div>
+          <div class="stats">
+            <span>👍 ${post.likes || 0}</span>
+            <span>💬 ${post.comments || 0}</span>
+            <span>🔁 ${post.shares || 0}</span>
+            <span>📅 ${new Date(post.date).toLocaleDateString()}</span>
+          </div>
+          <a href="${post.url}" target="_blank" class="link">Open Post →</a>
+        </div>
+      `).join("");
+    }
+
+    function renderSide() {
+      const key = active === "all" ? "youtube" : active;
+      document.getElementById("editor").value = (monitors[key] || []).join("\n");
+
+      const profiles = [...new Set(getDisplayPosts().map(p => p.author).filter(Boolean))].slice(0, 30);
+      const list = document.getElementById("profilesList");
+      list.innerHTML = profiles.length ? profiles.map(p => `<li>${escapeHtml(p)}</li>`).join("") : "<li>No fetched profiles.</li>";
+
+      document.getElementById("saveBtn").onclick = () => {
+        monitors[key] = [...new Set(document.getElementById("editor").value.split("\n").map(v => v.trim()).filter(Boolean))];
+        localStorage.setItem("painmed_monitors", JSON.stringify(monitors));
+        alert("Saved monitored profiles for " + key);
+      };
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = String(text || "");
+      return div.innerHTML;
+    }
+
+    function render() {
+      renderTabs();
+      renderCards();
+      renderSide();
+    }
+
+    load();
+    render();
+  </script>
+</body>
+</html>

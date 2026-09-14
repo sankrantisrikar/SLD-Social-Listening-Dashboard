@@ -1,0 +1,1546 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedIn Analytics Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0077b5 0%, #005885 100%);
+            color: white;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-bottom: 4px solid #00a0dc;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-content {
+            flex: 1;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: white;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .linkedin-icon {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #0077b5;
+        }
+
+        .header .subtitle {
+            color: #E0E7EF;
+            font-size: 0.95rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #0077b5;
+        }
+
+        .panel h3 {
+            color: #0077b5;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 1rem;
+        }
+
+        .filter-group label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #0077b5;
+            font-size: 0.9rem;
+        }
+
+        .filter-group textarea,
+        .filter-group input {
+            padding: 0.6rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .filter-group textarea:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: #0077b5;
+        }
+
+        .btn {
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            background: linear-gradient(135deg, #0077b5, #005885);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 119, 181, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: #e8f5f3;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0077b5, #00a0dc);
+            width: 0%;
+            transition: width 0.4s;
+        }
+
+        .status-text {
+            font-size: 0.9rem;
+            color: #0077b5;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid #ddd;
+            border-top-color: #0077b5;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #0077b5;
+        }
+
+        .metric-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #0077b5;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2rem;
+            border-top: 3px solid #0077b5;
+        }
+
+        .chart-card h3 {
+            margin-bottom: 1rem;
+            color: #0077b5;
+        }
+
+        .posts-feed {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .post-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.25rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #0077b5;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .post-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 0.75rem;
+        }
+
+        .platform-badge {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #e8f4fb;
+            color: #0077b5;
+        }
+
+        .sentiment-badge {
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .sentiment-badge.positive {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .sentiment-badge.neutral {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        .sentiment-badge.negative {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .post-author {
+            font-weight: 600;
+            color: #0077b5;
+            text-decoration: none;
+            font-size: 0.9rem;
+            padding: 4px 0;
+            display: inline-block;
+        }
+
+        .post-author:hover {
+            text-decoration: underline;
+        }
+
+        .post-title {
+            color: #2c3e50;
+            line-height: 1.5;
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
+        }
+
+        .post-meta {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.75rem;
+        }
+
+        .tag {
+            padding: 0.2rem 0.5rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #E0F2F1;
+            color: #0077b5;
+        }
+
+        .post-stats {
+            display: flex;
+            gap: 0.75rem;
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-bottom: 0.75rem;
+        }
+
+        .post-link {
+            display: inline-block;
+            color: #0077b5;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .post-link:hover {
+            text-decoration: underline;
+        }
+
+        .warning-banner {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: #856404;
+            font-size: 0.9rem;
+        }
+
+        .cred-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            padding: 0.75rem;
+            text-align: left;
+            font-size: 0.85rem;
+            color: #0077b5;
+            font-weight: 600;
+            text-transform: uppercase;
+            background: #f8f9fa;
+        }
+
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #ecf0f1;
+            font-size: 0.9rem;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>
+                <div class="linkedin-icon">💼</div>
+                LinkedIn Analytics Dashboard
+            </h1>
+            <p class="subtitle">Professional Healthcare Content Analysis | Pain Management & Prior Authorization
+                Intelligence</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn-outline" onclick="manageCredentials()">🔑 Credentials</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- SECTION 1: SEARCH & CONFIG -->
+        <div class="panel" id="searchPanel">
+            <h3>🔍 LinkedIn Content Search</h3>
+
+            <!-- Hidden credentials storage -->
+            <input type="hidden" id="apifyToken">
+            <input type="hidden" id="liCookie"
+                value="YOUR_LINKEDIN_LI_AT_COOKIE">
+
+            <!-- Keywords -->
+            <div class="filter-group">
+                <label style="display:flex;justify-content:space-between;align-items:center;">
+                    <span>Search Keywords (one per line)</span>
+                    <div style="display:flex;gap:0.5rem;">
+                        <button type="button" onclick="saveKeywords()"
+                            style="padding:0.3rem 0.8rem;font-size:0.8rem;background:#28a745;color:white;border:none;border-radius:4px;cursor:pointer;">💾
+                            Save</button>
+                        <button type="button" onclick="loadKeywords()"
+                            style="padding:0.3rem 0.8rem;font-size:0.8rem;background:#6c757d;color:white;border:none;border-radius:4px;cursor:pointer;">📂
+                            Load</button>
+                        <button type="button" onclick="clearKeywords()"
+                            style="padding:0.3rem 0.8rem;font-size:0.8rem;background:#dc3545;color:white;border:none;border-radius:4px;cursor:pointer;">🗑️
+                            Clear</button>
+                    </div>
+                </label>
+                <textarea id="keywords" rows="6" placeholder="prior authorization pain management
+interventional pain billing
+spinal cord stimulator denials
+Medicare pain procedures
+peer to peer appeals">prior authorization pain management
+interventional pain billing
+spinal cord stimulator denials
+Medicare pain procedures
+peer to peer appeals</textarea>
+                <small style="color:#6c757d;margin-top:0.25rem;">💡 Tip: Use specific phrases for better results</small>
+            </div>
+
+            <!-- Profile Monitoring -->
+            <div class="filter-group">
+                <label style="display:flex;justify-content:space-between;align-items:center;">
+                    <span>Monitor LinkedIn Profiles (URLs, one per line)</span>
+                    <div style="display:flex;gap:0.5rem;">
+                        <button type="button" onclick="saveProfiles()"
+                            style="padding:0.3rem 0.8rem;font-size:0.8rem;background:#28a745;color:white;border:none;border-radius:4px;cursor:pointer;">💾
+                            Save</button>
+                        <button type="button" onclick="loadProfiles()"
+                            style="padding:0.3rem 0.8rem;font-size:0.8rem;background:#6c757d;color:white;border:none;border-radius:4px;cursor:pointer;">📂
+                            Load</button>
+                        <button type="button" onclick="clearProfiles()"
+                            style="padding:0.3rem 0.8rem;font-size:0.8rem;background:#dc3545;color:white;border:none;border-radius:4px;cursor:pointer;">🗑️
+                            Clear</button>
+                    </div>
+                </label>
+                <textarea id="profiles" rows="4" placeholder="https://www.linkedin.com/in/dr-john-smith/
+https://www.linkedin.com/in/pain-management-expert/
+https://www.linkedin.com/company/painmed-solutions/
+https://www.linkedin.com/company/medtronic/"></textarea>
+                <small style="color:#6c757d;margin-top:0.25rem;">💡 Monitor specific healthcare professionals and
+                    companies</small>
+            </div>
+
+            <!-- Fetch Limit -->
+            <div class="filter-group">
+                <label>Fetch Limit (1-1000 posts)</label>
+                <div style="display:flex;gap:1rem;align-items:center;">
+                    <input type="number" id="fetchLimit" min="1" max="1000" value="50"
+                        style="width:100px;padding:0.5rem;border:1px solid #ddd;border-radius:6px;">
+                    <span style="font-size:0.9rem;color:#6c757d;">Higher limits use more credits but get more
+                        data</span>
+                </div>
+                <small style="color:#6c757d;margin-top:0.25rem;">💡 Start with 50-100 for testing, increase for
+                    comprehensive analysis</small>
+            </div>
+
+            <!-- Fetch Button -->
+            <button class="btn" id="fetchBtn" onclick="fetchAndAnalyze()" style="width:100%;margin-top:1rem;">
+                🚀 Fetch LinkedIn Posts
+            </button>
+
+            <!-- Debug Cache Bar -->
+            <div
+                style="margin-top:0.75rem;padding:0.75rem 1rem;background:#f0f7ff;border:1px solid #c8e0f4;border-radius:8px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+                    <div style="font-size:0.8rem;color:#005885;font-weight:600;">🗂️ Debug Cache <span
+                            style="font-weight:400;color:#6c757d;">(avoids refetching during testing)</span></div>
+                    <div style="display:flex;gap:0.5rem;">
+                        <button type="button" onclick="saveCachedResults()"
+                            style="padding:0.3rem 0.8rem;font-size:0.8rem;background:#0077b5;color:white;border:none;border-radius:4px;cursor:pointer;">💾
+                            Save</button>
+                        <button type="button" onclick="loadCachedResults()"
+                            style="padding:0.3rem 0.8rem;font-size:0.8rem;background:#28a745;color:white;border:none;border-radius:4px;cursor:pointer;">📂
+                            Load</button>
+                        <button type="button" onclick="clearCachedResults()"
+                            style="padding:0.3rem 0.8rem;font-size:0.8rem;background:#dc3545;color:white;border:none;border-radius:4px;cursor:pointer;">🗑️
+                            Clear</button>
+                    </div>
+                </div>
+                <div id="cacheStatus" style="font-size:0.78rem;color:#6c757d;margin-top:0.35rem;">No cache saved yet.
+                </div>
+            </div>
+
+            <!-- Progress -->
+            <div id="progressSection" style="display:none;margin-top:1rem;">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="status-text" id="statusText">
+                    <div class="spinner"></div>
+                    <span>Starting LinkedIn search...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: ANALYTICS PANEL -->
+        <div id="analyticsPanel" style="display:none;">
+
+            <!-- Metrics -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Total Posts</div>
+                    <div class="metric-value" id="totalPosts">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Unique Authors</div>
+                    <div class="metric-value" id="uniqueAuthors">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Total Engagement</div>
+                    <div class="metric-value" id="totalEngagement">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Avg Sentiment</div>
+                    <div class="metric-value" id="avgSentiment" style="font-size:2rem;">—</div>
+                </div>
+            </div>
+
+            <!-- Charts Row 1 -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:2rem;">
+                <div class="chart-card">
+                    <h3>📊 Posts by Topic</h3>
+                    <canvas id="topicChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>💭 Sentiment Analysis</h3>
+                    <canvas id="sentimentChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Charts Row 2 -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:2rem;">
+                <div class="chart-card">
+                    <h3>📈 Posts Over Time</h3>
+                    <canvas id="timelineChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>🏥 Payer Mentions</h3>
+                    <canvas id="payerChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Top Authors Table -->
+            <div class="chart-card">
+                <h3>👥 Top LinkedIn Authors</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Author</th>
+                            <th>Posts</th>
+                            <th>Total Engagement</th>
+                            <th>Profile</th>
+                        </tr>
+                    </thead>
+                    <tbody id="topAuthorsTable"></tbody>
+                </table>
+            </div>
+        </div>
+        <script>
+            // Utility for robustly opening LinkedIn URLs triggered by user click events
+            function handleLinkClick(event, element) {
+                if (!element) return;
+                event.preventDefault();
+                // Get the fully resolved href from the DOM element
+                const url = element.href;
+                if (!url || url === '' || url === window.location.href + '#' || url.endsWith('#')) return;
+                window.open(url, '_blank');
+            }
+        </script>
+
+        <!-- SECTION 3: POSTS FEED -->
+        <div id="postsPanel" style="display:none;">
+            <div class="panel">
+                <h3>💬 LinkedIn Posts Feed</h3>
+
+                <div class="posts-feed" id="postsFeed"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Global variables
+        let allPosts = [];
+        let charts = {};
+
+        // Storage functions for keywords
+        function saveKeywords() {
+            const keywords = document.getElementById('keywords').value;
+            localStorage.setItem('painmed_keywords', keywords);
+            alert('✅ Keywords saved successfully!');
+        }
+
+        function loadKeywords() {
+            const saved = localStorage.getItem('painmed_keywords');
+            if (saved) {
+                document.getElementById('keywords').value = saved;
+                alert('✅ Keywords loaded successfully!');
+            } else {
+                alert('❌ No saved keywords found');
+            }
+        }
+
+        function clearKeywords() {
+            if (confirm('Are you sure you want to clear all keywords?')) {
+                document.getElementById('keywords').value = '';
+                localStorage.removeItem('painmed_keywords');
+                alert('✅ Keywords cleared');
+            }
+        }
+
+        // Storage functions for profiles
+        function saveProfiles() {
+            const profiles = document.getElementById('profiles').value;
+            localStorage.setItem('painmed_profiles', profiles);
+            alert('✅ Profiles saved successfully!');
+        }
+
+        function loadProfiles() {
+            const saved = localStorage.getItem('painmed_profiles');
+            if (saved) {
+                document.getElementById('profiles').value = saved;
+                alert('✅ Profiles loaded successfully!');
+            } else {
+                alert('❌ No saved profiles found');
+            }
+        }
+
+        function clearProfiles() {
+            if (confirm('Are you sure you want to clear all profiles?')) {
+                document.getElementById('profiles').value = '';
+                localStorage.removeItem('painmed_profiles');
+                alert('✅ Profiles cleared');
+            }
+        }
+
+        // Save fetch limit
+        function saveFetchLimit() {
+            const limit = document.getElementById('fetchLimit').value;
+            localStorage.setItem('painmed_fetch_limit', limit);
+        }
+
+        // Auto-load saved data on page load
+        window.addEventListener('load', function () {
+            const savedKeywords = localStorage.getItem('painmed_keywords');
+            const savedProfiles = localStorage.getItem('painmed_profiles');
+            const savedApifyToken = localStorage.getItem('painmed_apify_token');
+            const savedFetchLimit = localStorage.getItem('painmed_fetch_limit');
+
+            if (savedKeywords) {
+                document.getElementById('keywords').value = savedKeywords;
+            }
+            if (savedProfiles) {
+                document.getElementById('profiles').value = savedProfiles;
+            }
+            if (savedApifyToken) {
+                document.getElementById('apifyToken').value = savedApifyToken;
+            }
+            if (savedFetchLimit) {
+                document.getElementById('fetchLimit').value = savedFetchLimit;
+            }
+
+            // Show cache status on load
+            updateCacheStatus();
+        });
+
+        // Auto-save credentials
+        function saveCredentials() {
+            const apifyToken = document.getElementById('apifyToken').value;
+            if (apifyToken) {
+                localStorage.setItem('painmed_apify_token', apifyToken);
+            }
+        }
+
+        // Manage Credentials Modal/Prompt
+        function manageCredentials() {
+            const currentToken = localStorage.getItem('painmed_apify_token') || '';
+            const newToken = prompt('Please enter your Apify API Token:', currentToken);
+
+            if (newToken !== null) {
+                localStorage.setItem('painmed_apify_token', newToken.trim());
+                document.getElementById('apifyToken').value = newToken.trim();
+
+                if (newToken.trim()) {
+                    testApifyConnection();
+                }
+            }
+        }
+
+        // Test Apify connection - check specific actor
+        async function testApifyConnection() {
+            const token = document.getElementById('apifyToken').value.trim();
+
+            if (!token) {
+                alert('Please enter your Apify token first');
+                return;
+            }
+
+            try {
+                // Test token validity
+                const userResponse = await fetch(`https://api.apify.com/v2/users/me?token=${token}`);
+                const userData = await userResponse.json();
+
+                if (!userResponse.ok) {
+                    alert(`❌ Token Error: ${userData.error?.message || 'Invalid token'}`);
+                    return;
+                }
+
+                // Test the specific LinkedIn actor
+                const actorResponse = await fetch(`https://api.apify.com/v2/acts/Wpp1BZ6yGWjySadk3?token=${token}`);
+                const actorData = await actorResponse.json();
+
+                if (actorResponse.ok) {
+                    alert(`✅ Connection successful!\n\nUser: ${userData.data.username}\nLinkedIn Actor: ${actorData.data.name || 'Wpp1BZ6yGWjySadk3'} ✅\n\nThis actor accepts keywords directly!\nReady to fetch LinkedIn data!`);
+                } else {
+                    alert(`⚠️ Token works but LinkedIn actor not accessible.\n\nPlease rent the actor at:\nhttps://console.apify.com/actors/Wpp1BZ6yGWjySadk3`);
+                }
+
+            } catch (error) {
+                alert(`❌ Connection failed: ${error.message}`);
+                console.error('Test error:', error);
+            }
+        }
+
+        // Sleep function
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Ensure URL is a proper LinkedIn URL
+        function ensureLinkedInUrl(url, type = 'profile') {
+            if (!url || typeof url !== 'string' || url === '#' || url === '' || url === 'undefined' || url === 'null') {
+                return '#';
+            }
+
+            // Clean up the URL
+            url = url.trim().replace(/^['"]+|['"]+$/g, '');
+
+            // Fix common malformed scraper formats
+            // Scrapers sometimes replace hyphens with underscores in activity URLs
+            if (url.includes('_activity-')) {
+                url = url.replace('_activity-', '-activity-');
+            }
+
+            // Handle relative paths
+            if (url.startsWith('/in/') || url.startsWith('/company/') || url.startsWith('/posts/') || url.startsWith('/feed/')) {
+                return 'https://www.linkedin.com' + url;
+            }
+
+            // If it's just a path without leading slash
+            if (url.startsWith('in/') || url.startsWith('company/') || url.startsWith('posts/') || url.startsWith('feed/')) {
+                return 'https://www.linkedin.com/' + url;
+            }
+
+            // If it's already a full LinkedIn URL (including shortened or variants), ensure protocol
+            if (url.includes('linkedin.com') || url.includes('lnkd.in')) {
+                if (!url.startsWith('http')) {
+                    return 'https://' + url.replace(/^\/+/, '');
+                }
+                return url;
+            }
+
+            // If it's a publicId or username (looks like a handle)
+            // Allow dots and trailing slashes
+            if (/^[a-zA-Z0-9\-_./]+$/.test(url) && url.length > 3) {
+                const cleanId = url.replace(/\/+$/, ''); // Remove trailing slash for construction
+                if (type === 'company') {
+                    return 'https://www.linkedin.com/company/' + cleanId + '/';
+                }
+                return 'https://www.linkedin.com/in/' + cleanId + '/';
+            }
+
+            return url;
+        }
+
+        // Open a LinkedIn URL robustly
+        function openLinkedInUrl(event, url) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            if (!url || url === '#') return;
+
+            // Open in new tab - direct call without features string avoids popup blockers
+            window.open(url, '_blank');
+        }
+
+        // Set progress
+        function setProgress(percent, message) {
+            const progressFill = document.getElementById('progressFill');
+            const statusText = document.getElementById('statusText');
+
+            if (percent !== null) {
+                progressFill.style.width = percent + '%';
+            }
+
+            if (message) {
+                statusText.innerHTML = `<div class="spinner"></div><span>${message}</span>`;
+            }
+        }
+
+        // Apify helper functions - simple version
+        async function apifyStart(token, actorId, input) {
+            console.log(`Starting Apify actor: ${actorId}`);
+
+            const response = await fetch(`https://api.apify.com/v2/acts/${actorId}/runs?token=${token}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(input)
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(`Apify error: ${error.error?.message || 'Unknown error'}`);
+            }
+
+            const result = await response.json();
+            console.log('Apify run started:', result.data.id);
+            return result.data;
+        }
+
+        async function apifyWait(token, runId, onUpdate) {
+            while (true) {
+                const response = await fetch(`https://api.apify.com/v2/actor-runs/${runId}?token=${token}`);
+                const run = await response.json();
+
+                if (onUpdate) onUpdate(run.data.status);
+
+                if (run.data.status === 'SUCCEEDED') break;
+                if (run.data.status === 'FAILED') throw new Error('Apify run failed');
+
+                await sleep(2000);
+            }
+        }
+
+        async function apifyDataset(token, datasetId) {
+            const response = await fetch(`https://api.apify.com/v2/datasets/${datasetId}/items?token=${token}`);
+            return await response.json();
+        }
+
+        function getCookieArray(liAt) {
+            return [{ name: 'li_at', value: liAt, domain: '.linkedin.com' }];
+        }
+
+        // LinkedIn fetcher with profiles and fetch limit
+        async function fetchLinkedIn(keywords, profiles, fetchLimit, token, liCookie) {
+            console.log(`Using actor: Wpp1BZ6yGWjySadk3`);
+            console.log('Keywords:', keywords);
+            console.log('Profiles:', profiles);
+            console.log('Fetch limit:', fetchLimit);
+
+            // Build URLs from both keywords and profiles
+            let urls = [];
+
+            // Add keyword search URLs
+            if (keywords.length > 0) {
+                const keywordUrls = keywords.map(kw =>
+                    `https://www.linkedin.com/search/results/content/?keywords=${encodeURIComponent(kw)}&origin=GLOBAL_SEARCH_HEADER&sortBy=date_posted`
+                );
+                urls.push(...keywordUrls);
+            }
+
+            // Add profile URLs directly
+            if (profiles.length > 0) {
+                const validProfiles = profiles.filter(url => url.trim().includes('linkedin.com'));
+                urls.push(...validProfiles);
+            }
+
+            if (urls.length === 0) {
+                throw new Error('Please enter either keywords or LinkedIn profiles to monitor');
+            }
+
+            console.log('Generated URLs:', urls);
+
+            const run = await apifyStart(token, 'Wpp1BZ6yGWjySadk3', {
+                urls: urls,
+                cookie: getCookieArray(liCookie),
+                maxResults: parseInt(fetchLimit),
+                limitPerSource: Math.max(5, Math.ceil(fetchLimit / urls.length)),
+                deepScrape: profiles.length > 0, // Deep scrape for profiles
+                minDelay: 2,
+                maxDelay: 8,
+                maxRequestRetries: 1,
+                userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+                proxy: { useApifyProxy: true, apifyProxyCountry: 'US' }
+            });
+
+            await apifyWait(token, run.id, msg => setProgress(null, `LinkedIn: ${msg}`));
+            const raw = await apifyDataset(token, run.defaultDatasetId);
+
+            console.log('Raw data from actor:', raw);
+            console.log('Sample item:', raw[0]);
+            console.log('Sample item keys:', raw[0] ? Object.keys(raw[0]) : 'No items');
+            console.log('Sample author field:', raw[0] ? raw[0].author : 'No author field');
+            console.log('Sample author type:', raw[0] ? typeof raw[0].author : 'No author');
+
+            return raw.map((item, idx) => {
+                // Log each item to see what fields are available
+                console.log(`Item ${idx}:`, item);
+
+                // Try multiple possible field names for text content
+                const text = item.text || item.content || item.description || item.postText || item.message || item.body || '';
+
+                // Handle author - check if it's an object or string
+                let author = 'Unknown Author';
+                // First try top-level flat field (actor always provides this)
+                if (item.authorName) {
+                    author = item.authorName;
+                } else if (item.author) {
+                    if (typeof item.author === 'object') {
+                        // Actor uses firstName + lastName (not name/displayName)
+                        const firstName = item.author.firstName || '';
+                        const lastName = item.author.lastName || '';
+                        author = (firstName + ' ' + lastName).trim()
+                            || item.author.name || item.author.displayName || item.author.fullName || item.author.title || 'Unknown Author';
+                    } else {
+                        author = item.author;
+                    }
+                } else {
+                    author = item.name || item.userName || item.user || item.profileName || 'Unknown Author';
+                }
+
+                // Handle author URL - exhaustively prefer actual URL fields over constructed ones
+                // (constructed IDs often give 404s because LinkedIn slugs != publicIdentifier)
+                let authorUrl = '#';
+                let authorType = 'profile';
+
+                // Detect company type
+                const isCompanyAuthor = (
+                    (item.author && typeof item.author === 'object' && item.author.type &&
+                        item.author.type.toLowerCase().includes('company')) ||
+                    (item.companyName && !item.authorName)
+                );
+                if (isCompanyAuthor) authorType = 'company';
+
+                // --- Priority 1: Direct URL from author object (most reliable) ---
+                if (item.author && typeof item.author === 'object') {
+                    authorUrl = item.author.url
+                        || item.author.profileUrl
+                        || item.author.navigationUrl
+                        || item.author.authorUrl
+                        || item.author.link
+                        || item.author.linkedInUrl
+                        || item.author.linkedinUrl
+                        || '';
+                }
+
+                // --- Priority 2: Top-level flat URL fields ---
+                if (!authorUrl || authorUrl === '#') {
+                    authorUrl = item.authorUrl
+                        || item.profileUrl
+                        || item.authorLink
+                        || item.userUrl
+                        || item.profileLink
+                        || item.authorProfileUrl
+                        || item.profileNavigationUrl
+                        || item.actorProfileUrl
+                        || '';
+                }
+
+                // --- Priority 3: Nested profile/user/company objects ---
+                if (!authorUrl || authorUrl === '#') {
+                    if (item.profile) {
+                        authorUrl = item.profile.url || item.profile.profileUrl || item.profile.navigationUrl || item.profile.link || '';
+                    } else if (item.user) {
+                        authorUrl = item.user.url || item.user.profileUrl || item.user.navigationUrl || item.user.link || '';
+                    } else if (item.company) {
+                        authorType = 'company';
+                        authorUrl = item.company.url || item.company.profileUrl || item.company.navigationUrl || item.company.link || '';
+                    }
+                }
+
+                // --- Priority 4: Construct from publicIdentifier ONLY (not generic IDs like urn/numbers)
+                //    publicIdentifier is the actual slug used in linkedin.com/in/<slug>/ URLs
+                if (!authorUrl || authorUrl === '#') {
+                    if (item.author && typeof item.author === 'object') {
+                        const slug = item.author.publicIdentifier || item.author.vanityName || item.author.alias;
+                        if (slug && slug.trim() && !slug.includes(':') && !slug.includes('urn')) {
+                            const cleanSlug = slug.trim().replace(/\/+$/, '');
+                            authorUrl = authorType === 'company'
+                                ? `https://www.linkedin.com/company/${cleanSlug}/`
+                                : `https://www.linkedin.com/in/${cleanSlug}/`;
+                        }
+                    }
+                }
+
+                // --- Priority 5: Last resort — numeric URN fallback (often still 404s) ---
+                // Skipping urn/id-based construction entirely as it reliably 404s
+
+                // Ensure URLs are proper LinkedIn URLs
+                authorUrl = ensureLinkedInUrl(authorUrl || '#', authorType);
+
+                // Try multiple possible field names for post URL
+                let postUrl = item.url || item.postUrl || item.link || item.postLink || item.permalink || '#';
+
+                // Try to construct a robust URL using URN if available (extremely reliable format)
+                const urn = item.urn || item.id || item.postId;
+                if (urn && urn.includes('urn:li:activity:')) {
+                    const activityId = urn.split(':').pop();
+                    postUrl = `https://www.linkedin.com/feed/update/urn:li:activity:${activityId}/`;
+                } else if (postUrl === '#' || postUrl === '') {
+                    // Fallback to simpler construction
+                    const id = item.id || item.postId;
+                    if (id) postUrl = `https://www.linkedin.com/feed/update/urn:li:activity:${id}/`;
+                }
+
+                postUrl = ensureLinkedInUrl(postUrl, 'post');
+
+                // Try multiple possible field names for date
+                const date = item.postedAtISO || (item.postedAtTimestamp ? new Date(item.postedAtTimestamp).toISOString() : null) || item.date || item.publishedAt || item.createdAt || item.timestamp || item.postedAt || new Date().toISOString();
+
+                // Try multiple possible field names for engagement
+                // Actor returns: numLikes, numComments, numShares (confirmed from API output)
+                const likes = parseInt(item.numLikes) || parseInt(item.likes) || parseInt(item.likeCount) || parseInt(item.likesCount) || (Array.isArray(item.reactions) ? item.reactions.length : parseInt(item.reactions)) || 0;
+                const comments = parseInt(item.numComments) || parseInt(item.commentCount) || parseInt(item.commentsCount) || (Array.isArray(item.comments) ? item.comments.length : parseInt(item.comments)) || 0;
+                const shares = parseInt(item.numShares) || parseInt(item.shares) || parseInt(item.reposts) || parseInt(item.shareCount) || parseInt(item.sharesCount) || 0;
+
+                // Determine source type
+                const isFromProfile = profiles.some(profile =>
+                    authorUrl.includes(profile) || postUrl.includes(profile)
+                );
+
+                const post = {
+                    id: 'li_' + idx,
+                    platform: 'linkedin',
+                    title: text.substring(0, 300),
+                    author: author,
+                    authorUrl: authorUrl,
+                    url: postUrl,
+                    date: date,
+                    keyword: findKeywordMatch(text, keywords),
+                    likes: likes,
+                    comments: comments,
+                    shares: shares,
+                    sentiment: analyzeSentiment(text),
+                    topic: classifyTopic(text),
+                    payer: detectPayer(text),
+                    procedure: detectProcedure(text),
+                    source: isFromProfile ? 'profile' : 'keyword',
+                    rawData: item // Keep raw data for debugging
+                };
+
+                console.log(`Processed post ${idx}:`, {
+                    author: post.author,
+                    authorUrl: post.authorUrl,
+                    postUrl: post.url,
+                    originalAuthorData: item.author,
+                    originalUrlData: item.url,
+                    authorPublicId: item.author?.publicId,
+                    authorProfileUrl: item.authorProfileUrl
+                });
+
+                // Log the actual URLs being used
+                if (idx < 3) { // Only log first 3 for clarity
+                    console.log(`ACTUAL URLS for post ${idx}:`);
+                    console.log(`  Author URL: "${post.authorUrl}"`);
+                    console.log(`  Post URL: "${post.url}"`);
+                    console.log(`  Author publicId: "${item.author?.publicId}"`);
+                }
+                return post;
+            }).filter(post => post.title.length > 10);
+        }
+
+        // Analysis functions
+        function findKeywordMatch(text, keywords) {
+            const lowerText = text.toLowerCase();
+            const matchedKeyword = keywords.find(kw => lowerText.includes(kw.toLowerCase()));
+            return matchedKeyword || (keywords.length > 0 ? keywords[0] : 'General');
+        }
+
+        function analyzeSentiment(text) {
+            const positive = ['great', 'excellent', 'amazing', 'wonderful', 'fantastic', 'love', 'best', 'perfect', 'outstanding', 'brilliant'];
+            const negative = ['terrible', 'awful', 'horrible', 'worst', 'hate', 'disgusting', 'pathetic', 'useless', 'failed', 'disappointed', 'denied', 'rejected', 'frustrated'];
+
+            const lowerText = text.toLowerCase();
+            const posCount = positive.filter(word => lowerText.includes(word)).length;
+            const negCount = negative.filter(word => lowerText.includes(word)).length;
+
+            if (posCount > negCount) return 'positive';
+            if (negCount > posCount) return 'negative';
+            return 'neutral';
+        }
+
+        function classifyTopic(text) {
+            const topics = {
+                'Prior Auth': ['prior authorization', 'prior auth', 'preauthorization', 'pre-authorization'],
+                'Billing & Denials': ['billing', 'denial', 'denied', 'claim', 'reimbursement', 'payment'],
+                'Payer Behavior': ['insurance', 'payer', 'medicare', 'medicaid', 'coverage'],
+                'Procedures/Devices': ['procedure', 'device', 'implant', 'surgery', 'treatment'],
+                'Appeals & P2P': ['appeal', 'peer to peer', 'p2p', 'review', 'reconsideration'],
+                'General Pain': ['pain', 'chronic', 'management', 'therapy', 'relief']
+            };
+
+            const lowerText = text.toLowerCase();
+            for (const [topic, keywords] of Object.entries(topics)) {
+                if (keywords.some(kw => lowerText.includes(kw))) {
+                    return topic;
+                }
+            }
+            return 'General Pain';
+        }
+
+        function detectPayer(text) {
+            const payers = ['Medicare', 'Medicaid', 'UnitedHealth', 'Aetna', 'Cigna', 'BCBS', 'Blue Cross', 'Humana', 'Anthem'];
+            const lowerText = text.toLowerCase();
+            return payers.find(payer => lowerText.includes(payer.toLowerCase())) || null;
+        }
+
+        function detectProcedure(text) {
+            const procedures = ['SCS', 'Spinal Cord Stimulator', 'SI Joint Fusion', 'Kyphoplasty', 'Intracept', 'PNS', 'RFA', 'Epidural', 'Facet Injection'];
+            const lowerText = text.toLowerCase();
+            return procedures.find(proc => lowerText.includes(proc.toLowerCase())) || null;
+        }
+
+        // Main fetch function with profiles and fetch limit
+        async function fetchAndAnalyze() {
+            const keywords = document.getElementById('keywords').value.split('\n').filter(k => k.trim());
+            const profiles = document.getElementById('profiles').value.split('\n').filter(p => p.trim());
+            const fetchLimit = parseInt(document.getElementById('fetchLimit').value) || 50;
+            const apifyToken = document.getElementById('apifyToken').value.trim();
+            const liCookie = document.getElementById('liCookie').value.trim();
+
+            if (!apifyToken) {
+                alert('Please enter your Apify token');
+                return;
+            }
+
+            if (!liCookie) {
+                alert('Please enter your LinkedIn cookie (li_at)');
+                return;
+            }
+
+            if (keywords.length === 0 && profiles.length === 0) {
+                alert('Please enter either keywords or LinkedIn profiles to monitor');
+                return;
+            }
+
+            if (fetchLimit < 1 || fetchLimit > 1000) {
+                alert('Fetch limit must be between 1 and 1000');
+                return;
+            }
+
+            // Auto-save all settings
+            saveCredentials();
+            saveFetchLimit();
+
+            // Show progress
+            document.getElementById('progressSection').style.display = 'block';
+            document.getElementById('fetchBtn').disabled = true;
+
+            try {
+                setProgress(10, 'Starting LinkedIn analysis...');
+
+                const posts = await fetchLinkedIn(keywords, profiles, fetchLimit, apifyToken, liCookie);
+                allPosts = posts;
+
+                setProgress(90, 'Processing results...');
+
+                if (posts.length === 0) {
+                    alert('No posts found. Check your credentials, keywords, and profiles.');
+                    return;
+                }
+
+                // Update dashboard
+                updateMetrics();
+                updateCharts();
+                updateTopAuthors();
+                renderPosts();
+
+                // Show debug info
+                console.log('Final processed posts:', posts);
+                console.log('Sample post structure:', posts[0]);
+
+                // Show results
+                document.getElementById('analyticsPanel').style.display = 'block';
+                document.getElementById('postsPanel').style.display = 'block';
+
+                // Show detailed summary
+                const keywordPosts = posts.filter(p => p.source === 'keyword').length;
+                const profilePosts = posts.filter(p => p.source === 'profile').length;
+                const authorsFound = new Set(posts.map(p => p.author)).size;
+                const validUrls = posts.filter(p => p.url !== '#').length;
+                const validAuthorUrls = posts.filter(p => p.authorUrl !== '#').length;
+
+                setProgress(100, `Found ${posts.length} posts! (${keywordPosts} from keywords, ${profilePosts} from profiles)`);
+
+                console.log(`Summary: ${posts.length} posts, ${authorsFound} unique authors, ${validUrls} valid post URLs, ${validAuthorUrls} valid author URLs`);
+
+                // Auto-save to cache after every successful fetch
+                autoSaveToCache(posts);
+
+                setTimeout(() => {
+                    document.getElementById('progressSection').style.display = 'none';
+                }, 3000);
+
+            } catch (error) {
+                alert('Error: ' + error.message);
+                console.error('Fetch error:', error);
+            } finally {
+                document.getElementById('fetchBtn').disabled = false;
+            }
+        }
+
+        // ── Debug Cache Functions ────────────────────────────────────────────────
+        function saveCachedResults() {
+            if (!allPosts || allPosts.length === 0) {
+                alert('❌ No results to save. Fetch some posts first.');
+                return;
+            }
+            const cache = {
+                posts: allPosts,
+                savedAt: new Date().toISOString(),
+                count: allPosts.length
+            };
+            try {
+                localStorage.setItem('painmed_cached_results', JSON.stringify(cache));
+                updateCacheStatus();
+                alert(`✅ ${allPosts.length} posts saved to cache!`);
+            } catch (e) {
+                alert('❌ Cache save failed (localStorage full?): ' + e.message);
+            }
+        }
+
+        function loadCachedResults() {
+            const raw = localStorage.getItem('painmed_cached_results');
+            if (!raw) {
+                alert('❌ No cached results found. Fetch and save first.');
+                return;
+            }
+            try {
+                const cache = JSON.parse(raw);
+                allPosts = cache.posts;
+                const age = timeSince(new Date(cache.savedAt));
+                updateMetrics();
+                updateCharts();
+                updateTopAuthors();
+                renderPosts();
+                document.getElementById('analyticsPanel').style.display = 'block';
+                document.getElementById('postsPanel').style.display = 'block';
+                document.getElementById('progressSection').style.display = 'none';
+                updateCacheStatus();
+                console.log(`[DEBUG] Loaded ${allPosts.length} posts from cache (saved ${age} ago)`);
+                // Show a brief non-blocking status instead of alert
+                const statusEl = document.getElementById('cacheStatus');
+                statusEl.innerHTML = `<span style="color:#28a745;">✅ Loaded ${cache.count} posts from cache saved ${age} ago — no API call made!</span>`;
+            } catch (e) {
+                alert('❌ Cache is corrupted: ' + e.message);
+            }
+        }
+
+        function clearCachedResults() {
+            if (!confirm('Clear the cached results?')) return;
+            localStorage.removeItem('painmed_cached_results');
+            updateCacheStatus();
+        }
+
+        function autoSaveToCache(posts) {
+            // Silently auto-save after every successful fetch
+            const cache = {
+                posts: posts,
+                savedAt: new Date().toISOString(),
+                count: posts.length
+            };
+            try {
+                localStorage.setItem('painmed_cached_results', JSON.stringify(cache));
+                console.log(`[DEBUG] Auto-saved ${posts.length} posts to cache`);
+                updateCacheStatus();
+            } catch (e) {
+                console.warn('[DEBUG] Auto-save failed (localStorage full?):', e.message);
+            }
+        }
+
+        function updateCacheStatus() {
+            const el = document.getElementById('cacheStatus');
+            if (!el) return;
+            const raw = localStorage.getItem('painmed_cached_results');
+            if (!raw) {
+                el.textContent = 'No cache saved yet.';
+                return;
+            }
+            try {
+                const cache = JSON.parse(raw);
+                const age = timeSince(new Date(cache.savedAt));
+                el.innerHTML = `📦 Cache: <strong>${cache.count} posts</strong> saved ${age} ago — click <strong>Load</strong> to restore without fetching.`;
+            } catch (e) {
+                el.textContent = 'Cache status unknown.';
+            }
+        }
+
+        function timeSince(date) {
+            const secs = Math.floor((new Date() - date) / 1000);
+            if (secs < 60) return `${secs}s`;
+            const mins = Math.floor(secs / 60);
+            if (mins < 60) return `${mins}m`;
+            const hrs = Math.floor(mins / 60);
+            if (hrs < 24) return `${hrs}h ${mins % 60}m`;
+            return `${Math.floor(hrs / 24)}d`;
+        }
+
+        // Update functions
+        function updateMetrics() {
+            document.getElementById('totalPosts').textContent = allPosts.length.toLocaleString();
+            document.getElementById('uniqueAuthors').textContent = new Set(allPosts.map(p => p.author)).size.toLocaleString();
+
+            const totalEng = allPosts.reduce((sum, p) => sum + (p.likes + p.comments + p.shares), 0);
+            document.getElementById('totalEngagement').textContent = totalEng.toLocaleString();
+
+            const sentiments = allPosts.map(p => p.sentiment);
+            const posCount = sentiments.filter(s => s === 'positive').length;
+            const negCount = sentiments.filter(s => s === 'negative').length;
+            const avgSent = posCount > negCount ? '😊 Positive' : negCount > posCount ? '😟 Negative' : '😐 Neutral';
+            document.getElementById('avgSentiment').textContent = avgSent;
+            document.getElementById('avgSentiment').style.fontSize = '1.5rem';
+        }
+
+        function updateCharts() {
+            updateTopicChart();
+            updateSentimentChart();
+            updateTimelineChart();
+            updatePayerChart();
+        }
+
+        function updateTopicChart() {
+            const topics = {};
+            allPosts.forEach(p => {
+                topics[p.topic] = (topics[p.topic] || 0) + 1;
+            });
+
+            const sorted = Object.entries(topics).sort((a, b) => b[1] - a[1]);
+
+            if (charts.topic) charts.topic.destroy();
+            charts.topic = new Chart(document.getElementById('topicChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: sorted.map(s => s[0]),
+                    datasets: [{
+                        data: sorted.map(s => s[1]),
+                        backgroundColor: ['#0077b5', '#00a0dc', '#005885', '#003d5c', '#7bb3d1', '#4d94b8', '#1a5f7a']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        function updateSentimentChart() {
+            const sentiments = { positive: 0, neutral: 0, negative: 0 };
+            allPosts.forEach(p => sentiments[p.sentiment]++);
+
+            if (charts.sentiment) charts.sentiment.destroy();
+            charts.sentiment = new Chart(document.getElementById('sentimentChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Positive', 'Neutral', 'Negative'],
+                    datasets: [{
+                        label: 'Posts',
+                        data: [sentiments.positive, sentiments.neutral, sentiments.negative],
+                        backgroundColor: ['#28a745', '#6c757d', '#dc3545']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        function updateTimelineChart() {
+            const weeks = {};
+            allPosts.forEach(p => {
+                const date = new Date(p.date);
+                const weekStart = new Date(date.setDate(date.getDate() - date.getDay()));
+                const key = weekStart.toISOString().split('T')[0];
+                weeks[key] = (weeks[key] || 0) + 1;
+            });
+
+            const sorted = Object.entries(weeks).sort((a, b) => a[0].localeCompare(b[0]));
+
+            if (charts.timeline) charts.timeline.destroy();
+            charts.timeline = new Chart(document.getElementById('timelineChart'), {
+                type: 'line',
+                data: {
+                    labels: sorted.map(s => new Date(s[0]).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
+                    datasets: [{
+                        label: 'Posts per Week',
+                        data: sorted.map(s => s[1]),
+                        borderColor: '#0077b5',
+                        backgroundColor: 'rgba(0, 119, 181, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        function updatePayerChart() {
+            const payers = {};
+            allPosts.forEach(p => {
+                if (p.payer) payers[p.payer] = (payers[p.payer] || 0) + 1;
+            });
+
+            const sorted = Object.entries(payers).sort((a, b) => b[1] - a[1]).slice(0, 8);
+
+            if (charts.payer) charts.payer.destroy();
+            charts.payer = new Chart(document.getElementById('payerChart'), {
+                type: 'bar',
+                data: {
+                    labels: sorted.map(s => s[0]),
+                    datasets: [{
+                        label: 'Mentions',
+                        data: sorted.map(s => s[1]),
+                        backgroundColor: '#0077b5'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { beginAtZero: true } }
+                }
+            });
+        }
+
+        function updateTopAuthors() {
+            const authors = {};
+            allPosts.forEach(p => {
+                if (!authors[p.author]) {
+                    authors[p.author] = { count: 0, engagement: 0, url: p.authorUrl };
+                }
+                authors[p.author].count++;
+                authors[p.author].engagement += (p.likes + p.comments + p.shares);
+            });
+
+            const sorted = Object.entries(authors)
+                .sort((a, b) => b[1].count - a[1].count)
+                .slice(0, 10);
+
+            const tbody = document.getElementById('topAuthorsTable');
+            tbody.innerHTML = sorted.map(([author, data]) => {
+                const safeUrl = String(data.url).replace(/"/g, '&quot;');
+                return `
+                <tr>
+                    <td>${escapeHtml(author)}</td>
+                    <td>${data.count}</td>
+                    <td>${data.engagement.toLocaleString()}</td>
+                    <td><a href="${safeUrl}" target="_blank" rel="noreferrer noopener" class="post-link" onclick="handleLinkClick(event, this)">View Profile →</a></td>
+                </tr>
+            `}).join('');
+        }
+
+        function renderPosts() {
+            const feed = document.getElementById('postsFeed');
+
+            if (allPosts.length === 0) {
+                feed.innerHTML = '<p style="grid-column:1/-1;text-align:center;padding:3rem;color:#6c757d;">No posts found</p>';
+                return;
+            }
+
+
+
+            feed.innerHTML = allPosts.map(post => {
+                const sourceIcon = post.source === 'profile' ? '👤' : '🔍';
+                const sourceLabel = post.source === 'profile' ? 'Profile' : 'Keyword';
+                // Use a simpler attribute-safe encoding for URLs to avoid issues with onclick and browser parsing
+                const safeAuthorUrl = String(post.authorUrl).replace(/"/g, '&quot;');
+                const safePostUrl = String(post.url).replace(/"/g, '&quot;');
+
+                return `
+                <div class="post-card">
+                    <div class="post-header">
+                        <span class="platform-badge">LinkedIn</span>
+                        <span class="sentiment-badge ${post.sentiment}">${post.sentiment}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+                        <a href="${safeAuthorUrl}" target="_blank" rel="noreferrer noopener" class="post-author" onclick="handleLinkClick(event, this)">${escapeHtml(post.author)}</a>
+                        <small style="color:#6c757d;font-size:0.7rem;">${sourceIcon} ${sourceLabel}</small>
+                    </div>
+                    <p class="post-title">${escapeHtml(post.title.substring(0, 250))}${post.title.length > 250 ? '...' : ''}</p>
+                    <div class="post-meta">
+                        <span class="tag">${escapeHtml(post.topic)}</span>
+                        <span class="tag">${escapeHtml(post.keyword)}</span>
+                        ${post.payer ? `<span class="tag">🏥 ${escapeHtml(post.payer)}</span>` : ''}
+                        ${post.procedure ? `<span class="tag">💉 ${escapeHtml(post.procedure)}</span>` : ''}
+                    </div>
+                    <div class="post-stats">
+                        <span>👍 ${post.likes}</span>
+                        <span>💬 ${post.comments}</span>
+                        <span>🔄 ${post.shares}</span>
+                        <span>📅 ${new Date(post.date).toLocaleDateString()}</span>
+                    </div>
+                    <a href="${safePostUrl}" target="_blank" rel="noreferrer noopener" class="post-link" onclick="handleLinkClick(event, this)">View Post →</a>
+                </div>
+            `}).join('');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = String(text || '');
+            return div.innerHTML;
+        }
+    </script>
+</body>
+
+</html>

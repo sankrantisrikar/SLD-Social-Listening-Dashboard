@@ -1,0 +1,24 @@
+[build]
+  publish = "."
+  command = "echo 'No build required - static site'"
+
+[[redirects]]
+  from = "/"
+  to = "/linkedin-dashboard-filtered.html"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/linkedin-dashboard-filtered.html"
+  status = 404
+
+[build.environment]
+  NODE_VERSION = "18"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    Access-Control-Allow-Origin = "*"

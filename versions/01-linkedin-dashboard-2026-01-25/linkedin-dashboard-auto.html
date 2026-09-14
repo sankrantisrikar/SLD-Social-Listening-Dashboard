@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedIn Pain Management Intelligence Dashboard - Auto Search</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f7fa;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #0077b5 0%, #005582 100%);
+            color: white;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header .subtitle {
+            font-size: 0.95rem;
+            opacity: 0.9;
+        }
+        
+        .live-indicator {
+            display: inline-block;
+            background: #95a5a6;
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-left: 1rem;
+        }
+        
+        .live-indicator.live {
+            background: #27ae60;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .config-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .config-panel h3 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+        }
+        
+        .help-text {
+            background: #e3f2fd;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            color: #1565c0;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+        }
+        
+        .form-group small {
+            display: block;
+            color: #7f8c8d;
+            font-size: 0.85rem;
+            margin-top: 0.3rem;
+        }
+        
+        .form-group input[type="password"],
+        .form-group input[type="text"],
+        .form-group input[type="number"] {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+        
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            resize: vertical;
+        }
+        
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #0077b5;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #005582;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,119,181,0.3);
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+            margin-left: 1rem;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #0077b5;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            border-left: 4px solid #e74c3c;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            border-radius: 4px;
+            color: #721c24;
+            display: none;
+        }
+        
+        .error-message.active {
+            display: block;
+        }
+        
+        .dashboard-content {
+            display: none;
+        }
+        
+        .dashboard-content.active {
+            display: block;
+        }
+        
+        .ceo-summary {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .ceo-summary h2 {
+            color: #e74c3c;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+        
+        .metric-label {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .table-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+        
+        .table-card h3 {
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        thead {
+            background: #f8f9fa;
+        }
+        
+        th {
+            padding: 0.75rem;
+            text-align: left;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #ecf0f1;
+            font-size: 0.9rem;
+        }
+        
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .badge-primary {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+        
+        .link-button {
+            color: #0077b5;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+        
+        .link-button:hover {
+            color: #005582;
+            text-decoration: underline;
+        }
+        
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+        }
+        
+        .chart-card h3 {
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 LinkedIn Pain Management Intelligence Dashboard</h1>
+        <p class="subtitle">
+            U.S. Interventional Pain Management | Keyword-Based Auto Search
+            <span class="live-indicator" id="liveIndicator">● READY</span>
+        </p>
+    </div>
+
+    <div class="container">
+        <!-- Configuration Panel -->
+        <div class="config-panel" id="configPanel">
+            <h3>⚙️ Setup - Enter Keywords to Auto-Search LinkedIn</h3>
+            
+            <div class="help-text">
+                <strong>How it works:</strong> Enter your Apify credentials and keywords below. 
+                The system will automatically search LinkedIn for matching posts and profiles, 
+                then display the results in the dashboard. Click any profile/post link to open it directly on LinkedIn.
+            </div>
+
+            
+            <div class="form-group">
+                <label>Apify API Token *</label>
+                <input type="password" id="apifyToken" placeholder="apify_api_xxxxxxxxxxxxx" />
+                <small>Get from: <a href="https://console.apify.com/account/integrations" target="_blank">Apify Console</a></small>
+            </div>
+            
+            <div class="form-group">
+                <label>LinkedIn Session Cookie (li_at) *</label>
+                <input type="password" id="linkedinCookie" placeholder="Your LinkedIn li_at cookie" />
+                <small>Login to LinkedIn → Press F12 → Application → Cookies → linkedin.com → Copy "li_at" value</small>
+            </div>
+            
+            <div class="form-group">
+                <label>Search Keywords (one per line) *</label>
+                <textarea id="searchKeywords" rows="8" placeholder="Enter keywords to search...">prior authorization pain management
+interventional pain billing
+spinal cord stimulator denials
+Medicare pain procedures
+RCM pain management
+peer to peer appeals pain
+WISeR automation
+pain management prior auth</textarea>
+                <small>System will search LinkedIn for posts containing these keywords</small>
+            </div>
+            
+            <div class="form-group">
+                <label>Maximum Posts to Fetch</label>
+                <input type="number" id="maxPosts" value="100" min="10" max="500" />
+                <small>More posts = more data but higher cost (~$0.01-0.05 per post)</small>
+            </div>
+            
+            <button class="btn btn-primary" onclick="startAutoSearch()">
+                🚀 Start Auto Search
+            </button>
+            
+            <button class="btn btn-secondary" onclick="useDemoData()">
+                📊 Use Demo Data
+            </button>
+        </div>
+
+
+        <!-- Loading State -->
+        <div class="loading" id="loadingState">
+            <div class="spinner"></div>
+            <p style="font-size: 1.2rem; color: #2c3e50; margin-bottom: 0.5rem;">Searching LinkedIn...</p>
+            <p id="loadingStatus" style="font-size: 0.9rem; color: #7f8c8d;">Initializing...</p>
+        </div>
+
+        <!-- Error Message -->
+        <div class="error-message" id="errorMessage"></div>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard-content" id="dashboardContent">
+            <!-- CEO Summary -->
+            <div class="ceo-summary">
+                <h2>📊 Executive Summary</h2>
+                <div id="ceoSummaryContent">
+                    <p>Loading insights...</p>
+                </div>
+            </div>
+
+            <!-- Key Metrics -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Total Posts Found</div>
+                    <div class="metric-value" id="totalPosts">-</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">Unique Authors</div>
+                    <div class="metric-value" id="uniqueAuthors">-</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">Total Engagement</div>
+                    <div class="metric-value" id="totalEngagement">-</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">Avg Engagement</div>
+                    <div class="metric-value" id="avgEngagement">-</div>
+                </div>
+            </div>
+
+            <!-- Posts Table -->
+            <div class="table-card">
+                <h3>💬 LinkedIn Posts & Discussions</h3>
+                <p style="margin-bottom: 1rem; color: #7f8c8d; font-size: 0.9rem;">
+                    Click any link to open the post or profile directly on LinkedIn
+                </p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Author</th>
+                            <th>Content Preview</th>
+                            <th>Engagement</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="postsTableBody">
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 2rem; color: #7f8c8d;">
+                                No data loaded. Configure search above.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Top Authors Table -->
+            <div class="table-card">
+                <h3>👥 Top Influencers & Authors</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Author</th>
+                            <th>Posts</th>
+                            <th>Total Engagement</th>
+                            <th>Avg Engagement</th>
+                            <th>Profile</th>
+                        </tr>
+                    </thead>
+                    <tbody id="authorsTableBody">
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 2rem; color: #7f8c8d;">
+                                No data loaded. Configure search above.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let rawData = [];
+        let processedData = {
+            totalPosts: 0,
+            uniqueAuthors: 0,
+            totalEngagement: 0,
+            avgEngagement: 0,
+            posts: [],
+            authors: {}
+        };
+
+        // Apify configuration
+        const APIFY_CONFIG = {
+            contentActorId: 'kfiWbq3boy3dWKbiL',
+            apiBaseUrl: 'https://api.apify.com/v2'
+        };
+
+        // Start auto search
+        async function startAutoSearch() {
+            const token = document.getElementById('apifyToken').value.trim();
+            const cookie = document.getElementById('linkedinCookie').value.trim();
+            const keywordsText = document.getElementById('searchKeywords').value.trim();
+            const maxPosts = parseInt(document.getElementById('maxPosts').value);
+
+
+            // Validation
+            if (!token) {
+                showError('Please enter your Apify API token');
+                return;
+            }
+
+            if (!cookie) {
+                showError('Please enter your LinkedIn session cookie (li_at)');
+                return;
+            }
+
+            if (!keywordsText) {
+                showError('Please enter at least one search keyword');
+                return;
+            }
+
+            // Parse keywords
+            const keywords = keywordsText.split('\n')
+                .map(k => k.trim())
+                .filter(k => k.length > 0);
+
+            if (keywords.length === 0) {
+                showError('Please enter valid keywords');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('configPanel').style.display = 'none';
+            document.getElementById('loadingState').classList.add('active');
+            document.getElementById('errorMessage').classList.remove('active');
+            document.getElementById('liveIndicator').textContent = '● SEARCHING...';
+            document.getElementById('liveIndicator').style.background = '#f39c12';
+
+            try {
+                // Build LinkedIn search URLs for each keyword
+                const searchUrls = keywords.map(keyword => {
+                    const encodedKeyword = encodeURIComponent(keyword);
+                    return `https://www.linkedin.com/search/results/content/?keywords=${encodedKeyword}`;
+                });
+
+                updateLoadingStatus(`Searching for ${keywords.length} keywords...`);
+
+                // Start Apify actor
+                const run = await startApifyActor(token, cookie, searchUrls, maxPosts);
+                
+                updateLoadingStatus('Actor started. Waiting for results...');
+                
+                // Wait for completion
+                await waitForRunCompletion(token, run.id);
+                
+                updateLoadingStatus('Fetching results...');
+                
+                // Get results
+                const datasetId = run.defaultDatasetId;
+                const data = await fetchDataset(token, datasetId);
+
+                
+                if (!data || data.length === 0) {
+                    throw new Error('No posts found. Try different keywords or check your LinkedIn cookie.');
+                }
+
+                // Process and display
+                rawData = data;
+                processData(data);
+                renderDashboard();
+
+                // Update UI
+                document.getElementById('loadingState').classList.remove('active');
+                document.getElementById('dashboardContent').classList.add('active');
+                document.getElementById('liveIndicator').textContent = '● LIVE DATA';
+                document.getElementById('liveIndicator').classList.add('live');
+
+                console.log('✓ Successfully loaded', data.length, 'posts from LinkedIn');
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError(`Failed to fetch data: ${error.message}`);
+                document.getElementById('loadingState').classList.remove('active');
+                document.getElementById('configPanel').style.display = 'block';
+                document.getElementById('liveIndicator').textContent = '● ERROR';
+                document.getElementById('liveIndicator').style.background = '#e74c3c';
+            }
+        }
+
+        // Start Apify actor
+        async function startApifyActor(token, cookie, searchUrls, maxPosts) {
+            const url = `${APIFY_CONFIG.apiBaseUrl}/acts/${APIFY_CONFIG.contentActorId}/runs?token=${token}`;
+            
+            const input = {
+                cookie: cookie,
+                startUrls: searchUrls,
+                resultsLimit: maxPosts,
+                proxy: {
+                    useApifyProxy: true,
+                    apifyProxyGroups: ["RESIDENTIAL"]
+                }
+            };
+
+            console.log('Starting actor with', searchUrls.length, 'search URLs');
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(input)
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error?.message || 'Failed to start actor');
+            }
+
+            const result = await response.json();
+            return result.data;
+        }
+
+
+        // Wait for actor run to complete
+        async function waitForRunCompletion(token, runId, maxWaitTime = 300000) {
+            const startTime = Date.now();
+            const pollInterval = 5000;
+
+            while (Date.now() - startTime < maxWaitTime) {
+                const url = `${APIFY_CONFIG.apiBaseUrl}/actor-runs/${runId}?token=${token}`;
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    throw new Error('Failed to check run status');
+                }
+
+                const result = await response.json();
+                const run = result.data;
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                
+                updateLoadingStatus(`Status: ${run.status} (${elapsed}s elapsed)`);
+
+                if (run.status === 'SUCCEEDED') {
+                    return run;
+                } else if (run.status === 'FAILED' || run.status === 'ABORTED') {
+                    throw new Error(`Actor run ${run.status.toLowerCase()}`);
+                }
+
+                await new Promise(resolve => setTimeout(resolve, pollInterval));
+            }
+
+            throw new Error('Timeout waiting for results. Try with fewer keywords.');
+        }
+
+        // Fetch dataset
+        async function fetchDataset(token, datasetId) {
+            const url = `${APIFY_CONFIG.apiBaseUrl}/datasets/${datasetId}/items?token=${token}&format=json`;
+            const response = await fetch(url);
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch results');
+            }
+
+            return await response.json();
+        }
+
+        // Process data
+        function processData(data) {
+            processedData.posts = data.map(item => ({
+                date: item.publishedAt || item.date || new Date().toISOString(),
+                author: item.author || item.authorName || 'Unknown',
+                authorUrl: item.authorUrl || item.profileUrl || '#',
+                content: item.text || item.content || '',
+                postUrl: item.url || item.postUrl || '#',
+                engagement: (item.likes || 0) + (item.comments || 0) + (item.shares || 0),
+                likes: item.likes || 0,
+                comments: item.comments || 0,
+                shares: item.shares || 0
+            }));
+
+
+            // Calculate author stats
+            const authorMap = {};
+            processedData.posts.forEach(post => {
+                if (!authorMap[post.author]) {
+                    authorMap[post.author] = {
+                        name: post.author,
+                        url: post.authorUrl,
+                        posts: 0,
+                        totalEngagement: 0
+                    };
+                }
+                authorMap[post.author].posts++;
+                authorMap[post.author].totalEngagement += post.engagement;
+            });
+
+            processedData.authors = authorMap;
+            processedData.totalPosts = data.length;
+            processedData.uniqueAuthors = Object.keys(authorMap).length;
+            
+            const totalEng = processedData.posts.reduce((sum, p) => sum + p.engagement, 0);
+            processedData.totalEngagement = totalEng;
+            processedData.avgEngagement = processedData.posts.length > 0 
+                ? Math.round(totalEng / processedData.posts.length) 
+                : 0;
+        }
+
+        // Render dashboard
+        function renderDashboard() {
+            // Update metrics
+            document.getElementById('totalPosts').textContent = processedData.totalPosts.toLocaleString();
+            document.getElementById('uniqueAuthors').textContent = processedData.uniqueAuthors.toLocaleString();
+            document.getElementById('totalEngagement').textContent = processedData.totalEngagement.toLocaleString();
+            document.getElementById('avgEngagement').textContent = processedData.avgEngagement.toLocaleString();
+
+            // Render CEO summary
+            renderCEOSummary();
+
+            // Render tables
+            renderPostsTable();
+            renderAuthorsTable();
+        }
+
+        // Render CEO summary
+        function renderCEOSummary() {
+            const topPosts = [...processedData.posts]
+                .sort((a, b) => b.engagement - a.engagement)
+                .slice(0, 5);
+
+            const topAuthors = Object.values(processedData.authors)
+                .sort((a, b) => b.totalEngagement - a.totalEngagement)
+                .slice(0, 3);
+
+            const html = `
+                <p style="margin-bottom: 1rem;">
+                    <strong>Data Loaded:</strong> ${new Date().toLocaleString()} | 
+                    <span class="badge badge-primary">LIVE FROM LINKEDIN</span>
+                </p>
+                <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 6px;">
+                    <h4 style="margin-bottom: 1rem; color: #2c3e50;">Key Insights:</h4>
+                    <ul style="list-style: none; padding-left: 0;">
+                        <li style="padding: 0.4rem 0;">→ Found ${processedData.totalPosts} LinkedIn posts matching your keywords</li>
+                        <li style="padding: 0.4rem 0;">→ ${processedData.uniqueAuthors} unique authors identified</li>
+                        <li style="padding: 0.4rem 0;">→ ${processedData.totalEngagement.toLocaleString()} total engagement (likes + comments + shares)</li>
+                        <li style="padding: 0.4rem 0;">→ Top author: ${topAuthors[0]?.name || 'N/A'} (${topAuthors[0]?.totalEngagement || 0} engagement)</li>
+                        <li style="padding: 0.4rem 0;">→ Most engaging post: ${topPosts[0]?.engagement || 0} interactions</li>
+                    </ul>
+                </div>
+            `;
+
+            document.getElementById('ceoSummaryContent').innerHTML = html;
+        }
+
+        // Render posts table
+        function renderPostsTable() {
+            const tbody = document.getElementById('postsTableBody');
+            const sortedPosts = [...processedData.posts]
+                .sort((a, b) => b.engagement - a.engagement)
+                .slice(0, 50);
+
+            if (sortedPosts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem;">No posts found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = sortedPosts.map(post => {
+                const date = new Date(post.date);
+                const preview = post.content.substring(0, 120) + (post.content.length > 120 ? '...' : '');
+                
+                return `
+                    <tr>
+                        <td>${date.toLocaleDateString()}</td>
+                        <td>
+                            <a href="${escapeHtml(post.authorUrl)}" target="_blank" class="link-button">
+                                ${escapeHtml(post.author)}
+                            </a>
+                        </td>
+                        <td>${escapeHtml(preview)}</td>
+                        <td>
+                            <strong>${post.engagement.toLocaleString()}</strong>
+                            <br>
+                            <small style="color: #7f8c8d;">
+                                👍 ${post.likes} 💬 ${post.comments} 🔄 ${post.shares}
+                            </small>
+                        </td>
+                        <td>
+                            <a href="${escapeHtml(post.postUrl)}" target="_blank" class="link-button">
+                                View Post →
+                            </a>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+
+        // Render authors table
+        function renderAuthorsTable() {
+            const tbody = document.getElementById('authorsTableBody');
+            const topAuthors = Object.values(processedData.authors)
+                .sort((a, b) => b.totalEngagement - a.totalEngagement)
+                .slice(0, 30);
+
+            if (topAuthors.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem;">No authors found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = topAuthors.map(author => {
+                const avgEngagement = Math.round(author.totalEngagement / author.posts);
+                
+                return `
+                    <tr>
+                        <td><strong>${escapeHtml(author.name)}</strong></td>
+                        <td>${author.posts}</td>
+                        <td>${author.totalEngagement.toLocaleString()}</td>
+                        <td>${avgEngagement.toLocaleString()}</td>
+                        <td>
+                            <a href="${escapeHtml(author.url)}" target="_blank" class="link-button">
+                                View Profile →
+                            </a>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Use demo data
+        function useDemoData() {
+            document.getElementById('configPanel').style.display = 'none';
+            document.getElementById('dashboardContent').classList.add('active');
+            document.getElementById('liveIndicator').textContent = '● DEMO MODE';
+            document.getElementById('liveIndicator').style.background = '#95a5a6';
+
+            const demoData = generateDemoData();
+            rawData = demoData;
+            processData(demoData);
+            renderDashboard();
+        }
+
+        // Generate demo data
+        function generateDemoData() {
+            const authors = [
+                { name: 'Dr. Sarah Chen', url: 'https://linkedin.com/in/demo-sarah-chen' },
+                { name: 'Michael Rodriguez', url: 'https://linkedin.com/in/demo-michael-rodriguez' },
+                { name: 'Dr. James Patterson', url: 'https://linkedin.com/in/demo-james-patterson' },
+                { name: 'Lisa Thompson', url: 'https://linkedin.com/in/demo-lisa-thompson' },
+                { name: 'Dr. Amir Patel', url: 'https://linkedin.com/in/demo-amir-patel' }
+            ];
+
+
+            const topics = [
+                'UHC just changed prior auth requirements for SCS procedures - practices need to know this NOW',
+                'Our practice reduced denials by 34% using peer-to-peer strategy. Here\'s what worked for us...',
+                'Medicare Advantage LCD changes are creating chaos for SI fusion procedures. Anyone else seeing this?',
+                'Billing staff burnout is real. We lost 2 coders this month due to prior auth workload',
+                'WISeR automation saved our practice 15 hours per week. CMS is finally getting it right',
+                'Aetna denying more interventional procedures lately. What\'s your experience?',
+                'Anyone else seeing increased prior auth delays with commercial payers?',
+                'Best practices for appealing SCS denials? Looking for peer insights',
+                'New CMS guidelines for pain management procedures - what you need to know',
+                'Peer-to-peer calls are taking 2+ hours now. How are you managing this?'
+            ];
+
+            const data = [];
+            for (let i = 0; i < 60; i++) {
+                const author = authors[Math.floor(Math.random() * authors.length)];
+                const topic = topics[Math.floor(Math.random() * topics.length)];
+                const daysAgo = Math.floor(Math.random() * 30);
+                const date = new Date();
+                date.setDate(date.getDate() - daysAgo);
+
+                data.push({
+                    author: author.name,
+                    authorUrl: author.url,
+                    text: topic,
+                    publishedAt: date.toISOString(),
+                    likes: Math.floor(Math.random() * 500) + 50,
+                    comments: Math.floor(Math.random() * 100) + 10,
+                    shares: Math.floor(Math.random() * 50),
+                    url: `https://linkedin.com/posts/demo-post-${i}`
+                });
+            }
+
+            return data;
+        }
+
+        // Update loading status
+        function updateLoadingStatus(message) {
+            document.getElementById('loadingStatus').textContent = message;
+        }
+
+        // Show error
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = '❌ Error: ' + message;
+            errorDiv.classList.add('active');
+        }
+
+        // Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initialize
+        console.log('LinkedIn Pain Management Dashboard - Auto Search Version');
+        console.log('Ready to search LinkedIn with keywords');
+    </script>
+</body>
+</html>

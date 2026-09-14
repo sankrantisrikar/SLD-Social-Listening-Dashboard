@@ -1,0 +1,17 @@
+# Netlify local state
+.netlify/
+# Secrets
+.env
+.env.*
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+# Node / Python
+node_modules/
+__pycache__/
+*.pyc
+# Data dumps
+output.json
+share_chunk.json

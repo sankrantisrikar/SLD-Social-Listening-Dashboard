@@ -1,0 +1,2697 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Listening Dashboard v4.0</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-soft: #f3f7fb;
+            --panel: #ffffff;
+            --ink: #243445;
+            --brand: #2E5C9A;
+            --accent: #4DAFA7;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: radial-gradient(circle at top right, #e4eef8 0%, var(--bg-soft) 35%, #eef4f8 100%);
+            color: var(--ink);
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2E5C9A 0%, #1e4278 100%);
+            color: white;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-bottom: 4px solid #4DAFA7;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header .subtitle {
+            color: #E0E7EF;
+            font-size: 0.95rem;
+        }
+
+        .cred-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 0.5rem 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            backdrop-filter: blur(4px);
+            transition: background 0.2s;
+        }
+
+        .cred-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .header-actions {
+            position: absolute;
+            top: 1.5rem;
+            right: 2rem;
+            display: flex;
+            gap: 0.6rem;
+            align-items: center;
+        }
+
+        .policy-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            backdrop-filter: blur(4px);
+        }
+
+        .policy-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .analytics-tabs {
+            display: flex;
+            gap: 1.25rem;
+            border-bottom: 2px solid #d9dee3;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.15rem;
+        }
+
+        .analytics-tab {
+            border: none;
+            background: transparent;
+            color: #5d6974;
+            font-size: 1.05rem;
+            font-weight: 600;
+            padding: 0.5rem 0.15rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+        }
+
+        .analytics-tab.active {
+            color: #1f7ea2;
+            border-bottom-color: #1f7ea2;
+        }
+
+        .analytics-pane {
+            display: none;
+        }
+
+        .analytics-pane.active {
+            display: block;
+        }
+
+        .section-card {
+            background: #fff;
+            border: 1px solid #d4dbe1;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-card h3 {
+            color: #1f4c5e;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-subtitle {
+            color: #66717b;
+            font-size: 1.2rem;
+            margin-left: 0.4rem;
+            font-weight: 500;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+        }
+
+        .range-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .range-grid .filter-group {
+            margin-bottom: 0;
+        }
+
+        .range-grid input {
+            width: 100%;
+        }
+
+        .monitor-launch-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+        }
+
+        .monitor-launch-card {
+            border: 1px solid #cdd9e5;
+            border-radius: 12px;
+            background: #fff;
+            padding: 0.8rem;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .monitor-launch-card:hover {
+            border-color: #1f7ea2;
+            box-shadow: 0 4px 12px rgba(31, 126, 162, 0.12);
+        }
+
+        .monitor-launch-title {
+            font-weight: 700;
+            color: #204d60;
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .monitor-launch-sub {
+            color: #6a7885;
+            font-size: 0.8rem;
+        }
+
+        .monitor-count {
+            display: inline-block;
+            margin-top: 0.35rem;
+            background: #eef7fb;
+            color: #1f7ea2;
+            border-radius: 999px;
+            padding: 0.12rem 0.5rem;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        .btn-secondary {
+            background: #2f5f96;
+            color: white;
+        }
+
+        .monitor-layout {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 1.25rem;
+        }
+
+        .monitor-platforms {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .monitor-platform-btn {
+            border: 1px solid #cfd8e1;
+            background: #fff;
+            border-radius: 10px;
+            padding: 0.7rem 0.8rem;
+            text-align: left;
+            cursor: pointer;
+            font-weight: 600;
+            color: #415261;
+        }
+
+        .monitor-platform-btn.active {
+            border-color: #1f7ea2;
+            color: #1f7ea2;
+            background: #eef7fb;
+        }
+
+        .monitor-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .monitor-editor {
+            margin-top: 1rem;
+        }
+
+        .monitor-editor textarea {
+            width: 100%;
+            min-height: 90px;
+            border: 1px solid #ccd6df;
+            border-radius: 8px;
+            padding: 0.6rem;
+            font-family: inherit;
+            font-size: 0.9rem;
+            resize: vertical;
+        }
+
+        .mini-card {
+            border: 1px solid #d5dde5;
+            border-radius: 10px;
+            padding: 1rem;
+            background: #fff;
+        }
+
+        .mini-card h4 {
+            color: #214e61;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .list-clean {
+            margin: 0;
+            padding-left: 1rem;
+            color: #42505e;
+        }
+
+        .list-clean li {
+            margin-bottom: 0.4rem;
+        }
+
+        .monitor-posts {
+            margin-top: 1rem;
+            overflow-x: auto;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #2E5C9A;
+        }
+
+        .panel h3 {
+            color: #2E5C9A;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 1rem;
+        }
+
+        .filter-group label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #2E5C9A;
+            font-size: 0.9rem;
+        }
+
+        .filter-group textarea,
+        .filter-group input {
+            padding: 0.6rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .filter-group textarea:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: #4DAFA7;
+        }
+
+        .source-toggles {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .source-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: 2px solid #ddd;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #aaa;
+            transition: all 0.2s;
+            user-select: none;
+            background: white;
+        }
+
+        .source-toggle input {
+            display: none;
+        }
+
+        .source-toggle.active-yt {
+            border-color: #FF0000;
+            color: #FF0000;
+            background: #ff000010;
+        }
+
+        .source-toggle.active-li {
+            border-color: #0077b5;
+            color: #0077b5;
+            background: #0077b510;
+        }
+
+        .source-toggle.active-rd {
+            border-color: #FF4500;
+            color: #FF4500;
+            background: #ff450010;
+        }
+
+        .source-toggle.active-tw {
+            border-color: #1DA1F2;
+            color: #1DA1F2;
+            background: #1da1f210;
+        }
+
+        .source-toggle.active-news {
+            border-color: #6c757d;
+            color: #6c757d;
+            background: #6c757d10;
+        }
+
+        .btn {
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4DAFA7, #3d8f88);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(77, 175, 167, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .chips-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            min-height: 32px;
+            margin-bottom: 0.5rem;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: #FF450018;
+            border: 1px solid #FF4500;
+            color: #FF4500;
+            padding: 0.25rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .chip-x {
+            cursor: pointer;
+            font-size: 1rem;
+            line-height: 1;
+            opacity: 0.7;
+        }
+
+        .chip-x:hover {
+            opacity: 1;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: #e8f5f3;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4DAFA7, #2E5C9A);
+            width: 0%;
+            transition: width 0.4s;
+        }
+
+        .status-text {
+            font-size: 0.9rem;
+            color: #4DAFA7;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid #ddd;
+            border-top-color: #4DAFA7;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #4DAFA7;
+        }
+
+        .metric-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #2E5C9A;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2rem;
+            border-top: 3px solid #4DAFA7;
+        }
+
+        .chart-card h3 {
+            margin-bottom: 1rem;
+            color: #2E5C9A;
+        }
+
+        .posts-feed {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .post-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.25rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #4DAFA7;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .post-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 0.75rem;
+        }
+
+        .platform-badge {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .platform-badge.youtube {
+            background: #fff0f0;
+            color: #FF0000;
+        }
+
+        .platform-badge.linkedin {
+            background: #e8f4fb;
+            color: #0077b5;
+        }
+
+        .platform-badge.reddit {
+            background: #fff1ec;
+            color: #FF4500;
+        }
+
+        .platform-badge.twitter {
+            background: #e8f5fe;
+            color: #1DA1F2;
+        }
+
+        .platform-badge.news {
+            background: #f8f9fa;
+            color: #6c757d;
+        }
+
+        .sentiment-badge {
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .sentiment-badge.positive {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .sentiment-badge.neutral {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        .sentiment-badge.negative {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .post-author {
+            font-weight: 600;
+            color: #2E5C9A;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .post-author:hover {
+            text-decoration: underline;
+        }
+
+        .post-title {
+            color: #2c3e50;
+            line-height: 1.5;
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
+        }
+
+        .post-meta {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.75rem;
+        }
+
+        .tag {
+            padding: 0.2rem 0.5rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #E0F2F1;
+            color: #2E5C9A;
+        }
+
+        .post-stats {
+            display: flex;
+            gap: 0.75rem;
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-bottom: 0.75rem;
+        }
+
+        .post-link {
+            display: inline-block;
+            color: #4DAFA7;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .post-link:hover {
+            text-decoration: underline;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-tab {
+            padding: 0.5rem 1rem;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #6c757d;
+            transition: all 0.2s;
+        }
+
+        .filter-tab.active {
+            border-color: #4DAFA7;
+            background: #E0F2F1;
+            color: #2E5C9A;
+        }
+
+        .cred-drawer {
+            display: none;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #ddd;
+        }
+
+        .cred-drawer.open {
+            display: block;
+        }
+
+        .cred-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .warning-banner {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: #856404;
+            font-size: 0.9rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            padding: 0.75rem;
+            text-align: left;
+            font-size: 0.85rem;
+            color: #2E5C9A;
+            font-weight: 600;
+            text-transform: uppercase;
+            background: #f8f9fa;
+        }
+
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #ecf0f1;
+            font-size: 0.9rem;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        @media (max-width: 980px) {
+            .header {
+                padding: 1.25rem;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+                padding-right: 8rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .monitor-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .monitor-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .posts-feed {
+                grid-template-columns: 1fr;
+            }
+
+            .cred-btn {
+                padding: 0.45rem 0.75rem;
+                font-size: 0.8rem;
+            }
+
+            .policy-btn {
+                padding: 0.45rem 0.7rem;
+                font-size: 0.78rem;
+            }
+
+            .header-actions {
+                top: 1rem;
+                right: 1rem;
+                gap: 0.45rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>Social Listening Dashboard v4.0</h1>
+        <p class="subtitle">Real-time Multi-Source Analytics | YouTube · LinkedIn · Reddit · X/Twitter · News | Pain
+            Management Intelligence</p>
+        <div class="header-actions">
+            <a class="policy-btn" href="/payer_policy_watch.html" target="_blank">📄 Policy Watch</a>
+            <button class="cred-btn" onclick="toggleCreds()">⚙️ Credentials</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- SECTION 1: SEARCH & CONFIG -->
+        <div class="panel" id="searchPanel">
+            <h3>🔍 Search & Configuration</h3>
+
+            <!-- Credentials Drawer -->
+            <div class="cred-drawer" id="credDrawer">
+                <div class="warning-banner"
+                    style="background:#e8f4fb;border-color:#0077b5;color:#004a7c;margin-bottom:1rem;">
+                    <strong>ℹ️ About Apify Token:</strong><br>
+                    • Required for LinkedIn and X/Twitter<br>
+                    • Free tier available at <a href="https://console.apify.com/sign-up" target="_blank"
+                        style="color:#0077b5;font-weight:600;">console.apify.com</a><br>
+                    • LinkedIn works on free tier, Twitter requires paid plan<br>
+                    • Check your credits at <a href="https://console.apify.com/billing" target="_blank"
+                        style="color:#0077b5;font-weight:600;">Billing Dashboard</a>
+                </div>
+                <div class="cred-grid">
+                    <div class="filter-group">
+                        <label>Apify Token (LinkedIn + Twitter)</label>
+                        <input type="password" id="apifyToken" placeholder="apify_api_...">
+                        <small style="color:#6c757d;margin-top:0.25rem;">Get at <a
+                                href="https://console.apify.com/account/integrations" target="_blank"
+                                style="color:#4DAFA7;">console.apify.com</a></small>
+                        <button onclick="testApifyToken()"
+                            style="margin-top:0.5rem;padding:0.4rem 0.8rem;background:#6c757d;color:white;border:none;border-radius:4px;cursor:pointer;font-size:0.85rem;">🔍
+                            Test Token</button>
+                    </div>
+                    <div class="filter-group">
+                        <label>LinkedIn Cookie (li_at)</label>
+                        <input type="password" id="liCookie" placeholder="Your li_at value">
+                        <small style="color:#6c757d;margin-top:0.25rem;">F12 → Application → Cookies → linkedin.com →
+                            li_at</small>
+                    </div>
+                    <div class="filter-group">
+                        <label>YouTube API Key</label>
+                        <input type="password" id="ytKey" placeholder="AIza...">
+                        <small style="color:#6c757d;margin-top:0.25rem;">Get at <a
+                                href="https://console.cloud.google.com" target="_blank"
+                                style="color:#4DAFA7;">console.cloud.google.com</a></small>
+                    </div>
+                    <div class="filter-group">
+                        <label>Reddit Client ID (optional)</label>
+                        <input type="password" id="redditClientId" placeholder="Client ID">
+                    </div>
+                    <div class="filter-group">
+                        <label>Reddit Secret (optional)</label>
+                        <input type="password" id="redditSecret" placeholder="Secret">
+                    </div>
+                    <div class="filter-group">
+                        <label>NewsAPI Key</label>
+                        <input type="password" id="newsApiKey" placeholder="NewsAPI key">
+                        <small style="color:#6c757d;margin-top:0.25rem;">Get at <a href="https://newsapi.org"
+                                target="_blank" style="color:#4DAFA7;">newsapi.org</a></small>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="saveCreds()" style="margin-top:1rem;">💾 Save
+                    Credentials</button>
+            </div>
+
+            <!-- Keywords -->
+            <div class="filter-group">
+                <label>Search Keywords (one per line - exact match)</label>
+                <textarea id="keywords" rows="6" placeholder="prior authorization pain management
+interventional pain billing
+spinal cord stimulator denials
+Medicare pain procedures
+peer to peer appeals">prior authorization pain management
+interventional pain billing
+spinal cord stimulator denials
+Medicare pain procedures
+peer to peer appeals</textarea>
+            </div>
+
+            <!-- Localhost Warning -->
+            <div id="localhostWarning"
+                style="display:none;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:1rem;margin-bottom:1rem;color:#856404;font-size:0.9rem;">
+                <strong>⚠️ Not Running on Localhost</strong><br>
+                Reddit and News require a local server. Run:<br>
+                <code
+                    style="background:rgba(0,0,0,0.1);padding:0.2rem 0.5rem;border-radius:4px;font-family:monospace;">python3 -m http.server 8080</code><br>
+                Then open: <code
+                    style="background:rgba(0,0,0,0.1);padding:0.2rem 0.5rem;border-radius:4px;font-family:monospace;">http://localhost:8080/pilot.html</code><br>
+                <small>Or uncheck Reddit and News to use YouTube only</small>
+            </div>
+
+            <!-- Source Toggles -->
+            <div class="filter-group">
+                <label>Select Data Sources</label>
+                <div class="source-toggles">
+                    <label class="source-toggle active-yt" id="tog-yt">
+                        <input type="checkbox" id="src-yt" checked>
+                        ▶️ YouTube
+                    </label>
+                    <label class="source-toggle active-li" id="tog-li">
+                        <input type="checkbox" id="src-li" checked>
+                        💼 LinkedIn
+                    </label>
+                    <label class="source-toggle active-rd" id="tog-rd">
+                        <input type="checkbox" id="src-rd" checked>
+                        🤖 Reddit
+                    </label>
+                    <label class="source-toggle" id="tog-tw">
+                        <input type="checkbox" id="src-tw">
+                        🐦 X/Twitter <small style="font-weight:400;opacity:0.7;">(paid)</small>
+                    </label>
+                    <label class="source-toggle active-news" id="tog-news">
+                        <input type="checkbox" id="src-news" checked>
+                        📰 News <small style="font-weight:400;opacity:0.7;">(via proxy)</small>
+                    </label>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label>Post Range Controls (max posts per source)</label>
+                <div class="range-grid">
+                    <div class="filter-group">
+                        <label>YouTube</label>
+                        <input type="number" id="limit-yt" min="5" max="250" value="80">
+                    </div>
+                    <div class="filter-group">
+                        <label>LinkedIn</label>
+                        <input type="number" id="limit-li" min="5" max="250" value="80">
+                    </div>
+                    <div class="filter-group">
+                        <label>Reddit</label>
+                        <input type="number" id="limit-rd" min="5" max="250" value="60">
+                    </div>
+                    <div class="filter-group">
+                        <label>X/Twitter</label>
+                        <input type="number" id="limit-tw" min="5" max="250" value="60">
+                    </div>
+                    <div class="filter-group">
+                        <label>News</label>
+                        <input type="number" id="limit-news" min="5" max="250" value="60">
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label>Platform Monitors</label>
+                <div class="monitor-launch-grid">
+                    <button class="monitor-launch-card" onclick="openPlatformFeed('youtube')" type="button">
+                        <div class="monitor-launch-title">▶️ YouTube</div>
+                        <div class="monitor-launch-sub">See posts & profiles</div>
+                        <div class="monitor-count" id="count-youtube">0 posts</div>
+                    </button>
+                    <button class="monitor-launch-card" onclick="openPlatformFeed('linkedin')" type="button">
+                        <div class="monitor-launch-title">💼 LinkedIn</div>
+                        <div class="monitor-launch-sub">See posts & profiles</div>
+                        <div class="monitor-count" id="count-linkedin">0 posts</div>
+                    </button>
+                    <button class="monitor-launch-card" onclick="openPlatformFeed('reddit')" type="button">
+                        <div class="monitor-launch-title">🤖 Reddit</div>
+                        <div class="monitor-launch-sub">See posts & profiles</div>
+                        <div class="monitor-count" id="count-reddit">0 posts</div>
+                    </button>
+                    <button class="monitor-launch-card" onclick="openPlatformFeed('twitter')" type="button">
+                        <div class="monitor-launch-title">🐦 X/Twitter</div>
+                        <div class="monitor-launch-sub">See posts & profiles</div>
+                        <div class="monitor-count" id="count-twitter">0 posts</div>
+                    </button>
+                    <button class="monitor-launch-card" onclick="openPlatformFeed('news')" type="button">
+                        <div class="monitor-launch-title">📰 News</div>
+                        <div class="monitor-launch-sub">See posts & profiles</div>
+                        <div class="monitor-count" id="count-news">0 posts</div>
+                    </button>
+                </div>
+            </div>
+
+
+            <!-- Fetch Button -->
+            <button class="btn btn-primary" id="fetchBtn" onclick="fetchAndAnalyze()"
+                style="width:100%;margin-top:1rem;">
+                🚀 Fetch & Analyze
+            </button>
+
+            <!-- Progress -->
+            <div id="progressSection" style="display:none;margin-top:1rem;">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="status-text" id="statusText">
+                    <div class="spinner"></div>
+                    <span>Starting...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: ANALYTICS PANEL -->
+        <div id="analyticsPanel" style="display:none;">
+            <div class="analytics-tabs">
+                <button class="analytics-tab active" data-tab="topics">Topics Deep Dive</button>
+                <button class="analytics-tab" data-tab="payer">Payer Analysis</button>
+                <button class="analytics-tab" data-tab="procedure">Procedure Trends</button>
+                <button class="analytics-tab" data-tab="methodology">Methodology & Sources</button>
+            </div>
+
+            <div class="analytics-pane active" id="pane-topics">
+                <div class="section-card">
+                    <h3>Weekly Mention Volume by Topic <span class="section-subtitle">Top conversations trending in pain management community</span></h3>
+                    <canvas id="topicChart"></canvas>
+                </div>
+            </div>
+
+            <div class="analytics-pane" id="pane-payer">
+                <div class="summary-grid">
+                    <div class="section-card">
+                        <h3>Total Payer Mentions (12-Week Period) <span class="section-subtitle">Discussion volume by insurance plan</span></h3>
+                        <canvas id="payerChart"></canvas>
+                    </div>
+                    <div class="section-card">
+                        <h3>Payer Mix Snapshot <span class="section-subtitle">Contribution by source platform</span></h3>
+                        <canvas id="platformChart"></canvas>
+                    </div>
+                </div>
+                <div class="section-card">
+                    <h3>Payer Mention Trends</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Payer</th>
+                                <th>Avg Weekly Mentions</th>
+                                <th>Peak Week</th>
+                                <th>Trend Direction</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topAuthorsTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="analytics-pane" id="pane-procedure">
+                <div class="summary-grid">
+                    <div class="section-card">
+                        <h3>Procedure & Device Mentions (12-Week Period) <span class="section-subtitle">Comparative discussion volume</span></h3>
+                        <canvas id="procedureChart"></canvas>
+                    </div>
+                    <div class="section-card">
+                        <h3>Sentiment by Platform <span class="section-subtitle">Positive vs neutral vs negative</span></h3>
+                        <canvas id="sentimentChart"></canvas>
+                    </div>
+                </div>
+                <div class="section-card">
+                    <h3>Procedure & Device Conversation Trends</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Procedure / Device</th>
+                                <th>Total Mentions</th>
+                                <th>Avg per Week</th>
+                                <th>Momentum</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trendingPosts"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="analytics-pane" id="pane-methodology">
+                <div class="section-card">
+                    <h3>Methodology & Sources</h3>
+                    <p style="color:#4f5d68;margin-bottom:0.75rem;">This dashboard aggregates public posts from selected sources, then classifies each post into topic, payer, procedure, and sentiment buckets.</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Source</th>
+                                <th>Collection Method</th>
+                                <th>Fields Used</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>YouTube</td><td>Search API + video statistics</td><td>Title, description, likes, comments, views, date</td></tr>
+                            <tr><td>LinkedIn</td><td>Apify actor run</td><td>Post text, author, reactions, comments, shares, date</td></tr>
+                            <tr><td>Reddit</td><td>Proxy endpoint via subreddit search</td><td>Title, body, score, comments, date</td></tr>
+                            <tr><td>X/Twitter</td><td>Apify actor run</td><td>Tweet text, username, likes, replies, reposts, date</td></tr>
+                            <tr><td>News</td><td>NewsAPI via proxy</td><td>Headline, description, source, published date</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="monitorPanel" style="display:none;">
+            <div class="section-card">
+                <h3>Platform Monitor Deep Dive <span class="section-subtitle">Saved profiles, monitor links, and matched posts per platform</span></h3>
+                <div class="monitor-layout">
+                    <div class="monitor-platforms" id="monitorPlatforms"></div>
+                    <div>
+                        <div class="monitor-cards">
+                            <div class="mini-card">
+                                <h4>Saved Monitored Profiles</h4>
+                                <ul class="list-clean" id="monitorProfilesList"></ul>
+                            </div>
+                            <div class="mini-card">
+                                <h4>Fetched Profiles (from current run)</h4>
+                                <ul class="list-clean" id="monitorFetchedProfilesList"></ul>
+                            </div>
+                            <div class="mini-card">
+                                <h4>Quick Monitor Links (keyword + profile)</h4>
+                                <ul class="list-clean" id="monitorLinksList"></ul>
+                            </div>
+                        </div>
+                        <div class="monitor-editor">
+                            <h4 style="color:#214e61;margin-bottom:0.4rem;">Edit Monitored Profiles (one per line)</h4>
+                            <textarea id="monitorEditor" placeholder="Add profile URLs, handles, channels, domains..."></textarea>
+                            <div style="margin-top:0.5rem;">
+                                <button class="btn btn-secondary" onclick="saveCurrentMonitorPlatform()">Save This Platform</button>
+                            </div>
+                        </div>
+                        <div class="monitor-posts">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Post</th>
+                                        <th>Author</th>
+                                        <th>Keyword</th>
+                                        <th>Match</th>
+                                        <th>Link</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="monitorPostsTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: POSTS FEED -->
+        <div id="postsPanel" style="display:none;">
+            <div class="panel">
+                <h3>💬 Posts Feed</h3>
+                <div class="filter-tabs" id="filterTabs"></div>
+                <div class="posts-feed" id="postsFeed"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ══════════════════════════════════════════════════════
+        // STATE
+        // ══════════════════════════════════════════════════════
+        let allPosts = [];
+        let currentFilter = 'all';
+        let charts = {};
+        let lastRunKeywords = [];
+        let monitoredProfiles = {
+            youtube: [],
+            linkedin: [],
+            reddit: [],
+            twitter: [],
+            news: []
+        };
+        let currentMonitorPlatform = 'youtube';
+
+        const MONITOR_CONFIG = {
+            youtube: { label: '▶️ YouTube', searchBase: 'https://www.youtube.com/results?search_query=' },
+            linkedin: { label: '💼 LinkedIn', searchBase: 'https://www.linkedin.com/search/results/content/?keywords=' },
+            reddit: { label: '🤖 Reddit', searchBase: 'https://www.reddit.com/search/?q=' },
+            twitter: { label: '🐦 X/Twitter', searchBase: 'https://x.com/search?q=' },
+            news: { label: '📰 News', searchBase: 'https://news.google.com/search?q=' }
+        };
+
+        // Default subreddits
+        const DEFAULT_SUBS = ['chronicpain', 'healthcareadmin', 'medicine', 'insurance', 'HealthInsurance'];
+        let selectedSubs = [...DEFAULT_SUBS]; // Initialize with default subreddits
+
+        // Subreddit suggestion map
+        const SUBREDDIT_MAP = [
+            { keywords: ['pain', 'chronic', 'neuropathy', 'fibromyalgia', 'back'], subs: ['chronicpain', 'backpain', 'Fibromyalgia'] },
+            { keywords: ['prior auth', 'authorization', 'preauth', 'pa denial'], subs: ['healthcareadmin', 'insurance'] },
+            { keywords: ['billing', 'rcm', 'revenue', 'claims', 'cpt', 'icd'], subs: ['medicalbilling', 'AskMedicalCoding'] },
+            { keywords: ['insurance', 'denial', 'appeal', 'peer to peer'], subs: ['insurance', 'HealthInsurance'] },
+            { keywords: ['medicare', 'medicaid', 'cms', 'wiser'], subs: ['medicare', 'healthcareadmin'] },
+            { keywords: ['scs', 'spinal cord stimulator', 'neuromodulation'], subs: ['spinalcordstimulation', 'chronicpain'] },
+            { keywords: ['kyphoplasty', 'vertebroplasty', 'fusion', 'si joint'], subs: ['backpain', 'SpineRecovery'] },
+            { keywords: ['doctor', 'physician', 'practice', 'clinic'], subs: ['medicine', 'Residency'] },
+            { keywords: ['nurse', 'np', 'pa', 'provider'], subs: ['nursing', 'physicianassistant'] },
+            { keywords: ['surgery', 'procedure', 'anesthesia', 'epidural'], subs: ['surgery', 'chronicpain'] },
+            { keywords: ['medical', 'health', 'healthcare', 'patient'], subs: ['medicine', 'AskDocs', 'medical'] },
+            { keywords: ['hospital', 'emergency', 'er', 'icu'], subs: ['medicine', 'nursing', 'emergencymedicine'] },
+            { keywords: ['pharmacy', 'medication', 'drug', 'prescription'], subs: ['pharmacy', 'AskDocs'] },
+            { keywords: ['mental', 'depression', 'anxiety', 'therapy'], subs: ['mentalhealth', 'depression', 'anxiety'] },
+            { keywords: ['cancer', 'oncology', 'chemotherapy', 'radiation'], subs: ['cancer', 'medicine'] },
+            { keywords: ['diabetes', 'blood sugar', 'insulin'], subs: ['diabetes', 'medicine'] },
+            { keywords: ['heart', 'cardiac', 'cardiology'], subs: ['medicine', 'AskDocs'] },
+            { keywords: ['radiology', 'imaging', 'mri', 'ct scan', 'xray'], subs: ['Radiology', 'medicine'] }
+        ];
+
+        // ══════════════════════════════════════════════════════
+        // INIT
+        // ══════════════════════════════════════════════════════
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCreds();
+            loadMonitors();
+            loadLastPosts();
+            setupSourceToggles();
+            setupAnalyticsTabs();
+            updatePlatformLaunchCounts();
+            checkLocalhost();
+        });
+
+        function setupAnalyticsTabs() {
+            const tabs = document.querySelectorAll('.analytics-tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const key = tab.dataset.tab;
+                    document.querySelectorAll('.analytics-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    document.querySelectorAll('.analytics-pane').forEach(p => p.classList.remove('active'));
+                    const pane = document.getElementById(`pane-${key}`);
+                    if (pane) pane.classList.add('active');
+                });
+            });
+        }
+
+        function checkLocalhost() {
+            const isLocalServer = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+            const isFileProtocol = location.protocol === 'file:';
+            const isNetlifyHost = location.hostname.endsWith('.netlify.app') || location.hostname.endsWith('.netlify.live');
+
+            // file:// cannot call proxy routes
+            if (isFileProtocol) {
+                document.getElementById('localhostWarning').style.display = 'block';
+                document.getElementById('localhostWarning').innerHTML = `
+                    <strong>ℹ️ Running as Local File</strong><br>
+                    News and Reddit are <strong>disabled</strong> because API proxy routes are unavailable on <code>file://</code>.<br>
+                    Use Flask (<code>http://localhost:5000</code>) or a Netlify deployment.
+                `;
+
+                // Auto-uncheck News and Reddit
+                ['news', 'rd'].forEach(src => {
+                    const checkbox = document.getElementById('src-' + src);
+                    const toggle = document.getElementById('tog-' + src);
+                    if (checkbox && checkbox.checked) {
+                        checkbox.checked = false;
+                        toggle.classList.remove('active-' + src);
+                    }
+                });
+            } else if (!isLocalServer && !isNetlifyHost) {
+                document.getElementById('localhostWarning').style.display = 'block';
+                document.getElementById('localhostWarning').innerHTML = `
+                    <strong>⚠️ Custom Host Detected</strong><br>
+                    Ensure <code>/api/news</code> and <code>/api/reddit</code> are routed to serverless functions.
+                `;
+            } else {
+                document.getElementById('localhostWarning').style.display = 'none';
+            }
+        }
+
+        function setupSourceToggles() {
+            ['yt', 'li', 'rd', 'tw', 'news'].forEach(src => {
+                const toggle = document.getElementById('tog-' + src);
+                const checkbox = document.getElementById('src-' + src);
+                toggle.addEventListener('click', () => {
+                    checkbox.checked = !checkbox.checked;
+                    toggle.classList.toggle('active-' + src, checkbox.checked);
+                });
+            });
+        }
+
+        // ══════════════════════════════════════════════════════
+        // CREDENTIALS
+        // ══════════════════════════════════════════════════════
+        function toggleCreds() {
+            document.getElementById('credDrawer').classList.toggle('open');
+        }
+
+        function saveCreds() {
+            const creds = {
+                apifyToken: document.getElementById('apifyToken').value.trim(),
+                liCookie: document.getElementById('liCookie').value.trim(),
+                ytKey: document.getElementById('ytKey').value.trim(),
+                redditClientId: document.getElementById('redditClientId').value.trim(),
+                redditSecret: document.getElementById('redditSecret').value.trim(),
+                newsApiKey: document.getElementById('newsApiKey').value.trim()
+            };
+
+            // Validate Apify token format
+            if (creds.apifyToken && !creds.apifyToken.startsWith('apify_api_')) {
+                alert('⚠️ Warning: Apify token should start with "apify_api_"\n\nYour token: ' + creds.apifyToken.substring(0, 20) + '...\n\nPlease verify it\'s correct.');
+            }
+
+            localStorage.setItem('painmed_creds', JSON.stringify(creds));
+            alert('✓ Credentials saved');
+            toggleCreds();
+        }
+
+        async function testApifyToken() {
+            const token = document.getElementById('apifyToken').value.trim();
+
+            if (!token) {
+                alert('Please enter an Apify token first');
+                return;
+            }
+
+            // Check format
+            if (!token.startsWith('apify_api_')) {
+                alert('❌ Token format incorrect\n\nShould start with: apify_api_\nYour token starts with: ' + token.substring(0, 15) + '...\n\nPlease copy the full token from Apify console.');
+                return;
+            }
+
+            // Test with Apify API
+            try {
+                console.log('Testing token with Apify API...');
+                const res = await fetch(`https://api.apify.com/v2/users/me?token=${token}`);
+
+                if (res.ok) {
+                    const data = await res.json();
+                    const user = data.data || {};
+
+                    // Check credits
+                    let creditInfo = '';
+                    if (user.plan) {
+                        creditInfo = `\nPlan: ${user.plan.name || 'Unknown'}`;
+                    }
+
+                    alert('✅ Token is VALID!\n\nUser: ' + (user.username || 'Unknown') + creditInfo + '\n\nYou can now use LinkedIn and Twitter sources.\n\nNote: Make sure you have available credits at:\nconsole.apify.com/billing');
+                } else if (res.status === 401 || res.status === 403) {
+                    const error = await res.json().catch(() => ({}));
+                    const errorMsg = error.error?.message || 'Authentication failed';
+
+                    console.error('Token test failed:', error);
+
+                    alert('❌ Token is INVALID\n\nError: ' + errorMsg + '\n\nThis is the SAME error you\'re getting!\n\nPlease:\n1. Go to console.apify.com/account/integrations\n2. Click "Regenerate token" button\n3. Copy the NEW token\n4. Paste it here and test again\n\nOR check if:\n• Your account email is verified\n• Your account is not suspended\n• You have credits available');
+                } else {
+                    alert('⚠️ Unexpected response: ' + res.status + '\n\nToken may be valid but API returned an error.\n\nCheck console (F12) for details.');
+                }
+            } catch (e) {
+                console.error('Token test error:', e);
+                alert('❌ Test failed\n\nError: ' + e.message + '\n\nCheck your internet connection.');
+            }
+        }
+
+        function loadCreds() {
+            try {
+                const creds = JSON.parse(localStorage.getItem('painmed_creds') || '{}');
+                if (creds.apifyToken) document.getElementById('apifyToken').value = creds.apifyToken.trim();
+                if (creds.liCookie) document.getElementById('liCookie').value = creds.liCookie.trim();
+                if (creds.ytKey) document.getElementById('ytKey').value = creds.ytKey.trim();
+                if (creds.redditClientId) document.getElementById('redditClientId').value = creds.redditClientId.trim();
+                if (creds.redditSecret) document.getElementById('redditSecret').value = creds.redditSecret.trim();
+                if (creds.newsApiKey) document.getElementById('newsApiKey').value = creds.newsApiKey.trim();
+            } catch (e) { }
+        }
+
+        function parseMultiline(value) {
+            return [...new Set(
+                String(value || '')
+                    .split('\n')
+                    .map(v => v.trim())
+                    .filter(Boolean)
+            )];
+        }
+
+        function saveMonitors(silent = false, platform = null) {
+            if (platform) {
+                const editor = document.getElementById('monitorEditor');
+                if (editor) monitoredProfiles[platform] = parseMultiline(editor.value);
+            }
+            localStorage.setItem('painmed_monitors', JSON.stringify(monitoredProfiles));
+            if (!silent) alert('✓ Monitored profiles saved');
+            if (document.getElementById('monitorPanel').style.display !== 'none') {
+                renderMonitorCenter(currentMonitorPlatform);
+            }
+        }
+
+        function loadMonitors() {
+            try {
+                const raw = JSON.parse(localStorage.getItem('painmed_monitors') || '{}');
+                monitoredProfiles = {
+                    youtube: Array.isArray(raw.youtube) ? raw.youtube : [],
+                    linkedin: Array.isArray(raw.linkedin) ? raw.linkedin : [],
+                    reddit: Array.isArray(raw.reddit) ? raw.reddit : [],
+                    twitter: Array.isArray(raw.twitter) ? raw.twitter : [],
+                    news: Array.isArray(raw.news) ? raw.news : []
+                };
+            } catch (e) { }
+        }
+
+        function saveLastPosts() {
+            try {
+                localStorage.setItem('painmed_last_posts', JSON.stringify(allPosts));
+            } catch (e) {
+                console.warn('Could not persist posts:', e);
+            }
+        }
+
+        function loadLastPosts() {
+            try {
+                const raw = JSON.parse(localStorage.getItem('painmed_last_posts') || '[]');
+                if (Array.isArray(raw)) allPosts = raw;
+            } catch (e) { }
+        }
+
+        function getPlatformCounts() {
+            return allPosts.reduce((acc, post) => {
+                acc[post.platform] = (acc[post.platform] || 0) + 1;
+                return acc;
+            }, { youtube: 0, linkedin: 0, reddit: 0, twitter: 0, news: 0 });
+        }
+
+        function updatePlatformLaunchCounts() {
+            const counts = getPlatformCounts();
+            ['youtube', 'linkedin', 'reddit', 'twitter', 'news'].forEach(platform => {
+                const el = document.getElementById(`count-${platform}`);
+                if (el) el.textContent = `${counts[platform] || 0} posts`;
+            });
+        }
+
+        function saveCurrentMonitorPlatform() {
+            saveMonitors(false, currentMonitorPlatform);
+        }
+
+        function openMonitorFromConfig(platform) {
+            document.getElementById('monitorPanel').style.display = 'block';
+            renderMonitorCenter(platform);
+            document.getElementById('monitorPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function openPlatformFeed(platform) {
+            const counts = getPlatformCounts();
+            if (!counts[platform]) {
+                alert(`No ${platform} posts available yet. Run Fetch & Analyze first.`);
+                return;
+            }
+            window.open(`/platform_feed.html?platform=${encodeURIComponent(platform)}`, '_blank');
+        }
+
+        // ══════════════════════════════════════════════════════
+        // SUBREDDIT MANAGEMENT
+        // ══════════════════════════════════════════════════════
+
+        // ══════════════════════════════════════════════════════
+        // PROGRESS
+        // ══════════════════════════════════════════════════════
+        function setProgress(pct, msg) {
+            document.getElementById('progressSection').style.display = 'block';
+            document.getElementById('progressFill').style.width = pct + '%';
+            if (msg) {
+                document.getElementById('statusText').innerHTML = `<div class="spinner"></div><span>${msg}</span>`;
+            }
+        }
+
+        function hideProgress() {
+            document.getElementById('progressSection').style.display = 'none';
+        }
+
+        function getFetchLimits() {
+            const parse = (id, fallback) => {
+                const raw = parseInt(document.getElementById(id)?.value || fallback, 10);
+                if (!Number.isFinite(raw)) return fallback;
+                return Math.max(5, Math.min(250, raw));
+            };
+            return {
+                yt: parse('limit-yt', 80),
+                li: parse('limit-li', 80),
+                rd: parse('limit-rd', 60),
+                tw: parse('limit-tw', 60),
+                news: parse('limit-news', 60)
+            };
+        }
+
+        // ══════════════════════════════════════════════════════
+        // MAIN FETCH ORCHESTRATOR
+        // ══════════════════════════════════════════════════════
+        async function fetchAndAnalyze() {
+            const kwText = document.getElementById('keywords').value.trim();
+            if (!kwText) {
+                alert('Please enter at least one keyword');
+                return;
+            }
+
+            const keywords = kwText.split('\n').map(k => k.trim()).filter(Boolean);
+            lastRunKeywords = keywords;
+            saveMonitors(true);
+            const sources = {
+                yt: document.getElementById('src-yt').checked,
+                li: document.getElementById('src-li').checked,
+                rd: document.getElementById('src-rd').checked,
+                tw: document.getElementById('src-tw').checked,
+                news: document.getElementById('src-news').checked
+            };
+            const limits = getFetchLimits();
+
+            if (!Object.values(sources).some(v => v)) {
+                alert('Please select at least one data source');
+                return;
+            }
+
+            // Validate credentials for selected sources
+            const warnings = [];
+            if (sources.yt && !document.getElementById('ytKey').value.trim()) {
+                warnings.push('• YouTube: API key missing');
+            }
+            if (sources.li) {
+                if (!document.getElementById('apifyToken').value.trim()) {
+                    warnings.push('• LinkedIn: Apify token missing');
+                }
+                if (!document.getElementById('liCookie').value.trim()) {
+                    warnings.push('• LinkedIn: li_at cookie missing');
+                }
+            }
+            if (sources.tw && !document.getElementById('apifyToken').value.trim()) {
+                warnings.push('• X/Twitter: Apify token missing');
+            }
+            if (sources.rd && (!document.getElementById('redditClientId').value.trim() || !document.getElementById('redditSecret').value.trim())) {
+                warnings.push('• Reddit: client ID/secret missing (using public fallback mode)');
+            }
+            if (sources.news && !document.getElementById('newsApiKey').value.trim()) {
+                warnings.push('• News: NewsAPI key missing');
+            }
+
+            if (warnings.length > 0) {
+                const proceed = confirm(
+                    'Missing credentials:\n\n' + warnings.join('\n') +
+                    '\n\nThese sources will be skipped.\n\nContinue with available sources?'
+                );
+                if (!proceed) return;
+            }
+
+            allPosts = [];
+            document.getElementById('fetchBtn').disabled = true;
+            setProgress(5, 'Starting fetch...');
+
+            const total = Object.values(sources).filter(Boolean).length;
+            const step = Math.floor(85 / total);
+            let progress = 10;
+
+            try {
+                // YouTube
+                if (sources.yt) {
+                    setProgress(progress, 'Fetching YouTube...');
+                    const ytKey = document.getElementById('ytKey').value.trim();
+                    if (ytKey) {
+                        const posts = await fetchYouTube(keywords, ytKey, limits.yt);
+                        allPosts.push(...posts);
+                    }
+                    progress += step;
+                }
+
+                // LinkedIn
+                if (sources.li) {
+                    setProgress(progress, 'Fetching LinkedIn...');
+                    const token = document.getElementById('apifyToken').value.trim();
+                    const cookie = document.getElementById('liCookie').value.trim();
+                    if (token && cookie) {
+                        try {
+                            const posts = await fetchLinkedIn(keywords, token, cookie, limits.li);
+                            allPosts.push(...posts);
+                        } catch (e) {
+                            console.error('LinkedIn error:', e);
+                            alert('LinkedIn fetch failed:\n' + e.message + '\n\nContinuing with other sources...');
+                        }
+                    } else {
+                        alert('LinkedIn requires both Apify Token and LinkedIn Cookie (li_at).\nSkipping LinkedIn...');
+                    }
+                    progress += step;
+                }
+
+                // Reddit
+                if (sources.rd && location.protocol !== 'file:') {
+                    setProgress(progress, 'Fetching Reddit...');
+                    const posts = await fetchReddit(keywords, limits.rd);
+                    allPosts.push(...posts);
+                    progress += step;
+                }
+
+                // Twitter
+                if (sources.tw) {
+                    setProgress(progress, 'Fetching X/Twitter...');
+                    const token = document.getElementById('apifyToken').value.trim();
+                    if (token) {
+                        try {
+                            const posts = await fetchTwitter(keywords, token, limits.tw);
+                            allPosts.push(...posts);
+                        } catch (e) {
+                            console.error('Twitter error:', e);
+                            alert('X/Twitter fetch failed:\n' + e.message + '\n\nNote: Twitter requires a paid Apify plan.\nContinuing with other sources...');
+                        }
+                    } else {
+                        alert('X/Twitter requires Apify Token.\nSkipping Twitter...');
+                    }
+                    progress += step;
+                }
+
+                // News
+                if (sources.news && location.protocol !== 'file:') {
+                    setProgress(progress, 'Fetching News...');
+                    const apiKey = document.getElementById('newsApiKey').value.trim();
+                    if (apiKey) {
+                        try {
+                            const posts = await fetchNews(keywords, apiKey, limits.news);
+                            allPosts.push(...posts);
+                        } catch (e) {
+                            console.error('News error:', e);
+                            if (e.message.includes('localhost')) {
+                                alert('⚠️ NewsAPI Restriction\n\n' + e.message);
+                            } else {
+                                alert('News fetch failed:\n' + e.message + '\n\nContinuing with other sources...');
+                            }
+                        }
+                    } else {
+                        console.log('NewsAPI key not provided, skipping News');
+                    }
+                    progress += step;
+                }
+
+                setProgress(95, 'Processing data...');
+
+                // Enrich posts
+                allPosts.forEach(post => {
+                    post.topic = assignTopic(post.title);
+                    post.sentiment = analyzeSentiment(post.title);
+                    post.payer = detectPayer(post.title);
+                    post.procedure = detectProcedure(post.title);
+                });
+
+                setProgress(100, 'Complete!');
+                setTimeout(() => {
+                    hideProgress();
+                    showResults();
+                }, 500);
+
+            } catch (e) {
+                console.error('Fetch error:', e);
+                alert('Error: ' + e.message);
+                hideProgress();
+            } finally {
+                document.getElementById('fetchBtn').disabled = false;
+            }
+        }
+
+        // ══════════════════════════════════════════════════════
+        // YOUTUBE FETCHER
+        // ══════════════════════════════════════════════════════
+        async function fetchYouTube(keywords, apiKey, limit = 80) {
+            const posts = [];
+            const seen = new Set();
+
+            for (const kw of keywords) {
+                // Two passes: shorts first, then any duration
+                for (const duration of ['short', 'any']) {
+                    if (posts.length >= limit) break;
+                    try {
+                        const remaining = Math.max(1, Math.min(25, limit - posts.length));
+                        const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(kw)}&type=video&maxResults=${remaining}&order=relevance&videoDuration=${duration}&key=${apiKey}`;
+                        const res = await fetch(url);
+                        const data = await res.json();
+
+                        if (data.error) {
+                            console.error('YouTube API error:', data.error);
+                            continue;
+                        }
+
+                        for (const item of (data.items || [])) {
+                            const vid = item.id?.videoId;
+                            if (!vid || seen.has(vid)) continue;
+                            seen.add(vid);
+                            if (posts.length >= limit) break;
+
+                            const s = item.snippet;
+                            const isShort = duration === 'short';
+
+                            // Get video statistics (views, likes, comments)
+                            let stats = { viewCount: 0, likeCount: 0, commentCount: 0 };
+                            try {
+                                const statsUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${vid}&key=${apiKey}`;
+                                const statsRes = await fetch(statsUrl);
+                                const statsData = await statsRes.json();
+                                if (statsData.items && statsData.items[0]) {
+                                    stats = statsData.items[0].statistics;
+                                }
+                            } catch (e) {
+                                console.warn('Could not fetch video stats:', e);
+                            }
+
+                            posts.push({
+                                id: 'yt_' + vid,
+                                platform: 'youtube',
+                                title: s.title + ' — ' + (s.description || '').substring(0, 200),
+                                author: s.channelTitle,
+                                authorUrl: `https://www.youtube.com/channel/${s.channelId}`,
+                                url: isShort ? `https://www.youtube.com/shorts/${vid}` : `https://www.youtube.com/watch?v=${vid}`,
+                                date: s.publishedAt,
+                                keyword: kw,
+                                likes: parseInt(stats.likeCount) || 0,
+                                comments: parseInt(stats.commentCount) || 0,
+                                shares: 0,
+                                platform_meta: {
+                                    isShort,
+                                    thumbnail: s.thumbnails?.medium?.url,
+                                    channelId: s.channelId,
+                                    videoId: vid,
+                                    viewCount: parseInt(stats.viewCount) || 0,
+                                    description: s.description || '',
+                                    publishedAt: s.publishedAt
+                                }
+                            });
+                        }
+                        await sleep(150);
+                    } catch (e) {
+                        console.error('YouTube error:', e);
+                    }
+                }
+                if (posts.length >= limit) break;
+            }
+            return posts.slice(0, limit);
+        }
+
+        // ══════════════════════════════════════════════════════
+        // LINKEDIN FETCHER
+        // ══════════════════════════════════════════════════════
+        // LINKEDIN FETCHER
+        // ══════════════════════════════════════════════════════
+        async function fetchLinkedIn(keywords, token, liCookie, limit = 80) {
+            console.log(`Using actor: Wpp1BZ6yGWjySadk3`);
+            console.log('Keywords:', keywords);
+
+            const searchUrls = keywords.map(kw =>
+                `https://www.linkedin.com/search/results/content/?keywords=${encodeURIComponent(kw)}&origin=GLOBAL_SEARCH_HEADER&sortBy=date_posted`
+            );
+
+            const run = await apifyStart(token, 'Wpp1BZ6yGWjySadk3', {
+                urls: searchUrls,
+                cookie: getCookieArray(liCookie),
+                maxResults: limit,
+                limitPerSource: Math.max(5, Math.ceil(limit / searchUrls.length)),
+                deepScrape: false,
+                minDelay: 2,
+                maxDelay: 8,
+                maxRequestRetries: 1,
+                userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+                proxy: { useApifyProxy: true, apifyProxyCountry: 'US' }
+            });
+
+            await apifyWait(token, run.id, msg => setProgress(null, 'LinkedIn: ' + msg));
+            const raw = await apifyDataset(token, run.defaultDatasetId);
+
+            console.log('Raw LinkedIn data:', raw);
+            console.log('Sample item:', raw[0]);
+
+            return raw.slice(0, limit).map((item, idx) => {
+                // Handle author
+                let author = 'Unknown Author';
+                if (item.authorName) {
+                    author = item.authorName;
+                } else if (item.author) {
+                    if (typeof item.author === 'object') {
+                        const firstName = item.author.firstName || '';
+                        const lastName = item.author.lastName || '';
+                        author = (firstName + ' ' + lastName).trim()
+                            || item.author.name || item.author.displayName || item.author.fullName || 'Unknown Author';
+                    } else {
+                        author = item.author;
+                    }
+                }
+
+                // Handle author URL with priority system
+                let authorUrl = '#';
+                let authorType = 'profile';
+
+                // Detect company type
+                const isCompanyAuthor = (
+                    (item.author && typeof item.author === 'object' && item.author.type &&
+                        item.author.type.toLowerCase().includes('company')) ||
+                    (item.companyName && !item.authorName)
+                );
+                if (isCompanyAuthor) authorType = 'company';
+
+                // Priority 1: Direct URL from author object
+                if (item.author && typeof item.author === 'object') {
+                    authorUrl = item.author.url
+                        || item.author.profileUrl
+                        || item.author.navigationUrl
+                        || item.author.authorUrl
+                        || item.author.link
+                        || '';
+                }
+
+                // Priority 2: Top-level flat URL fields
+                if (!authorUrl || authorUrl === '#') {
+                    authorUrl = item.authorUrl
+                        || item.profileUrl
+                        || item.authorLink
+                        || item.authorProfileUrl
+                        || '';
+                }
+
+                // Priority 3: Construct from publicIdentifier
+                if (!authorUrl || authorUrl === '#') {
+                    if (item.author && typeof item.author === 'object') {
+                        const slug = item.author.publicIdentifier || item.author.vanityName || item.author.alias;
+                        if (slug && slug.trim() && !slug.includes(':') && !slug.includes('urn')) {
+                            const cleanSlug = slug.trim().replace(/\/+$/, '');
+                            authorUrl = authorType === 'company'
+                                ? `https://www.linkedin.com/company/${cleanSlug}/`
+                                : `https://www.linkedin.com/in/${cleanSlug}/`;
+                        }
+                    }
+                }
+
+                // Ensure proper LinkedIn URL
+                if (authorUrl && authorUrl !== '#') {
+                    if (!authorUrl.startsWith('http')) {
+                        if (authorUrl.startsWith('/')) {
+                            authorUrl = 'https://www.linkedin.com' + authorUrl;
+                        } else {
+                            authorUrl = 'https://www.linkedin.com/in/' + authorUrl;
+                        }
+                    }
+                } else {
+                    authorUrl = '#';
+                }
+
+                // Handle post URL
+                let postUrl = item.url || item.postUrl || item.link || item.postLink || item.permalink || '#';
+
+                // Try to construct using URN
+                const urn = item.urn || item.id || item.postId;
+                if (urn && urn.includes('urn:li:activity:')) {
+                    const activityId = urn.split(':').pop();
+                    postUrl = `https://www.linkedin.com/feed/update/urn:li:activity:${activityId}/`;
+                } else if (postUrl === '#' || postUrl === '') {
+                    const id = item.id || item.postId;
+                    if (id) postUrl = `https://www.linkedin.com/feed/update/urn:li:activity:${id}/`;
+                }
+
+                // Ensure proper LinkedIn URL for post
+                if (postUrl && postUrl !== '#') {
+                    if (!postUrl.startsWith('http')) {
+                        if (postUrl.startsWith('/')) {
+                            postUrl = 'https://www.linkedin.com' + postUrl;
+                        }
+                    }
+                } else {
+                    postUrl = '#';
+                }
+
+                // Get text content
+                const text = item.text || item.content || item.description || item.postText || item.message || item.body || '';
+
+                // Get date
+                const date = item.postedAtISO || (item.postedAtTimestamp ? new Date(item.postedAtTimestamp).toISOString() : null) || item.date || item.publishedAt || item.createdAt || item.timestamp || item.postedAt || new Date().toISOString();
+
+                // Get engagement
+                const likes = parseInt(item.numLikes) || parseInt(item.likes) || parseInt(item.likeCount) || 0;
+                const comments = parseInt(item.numComments) || parseInt(item.commentCount) || 0;
+                const shares = parseInt(item.numShares) || parseInt(item.shares) || parseInt(item.shareCount) || 0;
+
+                // Find matching keyword
+                const lowerText = text.toLowerCase();
+                const matchedKeyword = keywords.find(kw => lowerText.includes(kw.toLowerCase())) || keywords[0] || 'General';
+
+                return {
+                    id: 'li_' + idx,
+                    platform: 'linkedin',
+                    title: text.substring(0, 300),
+                    author: author,
+                    authorUrl: authorUrl,
+                    url: postUrl,
+                    date: date,
+                    keyword: matchedKeyword,
+                    likes: likes,
+                    comments: comments,
+                    shares: shares,
+                    platform_meta: {}
+                };
+            }).filter(post => post.title.length > 10);
+        }
+
+        function getCookieArray(liAt) {
+            return [{ name: 'li_at', value: liAt, domain: '.linkedin.com' }];
+        }
+
+        // ══════════════════════════════════════════════════════
+        // REDDIT FETCHER
+        // ══════════════════════════════════════════════════════
+        async function fetchReddit(keywords, limit = 60) {
+            const posts = [];
+            const seen = new Set();
+            const redditClientId = document.getElementById('redditClientId').value.trim();
+            const redditSecret = document.getElementById('redditSecret').value.trim();
+
+            // Check for file:// protocol
+            if (location.protocol === 'file:') {
+                console.warn('Reddit requires server - file:// protocol detected');
+                return posts;
+            }
+
+            for (const kw of keywords) {
+                for (const sub of selectedSubs) {
+                    if (posts.length >= limit) break;
+                    try {
+                        const remaining = Math.max(1, Math.min(25, limit - posts.length));
+                        const authParams = (redditClientId && redditSecret)
+                            ? `&clientId=${encodeURIComponent(redditClientId)}&clientSecret=${encodeURIComponent(redditSecret)}`
+                            : '';
+                        const url = `/api/reddit?sub=${encodeURIComponent(sub)}&q=${encodeURIComponent(kw)}&limit=${remaining}${authParams}`;
+
+                        const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+                        if (!res.ok) {
+                            console.warn('Reddit fetch failed for:', sub, res.status);
+                            continue;
+                        }
+
+                        const json = await res.json();
+                        for (const child of (json?.data?.children || [])) {
+                            const d = child.data;
+                            if (seen.has(d.id)) continue;
+                            seen.add(d.id);
+                            if (posts.length >= limit) break;
+
+                            posts.push({
+                                id: 'rd_' + d.id,
+                                platform: 'reddit',
+                                title: (d.title || '') + ' ' + (d.selftext || '').substring(0, 300),
+                                author: 'u/' + (d.author || 'unknown'),
+                                authorUrl: `https://www.reddit.com/user/${d.author}`,
+                                url: `https://www.reddit.com${d.permalink}`,
+                                date: new Date(d.created_utc * 1000).toISOString(),
+                                keyword: kw,
+                                likes: d.score || 0,
+                                comments: d.num_comments || 0,
+                                shares: 0,
+                                platform_meta: { subreddit: d.subreddit }
+                            });
+                        }
+                        await sleep(1000); // Increased from 300ms to respect Reddit's rate limits
+                    } catch (e) {
+                        console.error('Reddit error:', sub, kw, e);
+                    }
+                }
+                if (posts.length >= limit) break;
+            }
+            return posts.slice(0, limit);
+        }
+
+        // ══════════════════════════════════════════════════════
+        // TWITTER FETCHER
+        // ══════════════════════════════════════════════════════
+        async function fetchTwitter(keywords, token, limit = 60) {
+            // Use exact keyword search with quotes
+            const searchTerms = keywords.slice(0, 3);
+
+            const run = await apifyStart(token, '61RPP7dywgiy0JPD0', {
+                searchTerms,
+                maxItems: limit,
+                sort: 'Latest',
+                tweetLanguage: 'en'
+            });
+
+            await apifyWait(token, run.id, msg => setProgress(null, 'Twitter: ' + msg));
+            const raw = await apifyDataset(token, run.defaultDatasetId);
+
+            console.log('Twitter raw data sample:', JSON.stringify(raw[0], null, 2));
+
+            // Filter out "no results" entries
+            const validTweets = raw.filter(item => !item.noResults);
+
+            if (validTweets.length === 0) {
+                console.warn('Twitter returned no results for keywords:', keywords);
+                throw new Error('Twitter search returned no results.\n\nPossible reasons:\n• Keywords too specific\n• No recent tweets match\n• Apify usage limit reached\n• Try broader keywords');
+            }
+
+            // Process tweets
+            return validTweets.slice(0, limit).map((item, i) => {
+                const text = item.text || item.full_text || '';
+                const screen = item.author?.userName || item.author?.username || item.user?.screen_name || item.username || '';
+                const tweetId = item.id || item.id_str || item.tweetId || '';
+
+                let tweetUrl = item.url || item.twitterUrl || item.link || '';
+                if (!tweetUrl && screen && tweetId) {
+                    tweetUrl = `https://x.com/${screen}/status/${tweetId}`;
+                } else if (!tweetUrl && tweetId) {
+                    tweetUrl = `https://x.com/i/status/${tweetId}`;
+                }
+
+                if (!tweetUrl) tweetUrl = '#';
+                const authorUrl = screen ? `https://x.com/${screen}` : '#';
+
+                return {
+                    id: 'tw_' + (tweetId || i),
+                    platform: 'twitter',
+                    title: text.substring(0, 500),
+                    author: screen ? '@' + screen : 'Unknown',
+                    authorUrl,
+                    url: tweetUrl,
+                    date: item.createdAt || item.created_at || new Date().toISOString(),
+                    keyword: keywords[0],
+                    likes: item.likeCount || item.favorite_count || 0,
+                    comments: item.replyCount || 0,
+                    shares: item.retweetCount || item.retweet_count || 0,
+                    platform_meta: {}
+                };
+            });
+        }
+
+        // ══════════════════════════════════════════════════════
+        // NEWS FETCHER
+        // ══════════════════════════════════════════════════════
+        async function fetchNews(keywords, apiKey, limit = 60) {
+            const posts = [];
+            const seen = new Set();
+
+            for (const kw of keywords) {
+                if (posts.length >= limit) break;
+                try {
+                    const url = `/api/news?q=${encodeURIComponent(kw)}&apiKey=${encodeURIComponent(apiKey)}`;
+
+                    const res = await fetch(url);
+                    const data = await res.json();
+
+                    if (data.status !== 'ok') {
+                        console.error('NewsAPI error:', data.message);
+                        continue;
+                    }
+
+                    for (const article of (data.articles || [])) {
+                        const id = article.url;
+                        if (seen.has(id)) continue;
+                        seen.add(id);
+                        if (posts.length >= limit) break;
+
+                        posts.push({
+                            id: 'news_' + btoa(id).substring(0, 20),
+                            platform: 'news',
+                            title: article.title + ' — ' + (article.description || '').substring(0, 200),
+                            author: article.source?.name || article.author || 'Unknown',
+                            authorUrl: article.url || '#',
+                            url: article.url,
+                            date: article.publishedAt,
+                            keyword: kw,
+                            likes: 0,
+                            comments: 0,
+                            shares: 0,
+                            platform_meta: { source: article.source?.name, urlToImage: article.urlToImage }
+                        });
+                    }
+                    await sleep(200);
+                } catch (e) {
+                    console.error('News error:', kw, e);
+                }
+            }
+            return posts.slice(0, limit);
+        }
+
+        // ══════════════════════════════════════════════════════
+        // APIFY HELPERS
+        // ══════════════════════════════════════════════════════
+        async function apifyStart(token, actorId, input) {
+            // Debug: Log token format (first/last 10 chars only for security)
+            console.log('Apify token format check:', {
+                starts_with: token.substring(0, 10),
+                ends_with: token.substring(token.length - 10),
+                length: token.length,
+                has_spaces: token.includes(' '),
+                has_newlines: token.includes('\n')
+            });
+
+            const res = await fetch(`https://api.apify.com/v2/acts/${actorId}/runs?token=${token}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(input)
+            });
+
+            if (!res.ok) {
+                let errorMsg = `Apify error (${res.status})`;
+                let errorDetails = null;
+
+                try {
+                    errorDetails = await res.json();
+                    errorMsg = errorDetails.error?.message || errorMsg;
+                    console.error('Apify error details:', errorDetails);
+                } catch (e) {
+                    console.error('Could not parse error response');
+                }
+
+                if (res.status === 403) {
+                    const specificError = errorDetails?.error?.message || 'Authentication failed';
+                    throw new Error(`Apify 403 Error: ${specificError}\n\nPossible causes:\n• Token is invalid or expired\n• Token doesn't have "Run actors" permission\n• Account has no credits (check: console.apify.com/billing)\n• Account is suspended or not verified\n\nSolutions:\n1. Test token with "🔍 Test Token" button\n2. Get fresh token: console.apify.com/account/integrations\n3. Check credits: console.apify.com/billing\n4. Or skip LinkedIn and use YouTube + Reddit + News instead`);
+                } else if (res.status === 401) {
+                    throw new Error('Apify token is invalid or missing. Please add your token in Credentials.');
+                } else if (res.status === 402) {
+                    throw new Error('Apify account has insufficient credits. Please add credits at: https://console.apify.com/billing');
+                }
+                throw new Error(errorMsg);
+            }
+            return (await res.json()).data;
+        }
+
+        async function apifyWait(token, runId, callback, maxMs = 300000) {
+            const start = Date.now();
+            while (Date.now() - start < maxMs) {
+                await sleep(3500);
+                const res = await fetch(`https://api.apify.com/v2/actor-runs/${runId}?token=${token}`);
+                const run = (await res.json()).data;
+                const elapsed = Math.floor((Date.now() - start) / 1000);
+                callback(`${run.status} (${elapsed}s)`);
+                if (run.status === 'SUCCEEDED') return run;
+                if (['FAILED', 'ABORTED'].includes(run.status)) throw new Error('Run ' + run.status);
+            }
+            throw new Error('Timeout');
+        }
+
+        async function apifyDataset(token, datasetId) {
+            const res = await fetch(`https://api.apify.com/v2/datasets/${datasetId}/items?token=${token}&format=json`);
+            if (!res.ok) throw new Error('Dataset fetch failed');
+            return res.json();
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // ══════════════════════════════════════════════════════
+        // TOPIC ASSIGNMENT
+        // ══════════════════════════════════════════════════════
+        function assignTopic(text) {
+            const lower = text.toLowerCase();
+
+            if (/prior auth|prior authorization|preauth|pa request/.test(lower)) return 'Prior Auth';
+            if (/denial|denied|billing|cpt|icd|claim|reimbursement/.test(lower)) return 'Billing & Denials';
+            if (/unitedhealth|aetna|cigna|bcbs|blue cross|medicare|medicaid|payer/.test(lower)) return 'Payer Behavior';
+            if (/scs|spinal cord stimulator|si joint|kyphoplasty|intracept|pns|vertebroplasty/.test(lower)) return 'Procedures/Devices';
+            if (/appeal|peer to peer|p2p|utilization management|um|overturn/.test(lower)) return 'Appeals & P2P';
+            if (/wiser|cms|medicare automation|lcd|ncd|policy/.test(lower)) return 'WISeR / CMS';
+
+            return 'General Pain';
+        }
+
+        // ══════════════════════════════════════════════════════
+        // SENTIMENT ANALYSIS
+        // ══════════════════════════════════════════════════════
+        function analyzeSentiment(text) {
+            const lower = text.toLowerCase();
+            const negWords = ['denied', 'denial', 'rejected', 'frustrating', 'unfair', 'wrong', 'terrible',
+                'broken', 'failed', 'problem', 'delay', 'refused', 'nightmare', 'impossible', 'harmful'];
+            const posWords = ['approved', 'won', 'success', 'overturned', 'helpful', 'great', 'excellent',
+                'improved', 'effective', 'resolved', 'passed', 'covered', 'positive', 'working'];
+
+            let score = 0;
+            posWords.forEach(w => { if (lower.includes(w)) score++; });
+            negWords.forEach(w => { if (lower.includes(w)) score--; });
+
+            return score > 0 ? 'positive' : score < 0 ? 'negative' : 'neutral';
+        }
+
+        // ══════════════════════════════════════════════════════
+        // PAYER DETECTION
+        // ══════════════════════════════════════════════════════
+        function detectPayer(text) {
+            const lower = text.toLowerCase();
+            const payers = ['Medicare', 'Medicaid', 'UnitedHealth', 'United Healthcare', 'UHC', 'Aetna',
+                'Cigna', 'BCBS', 'Blue Cross', 'Humana', 'Anthem', 'Centene', 'Molina'];
+
+            for (const payer of payers) {
+                if (lower.includes(payer.toLowerCase())) return payer;
+            }
+            return null;
+        }
+
+        // ══════════════════════════════════════════════════════
+        // PROCEDURE DETECTION
+        // ══════════════════════════════════════════════════════
+        function detectProcedure(text) {
+            const lower = text.toLowerCase();
+            const procedures = {
+                'SCS': ['scs', 'spinal cord stimulator'],
+                'SI Joint Fusion': ['si joint fusion', 'si joint', 'sacroiliac'],
+                'Kyphoplasty': ['kyphoplasty'],
+                'Intracept': ['intracept'],
+                'PNS': ['pns', 'peripheral nerve stimulation'],
+                'Vertebroplasty': ['vertebroplasty'],
+                'RFA': ['radiofrequency ablation', 'rfa'],
+                'Epidural': ['epidural'],
+                'Facet Injection': ['facet injection']
+            };
+
+            for (const [name, terms] of Object.entries(procedures)) {
+                if (terms.some(t => lower.includes(t))) return name;
+            }
+            return null;
+        }
+
+        // ══════════════════════════════════════════════════════
+        // SHOW RESULTS
+        // ══════════════════════════════════════════════════════
+        function showResults() {
+            if (allPosts.length === 0) {
+                alert('No posts found. Try different keywords or check credentials.');
+                return;
+            }
+
+            document.getElementById('analyticsPanel').style.display = 'block';
+            document.getElementById('monitorPanel').style.display = 'block';
+
+            updateMetrics();
+            updateCharts();
+            updateTopAuthors();
+            updateTrendingPosts();
+            renderMonitorCenter(currentMonitorPlatform);
+            saveLastPosts();
+            updatePlatformLaunchCounts();
+        }
+
+        // ══════════════════════════════════════════════════════
+        // METRICS
+        // ══════════════════════════════════════════════════════
+        function updateMetrics() {
+            const totalMentionsEl = document.getElementById('totalMentions');
+            if (totalMentionsEl) totalMentionsEl.textContent = allPosts.length.toLocaleString();
+        }
+
+        // ══════════════════════════════════════════════════════
+        // CHARTS
+        // ══════════════════════════════════════════════════════
+        function updateCharts() {
+            updateTopicChart();
+            updateSentimentChart();
+            updatePlatformChart();
+            updatePayerChart();
+            updateProcedureChart();
+        }
+
+        function updateTopicChart() {
+            const weekBuckets = new Map();
+            allPosts.forEach(post => {
+                const weekKey = getWeekStart(new Date(post.date)).toISOString().split('T')[0];
+                if (!weekBuckets.has(weekKey)) weekBuckets.set(weekKey, {});
+                const topicCounts = weekBuckets.get(weekKey);
+                topicCounts[post.topic] = (topicCounts[post.topic] || 0) + 1;
+            });
+            const weeks = [...weekBuckets.keys()].sort((a, b) => a.localeCompare(b));
+            const topicTotals = {};
+            allPosts.forEach(post => {
+                topicTotals[post.topic] = (topicTotals[post.topic] || 0) + 1;
+            });
+            const topTopics = Object.entries(topicTotals)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5)
+                .map(([name]) => name);
+
+            const palette = ['#1f82a9', '#a54f2d', '#2fb456', '#f2a11d', '#ef4a4a'];
+            const datasets = topTopics.map((topic, idx) => ({
+                label: topic,
+                data: weeks.map(week => weekBuckets.get(week)?.[topic] || 0),
+                borderColor: palette[idx % palette.length],
+                backgroundColor: palette[idx % palette.length],
+                pointRadius: 4,
+                pointHoverRadius: 5,
+                borderWidth: 3,
+                tension: 0.35,
+                fill: false
+            }));
+
+            if (charts.topic) charts.topic.destroy();
+            charts.topic = new Chart(document.getElementById('topicChart'), {
+                type: 'line',
+                data: {
+                    labels: weeks.map(formatWeekLabel),
+                    datasets
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom', labels: { usePointStyle: true } } },
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                }
+            });
+        }
+
+        function updateSentimentChart() {
+            const platforms = [...new Set(allPosts.map(p => p.platform))];
+            const sentiments = ['positive', 'neutral', 'negative'];
+            const colors = { positive: '#4DAFA7', neutral: '#95a5a6', negative: '#E85D75' };
+
+            const datasets = sentiments.map(sent => ({
+                label: sent.charAt(0).toUpperCase() + sent.slice(1),
+                data: platforms.map(plat =>
+                    allPosts.filter(p => p.platform === plat && p.sentiment === sent).length
+                ),
+                backgroundColor: colors[sent]
+            }));
+
+            if (charts.sentiment) charts.sentiment.destroy();
+            charts.sentiment = new Chart(document.getElementById('sentimentChart'), {
+                type: 'bar',
+                data: { labels: platforms, datasets },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
+                }
+            });
+        }
+
+        function updatePlatformChart() {
+            const platforms = {};
+            allPosts.forEach(p => {
+                platforms[p.platform] = (platforms[p.platform] || 0) + 1;
+            });
+
+            const colors = {
+                youtube: '#FF0000',
+                linkedin: '#0077b5',
+                reddit: '#FF4500',
+                twitter: '#1DA1F2',
+                news: '#6c757d'
+            };
+
+            if (charts.platform) charts.platform.destroy();
+            charts.platform = new Chart(document.getElementById('platformChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(platforms),
+                    datasets: [{
+                        data: Object.values(platforms),
+                        backgroundColor: Object.keys(platforms).map(p => colors[p])
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        function updatePayerChart() {
+            const payers = {};
+            allPosts.forEach(p => {
+                if (p.payer) payers[p.payer] = (payers[p.payer] || 0) + 1;
+            });
+
+            const sorted = Object.entries(payers).sort((a, b) => b[1] - a[1]).slice(0, 8);
+
+            if (charts.payer) charts.payer.destroy();
+            charts.payer = new Chart(document.getElementById('payerChart'), {
+                type: 'bar',
+                data: {
+                    labels: sorted.map(s => s[0]),
+                    datasets: [{
+                        label: 'Mentions',
+                        data: sorted.map(s => s[1]),
+                        backgroundColor: ['#2a87a8', '#26718c', '#b1532f', '#f3a11f', '#2dbd5d', '#4a82df', '#7b4de2', '#ef4646']
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { beginAtZero: true } }
+                }
+            });
+        }
+
+        function updateProcedureChart() {
+            const procedures = {};
+            allPosts.forEach(p => {
+                if (p.procedure) procedures[p.procedure] = (procedures[p.procedure] || 0) + 1;
+            });
+
+            const sorted = Object.entries(procedures).sort((a, b) => b[1] - a[1]).slice(0, 8);
+
+            if (charts.procedure) charts.procedure.destroy();
+            charts.procedure = new Chart(document.getElementById('procedureChart'), {
+                type: 'bar',
+                data: {
+                    labels: sorted.map(s => s[0]),
+                    datasets: [{
+                        label: 'Mentions',
+                        data: sorted.map(s => s[1]),
+                        backgroundColor: '#2a87a8'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { beginAtZero: true } }
+                }
+            });
+        }
+
+        function getWeekStart(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            d.setDate(d.getDate() - day + (day === 0 ? -6 : 1));
+            return d;
+        }
+
+        function formatWeekLabel(weekKey) {
+            return new Date(weekKey).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        // ══════════════════════════════════════════════════════
+        // TOP AUTHORS
+        // ══════════════════════════════════════════════════════
+        function updateTopAuthors() {
+            const payers = {};
+            allPosts.forEach(post => {
+                if (!post.payer) return;
+                const week = getWeekStart(new Date(post.date)).toISOString().split('T')[0];
+                if (!payers[post.payer]) payers[post.payer] = {};
+                payers[post.payer][week] = (payers[post.payer][week] || 0) + 1;
+            });
+
+            const sorted = Object.entries(payers)
+                .map(([payer, byWeek]) => {
+                    const series = Object.values(byWeek);
+                    const avg = series.reduce((a, b) => a + b, 0) / Math.max(1, series.length);
+                    const peak = Math.max(...series);
+                    const earliest = series[0] || 0;
+                    const latest = series[series.length - 1] || 0;
+                    const trend = latest >= earliest ? 'Uptrend 📈' : 'Softening ↘';
+                    return { payer, avg, peak, trend };
+                })
+                .sort((a, b) => b.avg - a.avg)
+                .slice(0, 10);
+
+            const tbody = document.getElementById('topAuthorsTable');
+            tbody.innerHTML = sorted.map(item => `
+                <tr>
+                    <td>${escapeHtml(item.payer)}</td>
+                    <td>${Math.round(item.avg).toLocaleString()}</td>
+                    <td>${item.peak.toLocaleString()}</td>
+                    <td>${item.trend}</td>
+                </tr>
+            `).join('');
+        }
+
+        // ══════════════════════════════════════════════════════
+        // TRENDING POSTS
+        // ══════════════════════════════════════════════════════
+        function updateTrendingPosts() {
+            const procedures = {};
+            allPosts.forEach(post => {
+                if (!post.procedure) return;
+                const week = getWeekStart(new Date(post.date)).toISOString().split('T')[0];
+                if (!procedures[post.procedure]) procedures[post.procedure] = { total: 0, byWeek: {} };
+                procedures[post.procedure].total++;
+                procedures[post.procedure].byWeek[week] = (procedures[post.procedure].byWeek[week] || 0) + 1;
+            });
+
+            const rows = Object.entries(procedures)
+                .map(([name, data]) => {
+                    const series = Object.values(data.byWeek);
+                    const avg = data.total / Math.max(1, series.length);
+                    const first = series[0] || 0;
+                    const last = series[series.length - 1] || 0;
+                    const momentum = last >= first ? 'Accelerating ⚡' : 'Stable →';
+                    return { name, total: data.total, avg, momentum };
+                })
+                .sort((a, b) => b.total - a.total)
+                .slice(0, 10);
+
+            const tbody = document.getElementById('trendingPosts');
+            tbody.innerHTML = rows.map(item => `
+                <tr>
+                    <td>${escapeHtml(item.name)}</td>
+                    <td>${item.total.toLocaleString()}</td>
+                    <td>${Math.round(item.avg).toLocaleString()}</td>
+                    <td>${item.momentum}</td>
+                </tr>
+            `).join('');
+        }
+
+        // ══════════════════════════════════════════════════════
+        // MONITOR CENTER
+        // ══════════════════════════════════════════════════════
+        function normalizeToken(value) {
+            const input = String(value || '').trim().toLowerCase();
+            if (!input) return '';
+            return input
+                .replace(/^https?:\/\//, '')
+                .replace(/^www\./, '')
+                .replace(/[/?#].*$/, '')
+                .replace(/[@\s]/g, '');
+        }
+
+        function getMonitorMatchScore(post, profiles) {
+            const hay = [
+                post.author,
+                post.authorUrl,
+                post.url,
+                post.title,
+                post.platform_meta?.source || ''
+            ].join(' ').toLowerCase();
+            let score = 0;
+            for (const profile of profiles) {
+                const token = normalizeToken(profile);
+                if (!token) continue;
+                if (hay.includes(token)) score++;
+            }
+            return score;
+        }
+
+        function setupMonitorPlatformButtons() {
+            const wrap = document.getElementById('monitorPlatforms');
+            if (!wrap) return;
+            wrap.innerHTML = Object.entries(MONITOR_CONFIG).map(([key, cfg]) => `
+                <button class="monitor-platform-btn ${key === currentMonitorPlatform ? 'active' : ''}" onclick="renderMonitorCenter('${key}')">${cfg.label}</button>
+            `).join('');
+        }
+
+        function buildMonitorSearchLink(platform, profile, keyword) {
+            const cfg = MONITOR_CONFIG[platform];
+            const query = `${keyword || ''} ${profile || ''}`.trim();
+            if (!cfg || !query) return '#';
+            if (platform === 'twitter') return `${cfg.searchBase}${encodeURIComponent(query)}&f=live`;
+            return `${cfg.searchBase}${encodeURIComponent(query)}`;
+        }
+
+        function renderMonitorCenter(platform = 'youtube') {
+            currentMonitorPlatform = platform;
+            setupMonitorPlatformButtons();
+
+            const profiles = monitoredProfiles[platform] || [];
+            const keywords = lastRunKeywords.length ? lastRunKeywords : parseMultiline(document.getElementById('keywords').value).slice(0, 3);
+            const keyKeyword = keywords[0] || '';
+            const posts = allPosts.filter(p => p.platform === platform);
+            const fetchedProfiles = [...new Set(posts.map(p => p.author).filter(Boolean))].slice(0, 20);
+            const matchedPosts = posts
+                .map(post => {
+                    const score = getMonitorMatchScore(post, profiles);
+                    return { post, score };
+                })
+                .filter(item => profiles.length === 0 ? true : item.score > 0)
+                .sort((a, b) => (b.score - a.score) || ((b.post.likes + b.post.comments + b.post.shares) - (a.post.likes + a.post.comments + a.post.shares)))
+                .slice(0, 25);
+
+            const profilesList = document.getElementById('monitorProfilesList');
+            profilesList.innerHTML = profiles.length
+                ? profiles.map(profile => `<li><a class="post-link" href="${profile.startsWith('http') ? profile : '#'}" target="_blank">${escapeHtml(profile)}</a></li>`).join('')
+                : '<li>No saved monitored profiles for this platform.</li>';
+
+            const fetchedProfilesList = document.getElementById('monitorFetchedProfilesList');
+            fetchedProfilesList.innerHTML = fetchedProfiles.length
+                ? fetchedProfiles.map(name => `<li>${escapeHtml(name)}</li>`).join('')
+                : '<li>No fetched profiles yet for this platform.</li>';
+
+            const linksList = document.getElementById('monitorLinksList');
+            linksList.innerHTML = profiles.length
+                ? profiles.map(profile => {
+                    const url = buildMonitorSearchLink(platform, profile, keyKeyword);
+                    return `<li><a class="post-link" href="${url}" target="_blank">Search "${escapeHtml(keyKeyword || 'keyword')}" in ${escapeHtml(profile)}</a></li>`;
+                }).join('')
+                : '<li>Add profiles above to generate monitor links.</li>';
+
+            const monitorEditor = document.getElementById('monitorEditor');
+            if (monitorEditor) monitorEditor.value = profiles.join('\n');
+
+            const tbody = document.getElementById('monitorPostsTable');
+            if (!matchedPosts.length) {
+                tbody.innerHTML = `<tr><td colspan="5">No matched posts yet for ${MONITOR_CONFIG[platform].label}. Run Fetch & Analyze after adding profiles/keywords.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = matchedPosts.map(({ post, score }) => `
+                <tr>
+                    <td>${escapeHtml(post.title.substring(0, 110))}${post.title.length > 110 ? '...' : ''}</td>
+                    <td>${escapeHtml(post.author)}</td>
+                    <td>${escapeHtml(post.keyword || '-')}</td>
+                    <td>${score > 0 ? `Matched (${score})` : 'General'}</td>
+                    <td><a class="post-link" href="${post.url}" target="_blank">Open</a></td>
+                </tr>
+            `).join('');
+        }
+
+        // ══════════════════════════════════════════════════════
+        // POSTS FEED
+        // ══════════════════════════════════════════════════════
+        function setupFilterTabs() {
+            const platforms = ['all', ...new Set(allPosts.map(p => p.platform))];
+            const counts = {};
+            counts.all = allPosts.length;
+            platforms.forEach(p => {
+                if (p !== 'all') {
+                    counts[p] = allPosts.filter(post => post.platform === p).length;
+                }
+            });
+
+            const icons = {
+                all: '🌐',
+                youtube: '▶️',
+                linkedin: '💼',
+                reddit: '🤖',
+                twitter: '🐦',
+                news: '📰'
+            };
+
+            const tabs = document.getElementById('filterTabs');
+            tabs.innerHTML = platforms.map(p => `
+                <button class="filter-tab ${p === 'all' ? 'active' : ''}" onclick="filterPosts('${p}')">
+                    ${icons[p] || ''} ${p.charAt(0).toUpperCase() + p.slice(1)} (${counts[p]})
+                </button>
+            `).join('');
+        }
+
+        function filterPosts(platform) {
+            currentFilter = platform;
+
+            // Update tab states
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.textContent.toLowerCase().includes(platform));
+            });
+
+            renderPosts(platform);
+        }
+
+        function renderPosts(platform) {
+            const filtered = platform === 'all'
+                ? allPosts
+                : allPosts.filter(p => p.platform === platform);
+
+            const feed = document.getElementById('postsFeed');
+
+            if (filtered.length === 0) {
+                feed.innerHTML = '<p style="grid-column:1/-1;text-align:center;padding:3rem;color:#6c757d;">No posts found</p>';
+                return;
+            }
+
+            feed.innerHTML = filtered.map(post => {
+                const shortsBadge = (post.platform === 'youtube' && post.platform_meta?.isShort)
+                    ? '<span style="font-size:0.68rem;font-weight:700;background:#FF0000;color:white;padding:0.1rem 0.4rem;border-radius:3px;margin-left:0.3rem;">SHORT</span>'
+                    : '';
+
+
+                const viewCount = post.platform === 'youtube' && post.platform_meta?.viewCount
+                    ? `<span>👁️ ${post.platform_meta.viewCount.toLocaleString()}</span>`
+                    : '';
+                return `
+                <div class="post-card">
+                    <div class="post-header">
+                        <span class="platform-badge ${post.platform}">${post.platform}${shortsBadge}</span>
+                        <span class="sentiment-badge ${post.sentiment}">${post.sentiment}</span>
+                    </div>
+                    <a href="${post.authorUrl}" target="_blank" class="post-author">${escapeHtml(post.author)}</a>
+                    <p class="post-title">${escapeHtml(post.title.substring(0, 250))}${post.title.length > 250 ? '...' : ''}</p>
+                    <div class="post-meta">
+                        <span class="tag">${escapeHtml(post.topic)}</span>
+                        <span class="tag">${escapeHtml(post.keyword)}</span>
+                        ${post.payer ? `<span class="tag">🏥 ${escapeHtml(post.payer)}</span>` : ''}
+                        ${post.procedure ? `<span class="tag">💉 ${escapeHtml(post.procedure)}</span>` : ''}
+                    </div>
+                    <div class="post-stats">
+                        ${viewCount}
+                        <span>👍 ${post.likes}</span>
+                        <span>💬 ${post.comments}</span>
+                        <span>🔄 ${post.shares}</span>
+                        <span>📅 ${new Date(post.date).toLocaleDateString()}</span>
+                    </div>
+                    <a href="${post.url}" target="_blank" class="post-link">Open Post →</a>
+                </div>
+            `}).join('');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = String(text || '');
+            return div.innerHTML;
+        }
+    </script>
+</body>
+
+</html>

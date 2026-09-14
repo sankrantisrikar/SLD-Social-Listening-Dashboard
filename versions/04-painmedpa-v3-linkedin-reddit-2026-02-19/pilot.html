@@ -1,0 +1,4015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PainMed-PA Social Listening Dashboard v2.0</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@3.0.0/index.min.js"></script>
+    <!-- US Map for geographic visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2E5C9A 0%, #1e4278 100%);
+            color: white;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-bottom: 4px solid #4DAFA7;
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .header .logo {
+            width: 70px;
+            height: 70px;
+            flex-shrink: 0;
+        }
+        
+        .header .subtitle {
+            color: #E0E7EF;
+            font-size: 0.95rem;
+            margin-left: 76px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .filters-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-left: 4px solid #2E5C9A;
+        }
+        
+        .filters-panel h3 {
+            color: #2E5C9A;
+            margin-bottom: 1rem;
+        }
+        
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .filter-group label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #2E5C9A;
+            font-size: 0.9rem;
+        }
+        
+        .filter-group select,
+        .filter-group input {
+            padding: 0.6rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: border-color 0.2s;
+        }
+        
+        .filter-group select:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: #4DAFA7;
+        }
+        
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #4DAFA7;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #3d8f88;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(77, 175, 167, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #E85D75;
+            color: white;
+            margin-left: 0.5rem;
+        }
+        
+        .btn-secondary:hover {
+            background: #d44a61;
+        }
+        
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+            border-top: 3px solid #4DAFA7;
+        }
+        
+        .chart-card h3 {
+            margin-bottom: 1rem;
+            color: #2E5C9A;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-left: 4px solid #4DAFA7;
+            transition: transform 0.2s;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+        
+        .metric-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #2E5C9A;
+        }
+        
+        .table-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+            overflow-x: auto;
+            border-top: 3px solid #2E5C9A;
+        }
+        
+        .table-card h3 {
+            margin-bottom: 1rem;
+            color: #2E5C9A;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        thead {
+            background: #f8f9fa;
+        }
+        
+        th {
+            padding: 0.75rem;
+            text-align: left;
+            font-size: 0.85rem;
+            color: #2E5C9A;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #ecf0f1;
+            font-size: 0.9rem;
+        }
+        
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .link-button {
+            color: #4DAFA7;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .link-button:hover {
+            color: #3d8f88;
+            text-decoration: underline;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #E0F2F1;
+            color: #2E5C9A;
+        }
+        
+        input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #4DAFA7;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>
+            <svg class="logo" viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg">
+                <!-- Red stethoscope -->
+                <g stroke="#E85D75" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <!-- Left earpiece -->
+                    <path d="M 60 80 Q 55 65 50 55"/>
+                    <circle cx="48" cy="50" r="8" fill="#E85D75"/>
+                    
+                    <!-- Right earpiece -->
+                    <path d="M 140 80 Q 145 65 150 55"/>
+                    <circle cx="152" cy="50" r="8" fill="#E85D75"/>
+                    
+                    <!-- Connecting arc -->
+                    <path d="M 60 80 Q 100 90 140 80"/>
+                    
+                    <!-- Left tube going down -->
+                    <path d="M 60 80 Q 65 110 75 140"/>
+                    
+                    <!-- Right tube going down -->
+                    <path d="M 140 80 Q 135 110 125 140"/>
+                    
+                    <!-- U-shaped bottom -->
+                    <path d="M 75 140 Q 75 165 100 165 Q 125 165 125 140"/>
+                    
+                    <!-- Bottom connector -->
+                    <ellipse cx="100" cy="175" rx="12" ry="8" fill="white" stroke="#E85D75" stroke-width="4"/>
+                </g>
+                
+                <!-- Teal checkmark -->
+                <path d="M 85 115 L 95 130 L 125 90" 
+                      stroke="#4DAFA7" 
+                      stroke-width="12" 
+                      stroke-linecap="round" 
+                      stroke-linejoin="round" 
+                      fill="none"/>
+                
+                <!-- Red curved line at bottom -->
+                <path d="M 20 200 Q 100 220 180 200" 
+                      stroke="#E85D75" 
+                      stroke-width="4" 
+                      fill="none"/>
+            </svg>
+            PainMed-PA Social Listening Dashboard
+        </h1>
+        <p class="subtitle">
+            Multi-Platform Intelligence | Healthcare Providers · Social Media · Community Discussions | A Probe Practice Solutions Company
+        </p>
+    </div>
+
+    <div class="container">
+        <!-- Configuration Panel -->
+        <div class="filters-panel" id="configPanel">
+            <h3 style="margin-bottom: 1rem;">⚙️ Multi-Platform Data Configuration</h3>
+            
+            <div style="background: #E0F2F1; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; font-size: 0.9rem; color: #2E5C9A; border-left: 4px solid #4DAFA7;">
+                <strong>✓ Multi-Platform Intelligence:</strong> Gather insights from professional networks, healthcare providers, social media, and community discussions.
+                <br><br>
+                <strong>📱 Supported Platforms:</strong>
+                <ul style="margin: 0.5rem 0 0 1.5rem; padding: 0;">
+                    <li><strong>LinkedIn:</strong> Professional network (requires li_at cookie)</li>
+                    <li><strong>Twitter/X:</strong> Real-time conversations via Apify (token required)</li>
+                    <li><strong>Reddit:</strong> Community discussions (no auth needed - free!)</li>
+                </ul>
+                <br>
+                <strong>⚡ Performance Tips:</strong>
+                <ul style="margin: 0.5rem 0 0 1.5rem; padding: 0;">
+                    <li>Use 3-5 keywords for best speed</li>
+                    <li>Start with 30-50 items per platform</li>
+                    <li>Try <strong>DEMO MODE</strong> to test without API calls!</li>
+                </ul>
+            </div>
+            
+            <div id="cacheStatus" style="background: #E0F2F1; padding: 0.8rem; border-radius: 6px; margin-bottom: 1rem; font-size: 0.9rem; color: #2E5C9A; display: none; border-left: 4px solid #4DAFA7;">
+                <strong>✓ Cache Available:</strong> <span id="cacheInfo"></span>
+                <button onclick="clearCacheAndReload()" style="margin-left: 1rem; padding: 0.3rem 0.8rem; background: #E85D75; color: white; border: none; border-radius: 4px; cursor: pointer;">Clear Cache</button>
+            </div>
+            
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label>Apify API Token (Required for LinkedIn/Twitter)</label>
+                    <input type="password" id="apifyToken" placeholder="apify_api_xxxxxxxxxxxxx (not needed for Reddit-only)" value="" />
+                </div>
+                
+                <div class="filter-group">
+                    <label>Select Platforms *</label>
+                    <div style="border: 1px solid #ddd; border-radius: 6px; padding: 0.5rem; background: white;">
+                        <label style="font-weight: normal; display: flex; align-items: center; cursor: pointer; margin-bottom: 0.5rem;">
+                            <input type="checkbox" id="platformLinkedIn" style="margin-right: 0.5rem;" checked />
+                            🔗 LinkedIn (Professional Network)
+                        </label>
+                        <label style="font-weight: normal; display: flex; align-items: center; cursor: pointer; margin-bottom: 0.5rem;">
+                            <input type="checkbox" id="platformTwitter" style="margin-right: 0.5rem;" />
+                            🐦 Twitter/X (via Apify)
+                        </label>
+                        <label style="font-weight: normal; display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="platformReddit" style="margin-right: 0.5rem;" checked />
+                            🤖 Reddit (Communities - Free!)
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Max Items Per Platform</label>
+                    <input type="number" id="maxItems" value="50" min="5" max="500" />
+                    <small style="color: #7f8c8d; font-size: 0.8rem; margin-top: 0.3rem;">
+                        💡 Tip: Start with 30-50 items for faster results
+                    </small>
+                </div>
+            </div>
+            
+            <div class="filter-group" style="margin-top: 1rem;">
+                <label>Search Keywords (one per line) * - Each keyword becomes a topic</label>
+                <textarea id="searchKeywords" rows="6" style="width: 100%; padding: 0.6rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem;">prior authorization pain management
+interventional pain billing
+spinal cord stimulator denials
+Medicare pain procedures
+RCM pain management
+peer to peer appeals</textarea>
+                <small style="color: #7f8c8d; font-size: 0.85rem;">
+                    Each keyword = one topic. 💡 <strong>Fewer keywords = faster results</strong> (3-5 recommended)
+                </small>
+            </div>
+            
+            <!-- LinkedIn-specific fields -->
+            <div id="linkedinFields" style="display: block; margin-top: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 6px; border-left: 3px solid #0077b5;">
+                <h4 style="color: #0077b5; margin-bottom: 0.8rem;">🔗 LinkedIn Options (Required if LinkedIn selected)</h4>
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label>LinkedIn Cookie (li_at) *</label>
+                        <input type="password" id="linkedinCookie" placeholder="Your li_at cookie" value="" />
+                        <small style="color: #7f8c8d; font-size: 0.75rem;">See CREDENTIALS_GUIDE.md for help</small>
+                    </div>
+                    <div class="filter-group">
+                        <label>LinkedIn Apify Actor ID</label>
+                        <input type="text" id="linkedinActorId" value="kfiWbq3boy3dWKbiL" placeholder="e.g., owner/actor-name or actor-id" />
+                        <small style="color: #7f8c8d; font-size: 0.75rem;">Use an actor your token can access. 403 usually means permission issue.</small>
+                    </div>
+                    <div class="filter-group">
+                        <label>Search Type</label>
+                        <select id="linkedinSearchType">
+                            <option value="content">Posts & Articles</option>
+                            <option value="people">People</option>
+                            <option value="companies">Companies</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+
+            <!-- Twitter-specific fields -->
+            <div id="twitterFields" style="display: none; margin-top: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 6px; border-left: 3px solid #1DA1F2;">
+                <h4 style="color: #1DA1F2; margin-bottom: 0.8rem;">🐦 Twitter/X Options (Required if Twitter selected)</h4>
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label>Twitter Apify Actor ID</label>
+                        <input type="text" id="twitterActorId" value="quacker/twitter-scraper" placeholder="e.g., quacker/twitter-scraper" />
+                        <small style="color: #7f8c8d; font-size: 0.75rem;">Change this if your Apify actor is different.</small>
+                    </div>
+                    <div class="filter-group">
+                        <label>Twitter Sort</label>
+                        <select id="twitterSort">
+                            <option value="Latest" selected>Latest</option>
+                            <option value="Top">Top</option>
+                            <option value="People">People</option>
+                            <option value="Photos">Photos</option>
+                            <option value="Videos">Videos</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Reddit-specific fields -->
+            <div id="redditFields" style="display: block; margin-top: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 6px; border-left: 3px solid #FF4500;">
+                <h4 style="color: #FF4500; margin-bottom: 0.8rem;">🤖 Reddit Options (Optional)</h4>
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label>Sort By</label>
+                        <select id="redditSort">
+                            <option value="hot">Hot</option>
+                            <option value="new">New</option>
+                            <option value="top">Top</option>
+                            <option value="relevance">Relevance</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Time Range</label>
+                        <select id="redditTime">
+                            <option value="day">Past 24 Hours</option>
+                            <option value="week" selected>Past Week</option>
+                            <option value="month">Past Month</option>
+                            <option value="year">Past Year</option>
+                            <option value="all">All Time</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Subreddits (comma-separated)</label>
+                        <input type="text" id="redditSubreddits" placeholder="e.g., medicine, healthcare" />
+                        <small style="color: #7f8c8d; font-size: 0.75rem;">Leave empty to search all</small>
+                    </div>
+                </div>
+                <div style="margin-top: 0.8rem;">
+                    <button class="btn btn-secondary" type="button" onclick="suggestRedditSubreddits()">💡 Suggest Subreddits</button>
+                    <small id="redditSuggestStatus" style="display: block; color: #7f8c8d; font-size: 0.8rem; margin-top: 0.5rem;">
+                        Click "Suggest Subreddits" to get recommendations from your keywords.
+                    </small>
+                    <div id="redditSuggestions" style="margin-top: 0.6rem; display: flex; flex-wrap: wrap; gap: 0.5rem;"></div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 1rem; display: flex; gap: 0.5rem; align-items: center;">
+                <button class="btn btn-primary" onclick="fetchMultiPlatformData()">🚀 Fetch Multi-Platform Data</button>
+                <button class="btn btn-secondary" onclick="loadDemoData()" style="background: #f39c12;">
+                    🎭 Try Demo Mode
+                </button>
+                <small style="color: #7f8c8d; margin-left: 0.5rem;">
+                    Demo mode loads sample data without API calls
+                </small>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div class="filters-panel" id="loadingPanel" style="display: none; text-align: center;">
+            <div style="display: inline-block; border: 4px solid #f3f3f3; border-top: 4px solid #4DAFA7; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 1rem;"></div>
+            <p id="loadingStatus" style="font-size: 1.1rem; color: #2E5C9A;">Fetching data...</p>
+            <div id="loadingDetails" style="margin-top: 1rem; font-size: 0.9rem; color: #6c757d;"></div>
+        </div>
+        
+        <style>
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        </style>
+
+        <!-- Filters Panel (shown after data is loaded) -->
+        <div class="filters-panel" id="filtersPanel" style="display: none;">
+            <h3 style="margin-bottom: 1rem;">🔍 Filters</h3>
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label>Platform</label>
+                    <select id="platformFilter">
+                        <option value="all">All Platforms</option>
+                        <option value="linkedin">🔗 LinkedIn</option>
+                        <option value="twitter">🐦 Twitter/X</option>
+                        <option value="reddit">🤖 Reddit</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Topics (Select Multiple)</label>
+                    <div style="border: 1px solid #ddd; border-radius: 6px; padding: 0.5rem; max-height: 150px; overflow-y: auto; background: white;">
+                        <div style="margin-bottom: 0.5rem;">
+                            <label style="font-weight: normal; display: flex; align-items: center; cursor: pointer;">
+                                <input type="checkbox" id="selectAllTopics" onchange="toggleAllTopics()" style="margin-right: 0.5rem;" checked />
+                                <strong>Select All</strong>
+                            </label>
+                        </div>
+                        <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid #ecf0f1;" />
+                        <div id="topicCheckboxes"></div>
+                    </div>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Start Date</label>
+                    <input type="date" id="startDate" />
+                </div>
+                
+                <div class="filter-group">
+                    <label>End Date</label>
+                    <input type="date" id="endDate" />
+                </div>
+            </div>
+            
+            <div style="margin-top: 1rem;">
+                <button class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
+                <button class="btn btn-secondary" onclick="resetFilters()">Reset</button>
+                <button class="btn btn-secondary" onclick="reloadData()">← Back to Config</button>
+                <button class="btn btn-secondary" onclick="debugData()" style="background: #6c757d;">🔍 Debug Data</button>
+                <button class="btn btn-secondary" onclick="showBookmarks()" style="background: #f39c12;">⭐ Bookmarks (<span id="bookmarkCount">0</span>)</button>
+                <button class="btn btn-secondary" onclick="showSavedKeywords()" style="background: #9b59b6;">🔑 Keywords</button>
+                <button class="btn btn-secondary" onclick="showInfluencers()" style="background: #e74c3c;">👥 Influencers</button>
+            </div>
+        </div>
+
+        <!-- Bookmarks Panel -->
+        <div class="filters-panel" id="bookmarksPanel" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3>⭐ Saved Posts & Collections</h3>
+                <button class="btn btn-secondary" onclick="hideBookmarks()">← Back to Dashboard</button>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 250px 1fr; gap: 1.5rem;">
+                <!-- Collections Sidebar -->
+                <div>
+                    <h4 style="color: #2E5C9A; margin-bottom: 0.8rem; font-size: 1rem;">Collections</h4>
+                    <div id="collectionsList" style="margin-bottom: 1rem;"></div>
+                    
+                    <button class="btn btn-primary" onclick="addNewCollection()" style="width: 100%; padding: 0.6rem; font-size: 0.9rem;">
+                        + New Collection
+                    </button>
+                    
+                    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #ddd;">
+                        <button class="btn btn-secondary" onclick="exportBookmarks()" style="width: 100%; padding: 0.6rem; font-size: 0.9rem; background: #4DAFA7;">
+                            📥 Export All
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Bookmarked Posts -->
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h4 style="color: #2E5C9A; font-size: 1rem;" id="collectionTitle">All Bookmarks</h4>
+                        <span style="color: #6c757d; font-size: 0.9rem;" id="bookmarkCountDisplay">0 posts</span>
+                    </div>
+                    <div id="bookmarkedPostsList"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Saved Keywords Panel -->
+        <div class="filters-panel" id="savedKeywordsPanel" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3>🔑 Saved Keyword Lists</h3>
+                <button class="btn btn-secondary" onclick="hideSavedKeywords()">← Back to Dashboard</button>
+            </div>
+            
+            <div style="background: #E0F2F1; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; font-size: 0.9rem; color: #2E5C9A; border-left: 4px solid #9b59b6;">
+                <strong>💡 About Saved Keywords:</strong> Save keyword lists for quick reuse. Perfect for recurring searches or different campaign types.
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <!-- Saved Lists -->
+                <div>
+                    <h4 style="color: #2E5C9A; margin-bottom: 1rem;">📋 Your Keyword Lists</h4>
+                    <div id="savedKeywordsList"></div>
+                    
+                    <div style="margin-top: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 6px;">
+                        <h5 style="color: #2E5C9A; margin-bottom: 0.8rem;">➕ Create New List</h5>
+                        <input type="text" id="newKeywordListName" placeholder="List name (e.g., 'PA Denials')" 
+                               style="width: 100%; padding: 0.6rem; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 0.5rem;" />
+                        <textarea id="newKeywordListContent" rows="6" placeholder="Enter keywords (one per line)"
+                                  style="width: 100%; padding: 0.6rem; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 0.5rem;"></textarea>
+                        <button class="btn btn-primary" onclick="saveKeywordList()" style="width: 100%;">
+                            💾 Save Keyword List
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- List Preview -->
+                <div>
+                    <h4 style="color: #2E5C9A; margin-bottom: 1rem;">👁️ Preview & Actions</h4>
+                    <div id="keywordListPreview" style="min-height: 200px;">
+                        <p style="color: #95a5a6; text-align: center; padding: 3rem;">
+                            Select a keyword list to preview
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Influencers Panel -->
+        <div class="filters-panel" id="influencersPanel" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3>👥 Saved Influencer Profiles</h3>
+                <button class="btn btn-secondary" onclick="hideInfluencers()">← Back to Dashboard</button>
+            </div>
+            
+            <div style="background: #FFE5E5; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; font-size: 0.9rem; color: #2E5C9A; border-left: 4px solid #e74c3c;">
+                <strong>💡 About Influencers:</strong> Track key authors, providers, and thought leaders. Monitor their activity and engagement across platforms.
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                    <button class="btn btn-secondary" onclick="filterInfluencers('all')" id="filterAll" style="background: #2E5C9A; color: white;">
+                        All (<span id="countAll">0</span>)
+                    </button>
+                    <button class="btn btn-secondary" onclick="filterInfluencers('linkedin')" id="filterLinkedIn">
+                        🔗 LinkedIn (<span id="countLinkedIn">0</span>)
+                    </button>
+                    <button class="btn btn-secondary" onclick="filterInfluencers('twitter')" id="filterTwitter">
+                        🐦 Twitter/X (<span id="countTwitter">0</span>)
+                    </button>
+                    <button class="btn btn-secondary" onclick="filterInfluencers('reddit')" id="filterReddit">
+                        🤖 Reddit (<span id="countReddit">0</span>)
+                    </button>
+                </div>
+            </div>
+            
+            <div id="influencersList"></div>
+            
+            <div style="margin-top: 1.5rem; text-align: center;">
+                <button class="btn btn-secondary" onclick="exportInfluencers()" style="background: #4DAFA7;">
+                    📥 Export All Influencers
+                </button>
+            </div>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Total Mentions</div>
+                <div class="metric-value" id="totalMentions">0</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">Unique Authors</div>
+                <div class="metric-value" id="uniqueAuthors">0</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">Total Engagement</div>
+                <div class="metric-value" id="totalEngagement">0</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">This Week</div>
+                <div class="metric-value" id="thisWeekMentions">0</div>
+            </div>
+        </div>
+
+        <!-- Weekly Mentions Chart -->
+        <div class="chart-card">
+            <h3>📈 Weekly Mentions by Selected Topics</h3>
+            <canvas id="weeklyChart" height="80"></canvas>
+        </div>
+
+        <!-- Sentiment Trend Chart -->
+        <div class="chart-card">
+            <h3>📊 Sentiment Trend Over Time</h3>
+            <p style="margin-bottom: 1rem; color: #7f8c8d; font-size: 0.9rem;">
+                Positive / Neutral / Negative conversation breakdown
+            </p>
+            <canvas id="sentimentChart" height="80"></canvas>
+        </div>
+
+        <!-- Payer and Procedure Mentions -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+            <!-- Total Payer Mentions -->
+            <div class="chart-card">
+                <h3>💼 Total Payer Mentions (12-Week Period)</h3>
+                <p style="margin-bottom: 1rem; color: #7f8c8d; font-size: 0.85rem;">
+                    Discussion volume by insurance plan
+                </p>
+                <div style="position: relative; height: 350px;">
+                    <canvas id="payerChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Procedure & Device Mentions -->
+            <div class="chart-card">
+                <h3>🏥 Procedure & Device Mentions (12-Week Period)</h3>
+                <p style="margin-bottom: 1rem; color: #7f8c8d; font-size: 0.85rem;">
+                    Comparative discussion volume
+                </p>
+                <div style="position: relative; height: 350px;">
+                    <canvas id="procedureChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI-Powered Insights -->
+        <div class="chart-card" style="border-left: 4px solid #E85D75;">
+            <h3>🤖 AI-Powered Insights</h3>
+            <p style="margin-bottom: 1rem; color: #7f8c8d; font-size: 0.85rem;">
+                Automated analysis of trends, pain points, and opportunities
+            </p>
+            <div id="aiInsights">
+                <div style="text-align: center; padding: 2rem; color: #95a5a6;">
+                    Loading insights...
+                </div>
+            </div>
+        </div>
+
+        <!-- Trending Keywords -->
+        <div class="chart-card" style="border-left: 4px solid #f39c12;">
+            <h3>🔥 Trending Keywords & Topics</h3>
+            <p style="margin-bottom: 1rem; color: #7f8c8d; font-size: 0.85rem;">
+                Most frequently mentioned terms in pain management discussions
+            </p>
+            <div id="trendingKeywords">
+                <div style="text-align: center; padding: 2rem; color: #95a5a6;">
+                    Analyzing keywords...
+                </div>
+            </div>
+        </div>
+
+        <!-- Lead Scoring - High Priority Posts -->
+        <div class="chart-card" style="border-left: 4px solid #4DAFA7;">
+            <h3>🎯 Sales Opportunities - Lead Scoring</h3>
+            <p style="margin-bottom: 1rem; color: #7f8c8d; font-size: 0.85rem;">
+                Posts scored by sales opportunity (10 = highest priority)
+            </p>
+            <div id="leadScoring">
+                <div style="text-align: center; padding: 2rem; color: #95a5a6;">
+                    Analyzing posts for sales opportunities...
+                </div>
+            </div>
+        </div>
+
+        <!-- Posts Table -->
+        <div class="table-card">
+            <h3>💬 Multi-Platform Posts & Mentions</h3>
+            <p style="margin-bottom: 1rem; color: #7f8c8d; font-size: 0.9rem;">
+                Sorted by engagement (highest first) - Top 50 items shown
+            </p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Platform</th>
+                        <th>Date</th>
+                        <th>Author</th>
+                        <th>Topic</th>
+                        <th>Content</th>
+                        <th>Engagement ↓</th>
+                        <th>Link</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="postsTable">
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 2rem; color: #7f8c8d;">
+                            No data loaded. Configure and fetch multi-platform data above.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let allData = [];
+        let filteredData = [];
+        let weeklyChart = null;
+        let sentimentChart = null;
+        let payerChart = null;
+        let procedureChart = null;
+        let searchKeywords = []; // Store the keywords used for search
+        
+        // Bookmarks state
+        let bookmarks = [];
+        let collections = ['Sales Leads', 'Case Studies', 'Follow Up', 'Competitors'];
+        
+        // Saved Keywords state
+        let savedKeywordLists = [];
+        
+        // Influencers state
+        let savedInfluencers = [];
+        let currentInfluencerFilter = 'all';
+        const IS_FILE_MODE = window.location.protocol === 'file:';
+        const IS_LOCAL_HTTP = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost';
+        const IS_LOCAL_DEV = IS_FILE_MODE || IS_LOCAL_HTTP;
+        const LOCAL_API_BASE = 'http://127.0.0.1:5173';
+        let localApiReachable = null;
+        
+        // Load bookmarks from localStorage
+        function loadBookmarks() {
+            const saved = localStorage.getItem('painmed_bookmarks');
+            if (saved) {
+                bookmarks = JSON.parse(saved);
+            }
+            
+            const savedCollections = localStorage.getItem('painmed_collections');
+            if (savedCollections) {
+                collections = JSON.parse(savedCollections);
+            }
+        }
+        
+        // Save bookmarks to localStorage
+        function saveBookmarks() {
+            localStorage.setItem('painmed_bookmarks', JSON.stringify(bookmarks));
+            localStorage.setItem('painmed_collections', JSON.stringify(collections));
+        }
+        
+        // Load saved keyword lists
+        function loadSavedKeywords() {
+            const saved = localStorage.getItem('painmed_keyword_lists');
+            if (saved) {
+                savedKeywordLists = JSON.parse(saved);
+            }
+        }
+        
+        // Save keyword lists
+        function saveSavedKeywords() {
+            localStorage.setItem('painmed_keyword_lists', JSON.stringify(savedKeywordLists));
+        }
+        
+        // Load saved influencers
+        function loadInfluencers() {
+            const saved = localStorage.getItem('painmed_influencers');
+            if (saved) {
+                savedInfluencers = JSON.parse(saved);
+            }
+        }
+        
+        // Save influencers
+        function saveInfluencers() {
+            localStorage.setItem('painmed_influencers', JSON.stringify(savedInfluencers));
+        }
+
+        // Apify configuration (LinkedIn + Twitter)
+        const APIFY_CONFIG = {
+            linkedin: {
+                actorId: 'kfiWbq3boy3dWKbiL',
+                name: 'LinkedIn Content Scraper'
+            },
+            twitter: {
+                defaultActorId: 'quacker/twitter-scraper',
+                name: 'Twitter/X Scraper'
+            },
+            apiBaseUrl: 'https://api.apify.com/v2'
+        };
+
+        function buildApifyActorRunUrl(actorId, token) {
+            if (IS_LOCAL_DEV) {
+                return `${LOCAL_API_BASE}/api/apify/run`;
+            }
+            return `${APIFY_CONFIG.apiBaseUrl}/acts/${actorId}/runs?token=${token}`;
+        }
+
+        async function startApifyRun(actorId, token, input) {
+            const url = buildApifyActorRunUrl(actorId, token);
+            const requestBody = IS_LOCAL_DEV ? JSON.stringify({ actorId, token, input }) : JSON.stringify(input);
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: requestBody
+            });
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(`Apify run error ${response.status}: ${errText.slice(0, 200)}`);
+            }
+            return await response.json();
+        }
+
+        async function getApifyRun(token, runId) {
+            const url = IS_LOCAL_DEV
+                ? `${LOCAL_API_BASE}/api/apify/run-status?token=${encodeURIComponent(token)}&runId=${encodeURIComponent(runId)}`
+                : `${APIFY_CONFIG.apiBaseUrl}/actor-runs/${runId}?token=${token}`;
+            const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+            if (!response.ok) {
+                throw new Error(`Failed to check run status (${response.status})`);
+            }
+            return await response.json();
+        }
+
+        async function getApifyDataset(token, datasetId) {
+            const url = IS_LOCAL_DEV
+                ? `${LOCAL_API_BASE}/api/apify/dataset?token=${encodeURIComponent(token)}&datasetId=${encodeURIComponent(datasetId)}`
+                : `${APIFY_CONFIG.apiBaseUrl}/datasets/${datasetId}/items?token=${token}&format=json`;
+            const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+            if (!response.ok) {
+                throw new Error(`Failed to fetch results (${response.status})`);
+            }
+            return await response.json();
+        }
+
+        async function ensureLocalApiAvailable() {
+            if (!IS_LOCAL_DEV) return true;
+            if (localApiReachable === true) return true;
+
+            try {
+                const response = await fetch(`${LOCAL_API_BASE}/api/health`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                localApiReachable = true;
+                return true;
+            } catch (_error) {
+                localApiReachable = false;
+                return false;
+            }
+        }
+
+        // Cache management
+        const CACHE_KEY = 'linkedin_dashboard_cache';
+        const CACHE_EXPIRY_KEY = 'linkedin_dashboard_cache_expiry';
+        const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+        // Initialize
+        function init() {
+            // Set default date range (last 90 days to capture more data)
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - 90);
+            
+            document.getElementById('startDate').valueAsDate = startDate;
+            document.getElementById('endDate').valueAsDate = endDate;
+
+            // Check for cached data
+            loadCachedData();
+            
+            // Load bookmarks
+            loadBookmarks();
+            updateBookmarkCount();
+            
+            // Load saved keywords and influencers
+            loadSavedKeywords();
+            loadInfluencers();
+            
+            // Add platform toggle listeners
+            document.getElementById('platformLinkedIn').addEventListener('change', togglePlatformFields);
+            document.getElementById('platformTwitter').addEventListener('change', togglePlatformFields);
+            document.getElementById('platformReddit').addEventListener('change', togglePlatformFields);
+            const keywordInput = document.getElementById('searchKeywords');
+            if (keywordInput) {
+                keywordInput.addEventListener('change', maybeSuggestRedditSubreddits);
+            }
+            const redditSuggestions = document.getElementById('redditSuggestions');
+            if (redditSuggestions) {
+                redditSuggestions.addEventListener('click', onRedditSuggestionClick);
+            }
+            if (IS_FILE_MODE) {
+                updateLoadingStatus('Opened via file://. Start local server and use http://127.0.0.1:5173/pilot.html');
+            }
+            togglePlatformFields(); // Initial state
+        }
+        
+        // Toggle platform-specific fields
+        function togglePlatformFields() {
+            const linkedinChecked = document.getElementById('platformLinkedIn').checked;
+            const twitterChecked = document.getElementById('platformTwitter').checked;
+            const redditChecked = document.getElementById('platformReddit').checked;
+            
+            document.getElementById('linkedinFields').style.display = linkedinChecked ? 'block' : 'none';
+            document.getElementById('twitterFields').style.display = twitterChecked ? 'block' : 'none';
+            document.getElementById('redditFields').style.display = redditChecked ? 'block' : 'none';
+            if (redditChecked) {
+                maybeSuggestRedditSubreddits();
+            }
+        }
+
+        function parseRedditSuggestionSeeds() {
+            const keywordsText = document.getElementById('searchKeywords').value.trim();
+            const rawKeywords = keywordsText
+                .split('\n')
+                .map(k => k.trim().toLowerCase())
+                .filter(Boolean);
+
+            const splitTerms = rawKeywords.flatMap((k) =>
+                k.split(/[^a-z0-9]+/).map((term) => term.trim()).filter(Boolean)
+            );
+
+            return [...new Set([...rawKeywords, ...splitTerms])].slice(0, 12);
+        }
+
+        function buildLocalSubredditSuggestions(seeds) {
+            const map = {
+                healthcare: ['healthcare', 'medicine', 'HealthIT', 'Hospital'],
+                medical: ['medicine', 'medical', 'medschool', 'nursing'],
+                billing: ['medicalbilling', 'healthcare', 'smallbusiness', 'practiceadmin'],
+                insurance: ['Insurance', 'HealthInsurance', 'medicine', 'personalfinance'],
+                medicare: ['medicine', 'healthcare', 'medicalbilling', 'Insurance'],
+                pain: ['ChronicPain', 'backpain', 'Fibromyalgia', 'medicine'],
+                management: ['healthcare', 'medicine', 'smallbusiness', 'practiceadmin'],
+                prior: ['Insurance', 'healthcare', 'medicine', 'medicalbilling'],
+                authorization: ['medicalbilling', 'healthcare', 'Insurance', 'medicine'],
+                interventional: ['medicine', 'ChronicPain', 'medical', 'healthcare'],
+                rcm: ['medicalbilling', 'healthcare', 'smallbusiness', 'practiceadmin']
+            };
+
+            const suggestions = [];
+            for (const seed of seeds) {
+                const mapped = map[seed];
+                if (!mapped) continue;
+                for (const name of mapped) {
+                    suggestions.push({ name, reason: `keyword: ${seed}` });
+                }
+            }
+
+            const deduped = [];
+            const seen = new Set();
+            for (const item of suggestions) {
+                const key = String(item.name || '').toLowerCase();
+                if (!key || seen.has(key)) continue;
+                seen.add(key);
+                deduped.push(item);
+            }
+            return deduped.slice(0, 20);
+        }
+
+        async function maybeSuggestRedditSubreddits() {
+            if (!document.getElementById('platformReddit').checked) return;
+            await suggestRedditSubreddits();
+        }
+
+        function onRedditSuggestionClick(event) {
+            const target = event.target;
+            if (!(target instanceof HTMLElement)) return;
+            const subreddit = target.dataset.subreddit;
+            if (!subreddit) return;
+
+            const input = document.getElementById('redditSubreddits');
+            const existing = input.value
+                .split(',')
+                .map((s) => s.trim().replace(/^r\//i, ''))
+                .filter(Boolean);
+            const existingSet = new Set(existing.map((s) => s.toLowerCase()));
+            if (!existingSet.has(subreddit.toLowerCase())) {
+                existing.push(subreddit);
+                input.value = existing.join(', ');
+            }
+
+            const statusEl = document.getElementById('redditSuggestStatus');
+            if (statusEl) {
+                statusEl.textContent = `Added r/${subreddit}. You can add more, then click Fetch Multi-Platform Data.`;
+            }
+
+            target.style.background = '#FF4500';
+            target.style.color = '#fff';
+            target.style.borderColor = '#FF4500';
+        }
+
+        function renderRedditSuggestions(suggestions) {
+            const statusEl = document.getElementById('redditSuggestStatus');
+            const suggestionsEl = document.getElementById('redditSuggestions');
+
+            if (!Array.isArray(suggestions) || suggestions.length === 0) {
+                suggestionsEl.innerHTML = '';
+                statusEl.textContent = 'No subreddit suggestions found for these keywords.';
+                return;
+            }
+
+            suggestionsEl.innerHTML = suggestions.slice(0, 20).map((item) => {
+                const name = String(item.name || '').trim();
+                const reason = String(item.reason || 'Suggested');
+                return `<button type="button" data-subreddit="${escapeHtml(name)}" title="${escapeHtml(reason)}" style="padding: 0.35rem 0.7rem; border: 1px solid #ffd0bf; border-radius: 999px; background: #fff6f2; color: #c53d08; font-size: 0.8rem; cursor: pointer;">r/${escapeHtml(name)}</button>`;
+            }).join('');
+            statusEl.textContent = `Found ${Math.min(suggestions.length, 20)} subreddit suggestions. Click to add them.`;
+        }
+
+        async function suggestRedditSubreddits() {
+            const statusEl = document.getElementById('redditSuggestStatus');
+            const suggestionsEl = document.getElementById('redditSuggestions');
+            const seeds = parseRedditSuggestionSeeds();
+
+            if (!seeds.length) {
+                statusEl.textContent = 'Add keywords first to get subreddit suggestions.';
+                suggestionsEl.innerHTML = '';
+                return;
+            }
+
+            statusEl.textContent = 'Finding subreddit suggestions...';
+            try {
+                if (IS_LOCAL_DEV) {
+                    const isHealthy = await ensureLocalApiAvailable();
+                    if (!isHealthy) {
+                        const localSuggestions = buildLocalSubredditSuggestions(seeds);
+                        renderRedditSuggestions(localSuggestions);
+                        statusEl.textContent = 'Local server not running. Using built-in subreddit suggestions.';
+                        return;
+                    }
+                }
+                const suggestUrl = IS_LOCAL_DEV
+                    ? `${LOCAL_API_BASE}/api/suggest-subreddits?keywords=${encodeURIComponent(seeds.join(','))}`
+                    : `/.netlify/functions/fetch-reddit?action=suggest&keywords=${encodeURIComponent(seeds.join(','))}`;
+                const response = await fetch(suggestUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const payload = await response.json();
+                const suggestions = Array.isArray(payload?.suggestions) ? payload.suggestions : [];
+                if (suggestions.length > 0) {
+                    renderRedditSuggestions(suggestions);
+                    return;
+                }
+                const localSuggestions = buildLocalSubredditSuggestions(seeds);
+                renderRedditSuggestions(localSuggestions);
+                if (localSuggestions.length > 0) {
+                    statusEl.textContent = 'Using built-in subreddit suggestions.';
+                }
+            } catch (error) {
+                const localSuggestions = buildLocalSubredditSuggestions(seeds);
+                renderRedditSuggestions(localSuggestions);
+                if (localSuggestions.length > 0) {
+                    statusEl.textContent = 'Could not reach suggestion API. Using built-in subreddit suggestions.';
+                } else {
+                    suggestionsEl.innerHTML = '';
+                    statusEl.textContent = `Suggestion fetch failed: ${error.message}`;
+                }
+            }
+        }
+
+        // Load cached data
+        function loadCachedData() {
+            try {
+                const cachedData = localStorage.getItem(CACHE_KEY);
+                const cacheExpiry = localStorage.getItem(CACHE_EXPIRY_KEY);
+                
+                if (cachedData && cacheExpiry) {
+                    const expiryTime = parseInt(cacheExpiry);
+                    const now = Date.now();
+                    
+                    if (now < expiryTime) {
+                        // Cache is still valid
+                        const cache = JSON.parse(cachedData);
+                        allData = cache.data;
+                        searchKeywords = cache.keywords;
+                        
+                        console.log('✓ Loaded cached data:', allData.length, 'posts');
+                        console.log('✓ Keywords:', searchKeywords);
+                        
+                        // Show cache status in config panel
+                        const hoursLeft = Math.round((expiryTime - now) / (60 * 60 * 1000));
+                        document.getElementById('cacheInfo').textContent = 
+                            `${allData.length} posts cached. Expires in ${hoursLeft} hours.`;
+                        document.getElementById('cacheStatus').style.display = 'block';
+                        
+                        // Auto-load dashboard with cached data
+                        document.getElementById('configPanel').style.display = 'none';
+                        document.getElementById('filtersPanel').style.display = 'block';
+                        
+                        populateTopicFilter();
+                        applyFilters();
+                    } else {
+                        // Cache expired
+                        console.log('Cache expired');
+                        clearCache();
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading cache:', error);
+                clearCache();
+            }
+        }
+
+        // Clear cache and reload
+        function clearCacheAndReload() {
+            if (confirm('Clear cached data and fetch fresh data from LinkedIn?')) {
+                clearCache();
+                location.reload();
+            }
+        }
+
+        // Save data to cache
+        function saveToCache(data, keywords) {
+            try {
+                const cache = {
+                    data: data,
+                    keywords: keywords,
+                    timestamp: Date.now()
+                };
+                
+                localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+                localStorage.setItem(CACHE_EXPIRY_KEY, (Date.now() + CACHE_DURATION).toString());
+                
+                console.log('✓ Data cached successfully');
+            } catch (error) {
+                console.error('Error saving cache:', error);
+            }
+        }
+
+        // Clear cache
+        function clearCache() {
+            localStorage.removeItem(CACHE_KEY);
+            localStorage.removeItem(CACHE_EXPIRY_KEY);
+            console.log('✓ Cache cleared');
+        }
+
+        // Fetch LinkedIn data
+        async function fetchLinkedInData() {
+            const token = document.getElementById('apifyToken').value.trim();
+            const cookie = document.getElementById('linkedinCookie').value.trim();
+            const keywordsText = document.getElementById('searchKeywords').value.trim();
+            const maxPosts = parseInt(document.getElementById('maxPosts').value);
+            const searchType = document.getElementById('searchType').value;
+
+            // Validation
+            if (!token || !cookie || !keywordsText) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            // Parse keywords
+            const keywords = keywordsText.split('\n')
+                .map(k => k.trim())
+                .filter(k => k.length > 0);
+
+            if (keywords.length === 0) {
+                alert('Please enter at least one keyword');
+                return;
+            }
+
+            // Store keywords globally
+            searchKeywords = keywords;
+
+            // Show loading
+            document.getElementById('configPanel').style.display = 'none';
+            document.getElementById('loadingPanel').style.display = 'block';
+            updateLoadingStatus('Building search URLs...');
+
+            try {
+                // Build LinkedIn search URLs - each URL corresponds to a keyword/topic
+                const searchUrls = keywords.map(keyword => {
+                    const encodedKeyword = encodeURIComponent(keyword.trim());
+                    return `https://www.linkedin.com/search/results/${searchType}/?keywords=${encodedKeyword}&origin=GLOBAL_SEARCH_HEADER`;
+                });
+
+                console.log('Search URLs:', searchUrls);
+                updateLoadingStatus(`Starting search for ${keywords.length} keywords...`);
+
+                // Start Apify actor
+                const run = await startApifyActor(token, cookie, searchUrls, maxPosts);
+                console.log('Actor run started:', run.id);
+                
+                updateLoadingStatus(`Searching LinkedIn... (Run ID: ${run.id})`);
+                
+                // Wait for completion
+                await waitForRunCompletion(token, run.id);
+                
+                updateLoadingStatus('Processing results...');
+                
+                // Get results
+                const datasetId = run.defaultDatasetId;
+                const rawData = await fetchDataset(token, datasetId);
+
+                if (!rawData || rawData.length === 0) {
+                    throw new Error('No posts found. Try different keywords or check your LinkedIn cookie.');
+                }
+
+                console.log('Fetched', rawData.length, 'posts');
+                
+                // Debug: Log first item to see data structure
+                if (rawData.length > 0) {
+                    console.log('Sample post data:', rawData[0]);
+                    console.log('Available fields:', Object.keys(rawData[0]));
+                }
+
+                // Process data - map each post to the keyword that found it
+                allData = processLinkedInData(rawData, keywords, searchUrls);
+                
+                // Save to cache
+                saveToCache(allData, keywords);
+                
+                // Show dashboard
+                document.getElementById('loadingPanel').style.display = 'none';
+                document.getElementById('filtersPanel').style.display = 'block';
+                
+                populateTopicFilter();
+                applyFilters();
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert(`Failed to fetch data: ${error.message}`);
+                document.getElementById('loadingPanel').style.display = 'none';
+                document.getElementById('configPanel').style.display = 'block';
+            }
+        }
+
+        // Process LinkedIn data - assign topic based on which search URL found it
+        function processLinkedInData(rawData, keywords, searchUrls) {
+            // Create a map of search URL to keyword
+            const urlToKeyword = {};
+            searchUrls.forEach((url, index) => {
+                urlToKeyword[url] = keywords[index];
+            });
+
+            return rawData.map((item, index) => {
+                // Extract author
+                const author = item.authorName || 
+                              (item.author ? `${item.author.firstName || ''} ${item.author.lastName || ''}`.trim() : '') ||
+                              'Unknown';
+                
+                const authorUrl = item.authorProfileUrl || 
+                                 (item.author?.publicId ? `https://www.linkedin.com/in/${item.author.publicId}` : '#');
+                
+                // Extract location from author data
+                const location = item.authorLocation || 
+                                (item.author?.location) || 
+                                (item.location) || 
+                                '';
+                
+                const content = item.text || item.content || '';
+                
+                // Try multiple possible URL fields
+                let postUrl = item.url || item.postUrl || item.link || item.permalink || '';
+                
+                // Fix incomplete LinkedIn URLs (missing hash at end)
+                if (postUrl && postUrl.includes('activity-') && !postUrl.match(/activity-\d+-\w{4}/)) {
+                    // Extract activity ID
+                    const activityMatch = postUrl.match(/activity-(\d+)/);
+                    if (activityMatch) {
+                        const activityId = activityMatch[1];
+                        // Use feed/update format which is more reliable
+                        postUrl = `https://www.linkedin.com/feed/update/urn:li:activity:${activityId}/`;
+                    }
+                }
+                
+                // Try to construct from URN if available
+                if (!postUrl && item.urn) {
+                    postUrl = `https://www.linkedin.com/feed/update/${item.urn}/`;
+                }
+                
+                // Try to construct from activity URN
+                if (!postUrl && item.activityUrn) {
+                    const urnId = item.activityUrn.split(':').pop();
+                    postUrl = `https://www.linkedin.com/feed/update/urn:li:activity:${urnId}/`;
+                }
+                
+                // Try to construct from post ID
+                if (!postUrl && item.postId) {
+                    postUrl = `https://www.linkedin.com/posts/${item.postId}`;
+                }
+                
+                // Debug log for first few items
+                if (index < 3) {
+                    console.log(`Post ${index + 1} URL:`, postUrl);
+                    console.log(`Post ${index + 1} raw data:`, {
+                        url: item.url,
+                        postUrl: item.postUrl,
+                        link: item.link,
+                        permalink: item.permalink,
+                        urn: item.urn,
+                        activityUrn: item.activityUrn,
+                        postId: item.postId
+                    });
+                }
+                
+                const date = item.postedAtISO || item.postedAt || new Date().toISOString();
+                
+                const likes = Number(item.numLikes) || Number(item.likes) || 0;
+                const comments = Number(item.numComments) || Number(item.comments) || 0;
+                const shares = Number(item.numShares) || Number(item.shares) || 0;
+                
+                // Determine topic based on which keyword/search found this post
+                let topic = 'general';
+                
+                // Try to match by content first
+                const lowerContent = content.toLowerCase();
+                for (const keyword of keywords) {
+                    if (lowerContent.includes(keyword.toLowerCase())) {
+                        topic = keyword;
+                        break;
+                    }
+                }
+                
+                // If no match, assign round-robin based on position
+                if (topic === 'general') {
+                    const postsPerKeyword = Math.ceil(rawData.length / keywords.length);
+                    const keywordIndex = Math.floor(index / postsPerKeyword);
+                    topic = keywords[Math.min(keywordIndex, keywords.length - 1)];
+                }
+
+                return {
+                    date: date,
+                    author: author,
+                    authorUrl: authorUrl,
+                    location: location,
+                    topic: topic,
+                    content: content,
+                    platform: 'linkedin',
+                    likes: likes,
+                    comments: comments,
+                    shares: shares,
+                    url: postUrl || '#'
+                };
+            });
+        }
+
+        // Start Apify actor
+        async function startApifyActor(token, liAtCookie, searchUrls, maxPosts) {
+            const cookieArray = getCookieArray(liAtCookie);
+            
+            // Optimize settings for faster execution while respecting Apify limits
+            const input = {
+                cookie: cookieArray,
+                userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+                urls: searchUrls,
+                limitPerSource: Math.max(3, Math.ceil(maxPosts / searchUrls.length)),
+                deepScrape: false, // Changed to false for faster scraping
+                rawData: false,
+                minDelay: 2, // Minimum required
+                maxDelay: 8, // Minimum required by Apify
+                proxy: {
+                    useApifyProxy: true,
+                    apifyProxyCountry: "US"
+                },
+                // Add performance optimizations
+                maxRequestRetries: 1, // Reduce retries
+                maxConcurrency: 10 // Increase concurrency for parallel processing
+            };
+
+            const result = await startApifyRun(APIFY_CONFIG.linkedin.actorId, token, input);
+            return result.data;
+        }
+
+        // Get cookie array
+        function getCookieArray(liAtValue) {
+            return [
+                {"domain": ".linkedin.com", "name": "lms_ads", "value": "AQFqpJug0ZkFJAAAAZwCHbmxN6xfF2RUbZhbkydXmHuX-lh8Ub4bNAFveAxMmm9TG8yW9IpGVUHzAT5N86PM5xIde2Dlh1KI", "path": "/", "secure": true, "httpOnly": false},
+                {"domain": ".linkedin.com", "name": "_guid", "value": "129ae7f6-79a8-45fd-a31d-0486f2decc26", "path": "/", "secure": true, "httpOnly": false},
+                {"domain": ".linkedin.com", "name": "bcookie", "value": "\"v=2&e54d18a5-c177-497e-8ab9-6c60bf330702\"", "path": "/", "secure": true, "httpOnly": false},
+                {"domain": ".linkedin.com", "name": "lms_analytics", "value": "AQFqpJug0ZkFJAAAAZwCHbmxN6xfF2RUbZhbkydXmHuX-lh8Ub4bNAFveAxMmm9TG8yW9IpGVUHzAT5N86PM5xIde2Dlh1KI", "path": "/", "secure": true, "httpOnly": false},
+                {"domain": ".www.linkedin.com", "name": "li_at", "value": liAtValue, "path": "/", "secure": true, "httpOnly": true},
+                {"domain": ".linkedin.com", "name": "lang", "value": "v=2&lang=en-us", "path": "/", "secure": true, "httpOnly": false},
+                {"domain": ".linkedin.com", "name": "lidc", "value": "\"b=OGST02:s=O:r=O:a=O:p=O:g=3724:u=1:x=1:i=1769562379:t=1769647549:v=2:sig=AQG0RRDY5TqhoUjOQT_-IuY4Q37uRTjd\"", "path": "/", "secure": true, "httpOnly": false},
+                {"domain": ".www.linkedin.com", "name": "bscookie", "value": "\"v=1&2026012801002105821962-8aa8-4867-8cc3-c2db0d4482dbAQGydB9VRRntWEP6EFWY9JA5yTx8duMh\"", "path": "/", "secure": true, "httpOnly": true},
+                {"domain": ".www.linkedin.com", "name": "JSESSIONID", "value": "\"ajax:7160386635290813687\"", "path": "/", "secure": true, "httpOnly": false},
+                {"domain": ".linkedin.com", "name": "li_sugr", "value": "cfbc4abf-f93d-4968-9024-c38b5c2e32d6", "path": "/", "secure": true, "httpOnly": false}
+            ];
+        }
+
+        // Wait for actor run completion
+        async function waitForRunCompletion(token, runId, maxWaitTime = 300000) {
+            const startTime = Date.now();
+            const pollInterval = 3000; // Reduced from 5000 to check more frequently
+
+            while (Date.now() - startTime < maxWaitTime) {
+                const result = await getApifyRun(token, runId);
+                const run = result.data;
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                
+                // Show progress with more detail
+                const stats = run.stats || {};
+                const requestsFinished = stats.requestsFinished || 0;
+                const requestsTotal = stats.requestsTotal || 0;
+                
+                if (requestsTotal > 0) {
+                    const progress = Math.round((requestsFinished / requestsTotal) * 100);
+                    updateLoadingStatus(`Status: ${run.status} - ${progress}% complete (${elapsed}s elapsed)`);
+                } else {
+                    updateLoadingStatus(`Status: ${run.status} (${elapsed}s elapsed)`);
+                }
+
+                if (run.status === 'SUCCEEDED') {
+                    return run;
+                } else if (run.status === 'FAILED' || run.status === 'ABORTED') {
+                    throw new Error(`Actor run ${run.status.toLowerCase()}. Check your credentials and try again.`);
+                }
+
+                await new Promise(resolve => setTimeout(resolve, pollInterval));
+            }
+
+            throw new Error('Timeout waiting for results. Try with fewer keywords.');
+        }
+
+        // Fetch dataset
+        async function fetchDataset(token, datasetId) {
+            return await getApifyDataset(token, datasetId);
+        }
+
+        // Update loading status
+        function updateLoadingStatus(message) {
+            document.getElementById('loadingStatus').textContent = message;
+        }
+
+        // Reload data (back to config)
+        function reloadData() {
+            if (confirm('This will clear cached data and return to configuration. Continue?')) {
+                clearCache();
+                document.getElementById('filtersPanel').style.display = 'none';
+                document.getElementById('configPanel').style.display = 'block';
+                allData = [];
+                filteredData = [];
+                searchKeywords = [];
+            }
+        }
+
+        // Populate topic filter dropdown
+        function populateTopicFilter() {
+            const topics = [...new Set(allData.map(item => item.topic))].sort();
+            const container = document.getElementById('topicCheckboxes');
+            
+            container.innerHTML = '';
+            topics.forEach(topic => {
+                const label = document.createElement('label');
+                label.style.cssText = 'display: flex; align-items: center; padding: 0.3rem 0; cursor: pointer; font-weight: normal;';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = topic;
+                checkbox.className = 'topic-checkbox';
+                checkbox.checked = true;
+                checkbox.style.marginRight = '0.5rem';
+                checkbox.onchange = updateSelectAllState;
+                
+                const text = document.createTextNode(topic);
+                
+                label.appendChild(checkbox);
+                label.appendChild(text);
+                container.appendChild(label);
+            });
+        }
+
+        // Toggle all topics
+        function toggleAllTopics() {
+            const selectAll = document.getElementById('selectAllTopics');
+            const checkboxes = document.querySelectorAll('.topic-checkbox');
+            
+            checkboxes.forEach(cb => {
+                cb.checked = selectAll.checked;
+            });
+        }
+
+        // Update select all state
+        function updateSelectAllState() {
+            const checkboxes = document.querySelectorAll('.topic-checkbox');
+            const selectAll = document.getElementById('selectAllTopics');
+            
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            const noneChecked = Array.from(checkboxes).every(cb => !cb.checked);
+            
+            selectAll.checked = allChecked;
+            selectAll.indeterminate = !allChecked && !noneChecked;
+        }
+
+        // Get selected topics
+        function getSelectedTopics() {
+            const checkboxes = document.querySelectorAll('.topic-checkbox:checked');
+            return Array.from(checkboxes).map(cb => cb.value);
+        }
+
+        // Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ===== BOOKMARK FUNCTIONS =====
+        
+        // Update bookmark count display
+        function updateBookmarkCount() {
+            const count = bookmarks.length;
+            const countElements = document.querySelectorAll('#bookmarkCount');
+            countElements.forEach(el => el.textContent = count);
+        }
+        
+        // Check if post is bookmarked
+        function isBookmarked(postUrl) {
+            return bookmarks.some(b => b.url === postUrl);
+        }
+        
+        // Toggle bookmark
+        function toggleBookmark(post) {
+            const existing = bookmarks.findIndex(b => b.url === post.url);
+            
+            if (existing >= 0) {
+                // Remove bookmark
+                bookmarks.splice(existing, 1);
+                saveBookmarks();
+                updateBookmarkCount();
+                alert('Bookmark removed!');
+            } else {
+                // Add bookmark
+                const bookmark = {
+                    ...post,
+                    bookmarkedAt: new Date().toISOString(),
+                    collection: 'Uncategorized',
+                    notes: ''
+                };
+                bookmarks.push(bookmark);
+                saveBookmarks();
+                updateBookmarkCount();
+                
+                // Ask if user wants to add to collection
+                setTimeout(() => {
+                    if (confirm('Bookmark saved! Would you like to add it to a collection?')) {
+                        showAddToCollectionDialog(bookmark);
+                    }
+                }, 100);
+            }
+            
+            // Refresh table if visible
+            if (document.getElementById('postsTable').innerHTML) {
+                updatePostsTable();
+            }
+        }
+        
+        // Show add to collection dialog
+        function showAddToCollectionDialog(bookmark) {
+            const collectionName = prompt(
+                `Add to collection:\n\nAvailable collections:\n${collections.join('\n')}\n\nEnter collection name:`,
+                collections[0]
+            );
+            
+            if (collectionName) {
+                // Add collection if it doesn't exist
+                if (!collections.includes(collectionName)) {
+                    collections.push(collectionName);
+                }
+                
+                // Update bookmark
+                const index = bookmarks.findIndex(b => b.url === bookmark.url);
+                if (index >= 0) {
+                    bookmarks[index].collection = collectionName;
+                    saveBookmarks();
+                }
+            }
+        }
+        
+        // Show bookmarks panel
+        function showBookmarks() {
+            document.getElementById('dashboardContent').style.display = 'none';
+            document.getElementById('filtersPanel').style.display = 'none';
+            document.getElementById('bookmarksPanel').style.display = 'block';
+            
+            renderCollections();
+            renderBookmarkedPosts();
+        }
+        
+        // Hide bookmarks panel
+        function hideBookmarks() {
+            document.getElementById('bookmarksPanel').style.display = 'none';
+            document.getElementById('filtersPanel').style.display = 'block';
+            document.getElementById('dashboardContent').style.display = 'block';
+        }
+        
+        // Render collections list
+        function renderCollections(selectedCollection = null) {
+            const container = document.getElementById('collectionsList');
+            
+            // Count posts per collection
+            const counts = {};
+            collections.forEach(c => counts[c] = 0);
+            counts['Uncategorized'] = 0;
+            counts['All'] = bookmarks.length;
+            
+            bookmarks.forEach(b => {
+                const col = b.collection || 'Uncategorized';
+                counts[col] = (counts[col] || 0) + 1;
+            });
+            
+            container.innerHTML = `
+                <div onclick="filterByCollection(null)" 
+                     style="padding: 0.6rem; margin-bottom: 0.3rem; border-radius: 6px; cursor: pointer; background: ${!selectedCollection ? '#E0F2F1' : 'white'}; border: 1px solid ${!selectedCollection ? '#4DAFA7' : '#ddd'};">
+                    <strong style="color: #2E5C9A;">All Bookmarks</strong>
+                    <span style="float: right; color: #6c757d; font-size: 0.9rem;">${counts['All']}</span>
+                </div>
+                
+                ${['Uncategorized', ...collections].map(col => `
+                    <div onclick="filterByCollection('${col}')" 
+                         style="padding: 0.6rem; margin-bottom: 0.3rem; border-radius: 6px; cursor: pointer; background: ${selectedCollection === col ? '#E0F2F1' : 'white'}; border: 1px solid ${selectedCollection === col ? '#4DAFA7' : '#ddd'};">
+                        <span style="color: #2E5C9A;">${col}</span>
+                        <span style="float: right; color: #6c757d; font-size: 0.9rem;">${counts[col] || 0}</span>
+                    </div>
+                `).join('')}
+            `;
+        }
+        
+        // Filter bookmarks by collection
+        let currentCollection = null;
+        function filterByCollection(collection) {
+            currentCollection = collection;
+            renderCollections(collection);
+            renderBookmarkedPosts(collection);
+        }
+        
+        // Render bookmarked posts
+        function renderBookmarkedPosts(collection = null) {
+            const container = document.getElementById('bookmarkedPostsList');
+            const titleEl = document.getElementById('collectionTitle');
+            const countEl = document.getElementById('bookmarkCountDisplay');
+            
+            let filtered = bookmarks;
+            if (collection) {
+                filtered = bookmarks.filter(b => (b.collection || 'Uncategorized') === collection);
+                titleEl.textContent = collection;
+            } else {
+                titleEl.textContent = 'All Bookmarks';
+            }
+            
+            countEl.textContent = `${filtered.length} post${filtered.length !== 1 ? 's' : ''}`;
+            
+            if (filtered.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 3rem; color: #95a5a6;">No bookmarked posts yet. Star posts from the main dashboard to save them here.</p>';
+                return;
+            }
+            
+            // Sort by bookmarked date (newest first)
+            filtered.sort((a, b) => new Date(b.bookmarkedAt) - new Date(a.bookmarkedAt));
+            
+            container.innerHTML = filtered.map(post => {
+                const date = new Date(post.date);
+                const bookmarkedDate = new Date(post.bookmarkedAt);
+                const engagement = (post.likes || 0) + (post.comments || 0) + (post.shares || 0);
+                
+                return `
+                    <div style="border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; background: white;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.8rem;">
+                            <div>
+                                <strong style="color: #2E5C9A;">
+                                    <a href="${post.authorUrl}" target="_blank" style="color: #2E5C9A; text-decoration: none;">
+                                        ${escapeHtml(post.author)}
+                                    </a>
+                                </strong>
+                                <span style="color: #6c757d; font-size: 0.85rem; margin-left: 0.5rem;">
+                                    • ${date.toLocaleDateString()}
+                                </span>
+                            </div>
+                            <button onclick="removeBookmark('${post.url.replace(/'/g, "\\'")}'); event.stopPropagation();" style="background: #E85D75; color: white; border: none; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">
+                                Remove
+                            </button>
+                        </div>
+                        
+                        <p style="color: #2c3e50; line-height: 1.6; margin-bottom: 0.8rem;">
+                            ${escapeHtml(post.content.substring(0, 200))}${post.content.length > 200 ? '...' : ''}
+                        </p>
+                        
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.8rem;">
+                            <span class="badge">${escapeHtml(post.topic)}</span>
+                            <span class="badge" style="background: #FFF4E5; color: #f39c12;">${post.collection || 'Uncategorized'}</span>
+                            <span style="color: #6c757d; font-size: 0.85rem;">👍 ${post.likes} 💬 ${post.comments} 🔄 ${post.shares}</span>
+                        </div>
+                        
+                        <div style="margin-bottom: 0.8rem;">
+                            <textarea id="notes_${post.url.replace(/[^a-zA-Z0-9]/g, '_')}" 
+                                      placeholder="Add notes..." 
+                                      style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem; min-height: 60px;"
+                                      onchange="updateNotes('${post.url.replace(/'/g, "\\'")}', this.value)">${escapeHtml(post.notes || '')}</textarea>
+                        </div>
+                        
+                        <div style="display: flex; gap: 0.5rem;">
+                            <a href="${post.url}" target="_blank" class="link-button" style="font-size: 0.9rem;">View Post →</a>
+                            <button onclick="changeCollection('${post.url.replace(/'/g, "\\'")}'); event.stopPropagation();" style="background: #4DAFA7; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">
+                                Move to Collection
+                            </button>
+                        </div>
+                        
+                        <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #95a5a6;">
+                            Saved: ${bookmarkedDate.toLocaleDateString()} ${bookmarkedDate.toLocaleTimeString()}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Remove bookmark
+        function removeBookmark(url) {
+            if (confirm('Remove this bookmark?')) {
+                const index = bookmarks.findIndex(b => b.url === url);
+                if (index >= 0) {
+                    bookmarks.splice(index, 1);
+                    saveBookmarks();
+                    updateBookmarkCount();
+                    renderBookmarkedPosts(currentCollection);
+                    renderCollections(currentCollection);
+                }
+            }
+        }
+        
+        // Update notes
+        function updateNotes(url, notes) {
+            const index = bookmarks.findIndex(b => b.url === url);
+            if (index >= 0) {
+                bookmarks[index].notes = notes;
+                saveBookmarks();
+            }
+        }
+        
+        // Change collection
+        function changeCollection(url) {
+            const collectionName = prompt(
+                `Move to collection:\n\nAvailable collections:\n${collections.join('\n')}\n\nEnter collection name:`,
+                collections[0]
+            );
+            
+            if (collectionName) {
+                // Add collection if it doesn't exist
+                if (!collections.includes(collectionName)) {
+                    collections.push(collectionName);
+                }
+                
+                // Update bookmark
+                const index = bookmarks.findIndex(b => b.url === url);
+                if (index >= 0) {
+                    bookmarks[index].collection = collectionName;
+                    saveBookmarks();
+                    renderBookmarkedPosts(currentCollection);
+                    renderCollections(currentCollection);
+                }
+            }
+        }
+        
+        // Add new collection
+        function addNewCollection() {
+            const name = prompt('Enter new collection name:');
+            if (name && name.trim()) {
+                if (!collections.includes(name.trim())) {
+                    collections.push(name.trim());
+                    saveBookmarks();
+                    renderCollections(currentCollection);
+                } else {
+                    alert('Collection already exists!');
+                }
+            }
+        }
+        
+        // Export bookmarks
+        function exportBookmarks() {
+            if (bookmarks.length === 0) {
+                alert('No bookmarks to export!');
+                return;
+            }
+            
+            // Create CSV
+            const headers = ['Date', 'Author', 'Topic', 'Collection', 'Content', 'Likes', 'Comments', 'Shares', 'URL', 'Notes', 'Bookmarked At'];
+            const rows = bookmarks.map(b => [
+                new Date(b.date).toLocaleDateString(),
+                b.author,
+                b.topic,
+                b.collection || 'Uncategorized',
+                b.content.replace(/"/g, '""'),
+                b.likes,
+                b.comments,
+                b.shares,
+                b.url,
+                (b.notes || '').replace(/"/g, '""'),
+                new Date(b.bookmarkedAt).toLocaleString()
+            ]);
+            
+            const csv = [
+                headers.join(','),
+                ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+            ].join('\n');
+            
+            // Download
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `painmed-bookmarks-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert(`Exported ${bookmarks.length} bookmarks to CSV!`);
+        }
+        
+        // ============================================
+        // SAVED KEYWORDS FUNCTIONS
+        // ============================================
+        
+        // Show saved keywords panel
+        function showSavedKeywords() {
+            document.getElementById('filtersPanel').style.display = 'none';
+            document.getElementById('savedKeywordsPanel').style.display = 'block';
+            renderSavedKeywordsList();
+        }
+        
+        // Hide saved keywords panel
+        function hideSavedKeywords() {
+            document.getElementById('savedKeywordsPanel').style.display = 'none';
+            document.getElementById('filtersPanel').style.display = 'block';
+        }
+        
+        // Render saved keywords list
+        function renderSavedKeywordsList() {
+            const container = document.getElementById('savedKeywordsList');
+            
+            if (savedKeywordLists.length === 0) {
+                container.innerHTML = '<p style="color: #95a5a6; text-align: center; padding: 2rem;">No saved keyword lists yet. Create one below!</p>';
+                return;
+            }
+            
+            container.innerHTML = savedKeywordLists.map((list, index) => `
+                <div style="border: 1px solid #ddd; border-radius: 6px; padding: 1rem; margin-bottom: 1rem; background: white; cursor: pointer;"
+                     onclick="previewKeywordList(${index})">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                        <strong style="color: #2E5C9A; font-size: 1.1rem;">${list.name}</strong>
+                        <span style="color: #6c757d; font-size: 0.85rem;">${list.keywords.length} keywords</span>
+                    </div>
+                    <div style="color: #6c757d; font-size: 0.85rem; margin-bottom: 0.8rem;">
+                        Created: ${new Date(list.createdAt).toLocaleDateString()}
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button onclick="useKeywordList(${index}); event.stopPropagation();" 
+                                class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+                            🚀 Use in Search
+                        </button>
+                        <button onclick="deleteKeywordList(${index}); event.stopPropagation();" 
+                                class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background: #E85D75;">
+                            🗑️ Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Preview keyword list
+        function previewKeywordList(index) {
+            const list = savedKeywordLists[index];
+            const container = document.getElementById('keywordListPreview');
+            
+            container.innerHTML = `
+                <div style="border: 2px solid #9b59b6; border-radius: 8px; padding: 1.5rem; background: white;">
+                    <h4 style="color: #2E5C9A; margin-bottom: 1rem;">${list.name}</h4>
+                    <div style="margin-bottom: 1rem;">
+                        <strong style="color: #6c757d; font-size: 0.9rem;">Keywords (${list.keywords.length}):</strong>
+                        <div style="margin-top: 0.5rem; padding: 1rem; background: #f8f9fa; border-radius: 6px; max-height: 300px; overflow-y: auto;">
+                            ${list.keywords.map(kw => `
+                                <div style="padding: 0.3rem 0; border-bottom: 1px solid #ecf0f1;">
+                                    ${kw}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div style="color: #6c757d; font-size: 0.85rem;">
+                        Created: ${new Date(list.createdAt).toLocaleDateString()}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Save new keyword list
+        function saveKeywordList() {
+            const name = document.getElementById('newKeywordListName').value.trim();
+            const content = document.getElementById('newKeywordListContent').value.trim();
+            
+            if (!name) {
+                alert('Please enter a name for the keyword list');
+                return;
+            }
+            
+            if (!content) {
+                alert('Please enter at least one keyword');
+                return;
+            }
+            
+            const keywords = content.split('\n').map(k => k.trim()).filter(k => k.length > 0);
+            
+            if (keywords.length === 0) {
+                alert('Please enter at least one keyword');
+                return;
+            }
+            
+            savedKeywordLists.push({
+                name: name,
+                keywords: keywords,
+                createdAt: new Date().toISOString()
+            });
+            
+            saveSavedKeywords();
+            
+            // Clear form
+            document.getElementById('newKeywordListName').value = '';
+            document.getElementById('newKeywordListContent').value = '';
+            
+            renderSavedKeywordsList();
+            alert(`Saved "${name}" with ${keywords.length} keywords!`);
+        }
+        
+        // Use keyword list in search
+        function useKeywordList(index) {
+            const list = savedKeywordLists[index];
+            
+            // Go back to config panel
+            hideSavedKeywords();
+            document.getElementById('filtersPanel').style.display = 'none';
+            document.getElementById('configPanel').style.display = 'block';
+            
+            // Fill in keywords
+            document.getElementById('searchKeywords').value = list.keywords.join('\n');
+            
+            alert(`Loaded "${list.name}" keywords into search box. Configure other settings and click "Fetch Multi-Platform Data".`);
+        }
+        
+        // Delete keyword list
+        function deleteKeywordList(index) {
+            const list = savedKeywordLists[index];
+            if (confirm(`Delete keyword list "${list.name}"?`)) {
+                savedKeywordLists.splice(index, 1);
+                saveSavedKeywords();
+                renderSavedKeywordsList();
+                document.getElementById('keywordListPreview').innerHTML = '<p style="color: #95a5a6; text-align: center; padding: 3rem;">Select a keyword list to preview</p>';
+            }
+        }
+        
+        // ============================================
+        // INFLUENCERS FUNCTIONS
+        // ============================================
+        
+        // Show influencers panel
+        function showInfluencers() {
+            document.getElementById('filtersPanel').style.display = 'none';
+            document.getElementById('influencersPanel').style.display = 'block';
+            renderInfluencersList();
+            updateInfluencerCounts();
+        }
+        
+        // Hide influencers panel
+        function hideInfluencers() {
+            document.getElementById('influencersPanel').style.display = 'none';
+            document.getElementById('filtersPanel').style.display = 'block';
+        }
+        
+        // Save influencer
+        function saveInfluencer(author, authorUrl, platform) {
+            // Check if already saved
+            const exists = savedInfluencers.some(inf => inf.authorUrl === authorUrl);
+            if (exists) {
+                alert('This influencer is already saved!');
+                return;
+            }
+            
+            savedInfluencers.push({
+                author: author,
+                authorUrl: authorUrl,
+                platform: platform,
+                savedAt: new Date().toISOString(),
+                notes: ''
+            });
+            
+            saveInfluencers();
+            alert(`Saved ${author} as influencer!`);
+        }
+        
+        // Check if influencer is saved
+        function isInfluencerSaved(authorUrl) {
+            return savedInfluencers.some(inf => inf.authorUrl === authorUrl);
+        }
+        
+        // Filter influencers
+        function filterInfluencers(platform) {
+            currentInfluencerFilter = platform;
+            
+            // Update button styles
+            ['All', 'LinkedIn', 'Twitter', 'Reddit'].forEach(p => {
+                const btn = document.getElementById(`filter${p}`);
+                if (btn) {
+                    if (p.toLowerCase() === platform || (p === 'All' && platform === 'all')) {
+                        btn.style.background = '#2E5C9A';
+                        btn.style.color = 'white';
+                    } else {
+                        btn.style.background = '#ecf0f1';
+                        btn.style.color = '#2E5C9A';
+                    }
+                }
+            });
+            
+            renderInfluencersList();
+        }
+        
+        // Render influencers list
+        function renderInfluencersList() {
+            const container = document.getElementById('influencersList');
+            
+            let filtered = savedInfluencers;
+            if (currentInfluencerFilter !== 'all') {
+                filtered = savedInfluencers.filter(inf => inf.platform === currentInfluencerFilter);
+            }
+            
+            if (filtered.length === 0) {
+                container.innerHTML = '<p style="color: #95a5a6; text-align: center; padding: 2rem;">No influencers saved yet. Click "👥" button on any post to save the author!</p>';
+                return;
+            }
+            
+            // Sort by most recent
+            filtered.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
+            
+            const platformBadges = {
+                'linkedin': { icon: '🔗', name: 'LinkedIn', color: '#0077b5' },
+                'twitter': { icon: '🐦', name: 'Twitter/X', color: '#1DA1F2' },
+                'reddit': { icon: '🤖', name: 'Reddit', color: '#FF4500' }
+            };
+            
+            container.innerHTML = filtered.map((inf, index) => {
+                const platform = platformBadges[inf.platform] || { icon: '📱', name: 'Unknown', color: '#6c757d' };
+                const actualIndex = savedInfluencers.findIndex(i => i.authorUrl === inf.authorUrl);
+                
+                return `
+                    <div style="border: 1px solid ${platform.color}; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; background: white;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.8rem;">
+                            <div style="flex: 1;">
+                                <div style="margin-bottom: 0.5rem;">
+                                    <span class="badge" style="background: ${platform.color}; color: white;">
+                                        ${platform.icon} ${platform.name}
+                                    </span>
+                                </div>
+                                <strong style="color: #2E5C9A; font-size: 1.1rem;">
+                                    <a href="${inf.authorUrl}" target="_blank" style="color: #2E5C9A; text-decoration: none;">
+                                        ${inf.author}
+                                    </a>
+                                </strong>
+                                <div style="color: #6c757d; font-size: 0.85rem; margin-top: 0.3rem;">
+                                    Saved: ${new Date(inf.savedAt).toLocaleDateString()}
+                                </div>
+                            </div>
+                            <button onclick="deleteInfluencer(${actualIndex})" 
+                                    class="btn btn-secondary" 
+                                    style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background: #E85D75;">
+                                🗑️
+                            </button>
+                        </div>
+                        
+                        <div style="margin-top: 0.8rem;">
+                            <textarea id="influencerNotes${actualIndex}" 
+                                      placeholder="Add notes about this influencer..."
+                                      style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; min-height: 60px;"
+                                      onchange="updateInfluencerNotes(${actualIndex})">${inf.notes || ''}</textarea>
+                        </div>
+                        
+                        <div style="margin-top: 0.5rem;">
+                            <a href="${inf.authorUrl}" target="_blank" class="link-button" style="font-size: 0.85rem;">
+                                View Profile →
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Update influencer notes
+        function updateInfluencerNotes(index) {
+            const notes = document.getElementById(`influencerNotes${index}`).value;
+            savedInfluencers[index].notes = notes;
+            saveInfluencers();
+        }
+        
+        // Delete influencer
+        function deleteInfluencer(index) {
+            const inf = savedInfluencers[index];
+            if (confirm(`Remove ${inf.author} from influencers?`)) {
+                savedInfluencers.splice(index, 1);
+                saveInfluencers();
+                renderInfluencersList();
+                updateInfluencerCounts();
+            }
+        }
+        
+        // Update influencer counts
+        function updateInfluencerCounts() {
+            document.getElementById('countAll').textContent = savedInfluencers.length;
+            document.getElementById('countLinkedIn').textContent = savedInfluencers.filter(i => i.platform === 'linkedin').length;
+            document.getElementById('countTwitter').textContent = savedInfluencers.filter(i => i.platform === 'twitter').length;
+            document.getElementById('countReddit').textContent = savedInfluencers.filter(i => i.platform === 'reddit').length;
+        }
+        
+        // Export influencers
+        function exportInfluencers() {
+            if (savedInfluencers.length === 0) {
+                alert('No influencers to export!');
+                return;
+            }
+            
+            const headers = ['Platform', 'Author', 'Profile URL', 'Saved Date', 'Notes'];
+            const rows = savedInfluencers.map(inf => [
+                inf.platform,
+                inf.author,
+                inf.authorUrl,
+                new Date(inf.savedAt).toLocaleString(),
+                (inf.notes || '').replace(/"/g, '""')
+            ]);
+            
+            const csv = [
+                headers.join(','),
+                ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+            ].join('\n');
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `painmed-influencers-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert(`Exported ${savedInfluencers.length} influencers to CSV!`);
+        }
+
+        // Apply filters
+        function applyFilters() {
+            const platform = document.getElementById('platformFilter').value;
+            const selectedTopics = getSelectedTopics();
+            const allTopics = [...new Set(allData.map(item => item.topic))];
+            const activeTopics = selectedTopics.length ? selectedTopics : allTopics;
+
+            const startInput = document.getElementById('startDate').value;
+            const endInput = document.getElementById('endDate').value;
+            const startDate = startInput ? new Date(startInput) : new Date('0001-01-01');
+            const endDate = endInput ? new Date(endInput) : new Date('9999-12-31');
+            endDate.setHours(23, 59, 59, 999);
+
+            const startValid = !Number.isNaN(startDate.getTime());
+            const endValid = !Number.isNaN(endDate.getTime());
+
+            filteredData = allData.filter(item => {
+                const itemDate = new Date(item.date);
+                const itemDateValid = !Number.isNaN(itemDate.getTime());
+                
+                const platformMatch = platform === 'all' || item.platform === platform;
+                const topicMatch = activeTopics.includes(item.topic);
+                const dateMatch = !startValid || !endValid || !itemDateValid || (itemDate >= startDate && itemDate <= endDate);
+                
+                return platformMatch && topicMatch && dateMatch;
+            });
+
+            updateDashboard();
+        }
+
+        // Reset filters
+        function resetFilters() {
+            document.getElementById('platformFilter').value = 'all';
+            
+            // Check all topics
+            document.getElementById('selectAllTopics').checked = true;
+            document.querySelectorAll('.topic-checkbox').forEach(cb => cb.checked = true);
+            
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - 90);
+            
+            document.getElementById('startDate').valueAsDate = startDate;
+            document.getElementById('endDate').valueAsDate = endDate;
+            
+            applyFilters();
+        }
+
+        // Update dashboard
+        function updateDashboard() {
+            updateMetrics();
+            updateWeeklyChart();
+            updateSentimentChart();
+            
+            // Use setTimeout to prevent blocking and separate chart rendering
+            setTimeout(() => updatePayerChart(), 100);
+            setTimeout(() => updateProcedureChart(), 200);
+            setTimeout(() => generateAIInsights(), 300);
+            setTimeout(() => generateTrendingKeywords(), 350);
+            setTimeout(() => generateLeadScoring(), 400);
+            setTimeout(() => updatePostsTable(), 500);
+        }
+
+        // Update metrics
+        function updateMetrics() {
+            const uniqueAuthors = new Set(filteredData.map(item => item.author)).size;
+            const totalEngagement = filteredData.reduce((sum, item) => 
+                sum + (item.likes || 0) + (item.comments || 0) + (item.shares || 0), 0
+            );
+            
+            // Calculate this week's mentions
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+            const thisWeekMentions = filteredData.filter(item => 
+                new Date(item.date) >= oneWeekAgo
+            ).length;
+
+            document.getElementById('totalMentions').textContent = filteredData.length.toLocaleString();
+            document.getElementById('uniqueAuthors').textContent = uniqueAuthors.toLocaleString();
+            document.getElementById('totalEngagement').textContent = totalEngagement.toLocaleString();
+            document.getElementById('thisWeekMentions').textContent = thisWeekMentions.toLocaleString();
+        }
+
+        // Update weekly chart
+        function updateWeeklyChart() {
+            const ctx = document.getElementById('weeklyChart').getContext('2d');
+            
+            // Get selected topics
+            const selectedTopics = getSelectedTopics();
+            
+            // Group data by week and topic
+            const weeklyData = {};
+            
+            filteredData.forEach(item => {
+                const date = new Date(item.date);
+                const weekStart = getWeekStart(date);
+                const weekKey = weekStart.toISOString().split('T')[0];
+                
+                if (!weeklyData[weekKey]) {
+                    weeklyData[weekKey] = {};
+                    selectedTopics.forEach(topic => weeklyData[weekKey][topic] = 0);
+                }
+                
+                if (selectedTopics.includes(item.topic)) {
+                    weeklyData[weekKey][item.topic]++;
+                }
+            });
+
+            // Sort weeks
+            const weeks = Object.keys(weeklyData).sort();
+            
+            // Prepare datasets for each selected topic
+            const colors = [
+                '#2E5C9A', '#4DAFA7', '#E85D75', '#5B8DBE', '#6BC4BC', '#F08A9D',
+                '#1e4278', '#3d8f88', '#d44a61', '#4a7aa8', '#5aada5', '#e67387'
+            ];
+            
+            const datasets = selectedTopics.map((topic, index) => ({
+                label: topic,
+                data: weeks.map(week => weeklyData[week][topic] || 0),
+                backgroundColor: colors[index % colors.length],
+                borderColor: colors[index % colors.length],
+                borderWidth: 2,
+                fill: false,
+                tension: 0.3
+            }));
+
+            // Destroy existing chart
+            if (weeklyChart) {
+                weeklyChart.destroy();
+            }
+
+            // Create new chart
+            weeklyChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: weeks.map(week => formatWeekLabel(week)),
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Simple sentiment analysis
+        function analyzeSentiment(text) {
+            const positiveWords = ['great', 'excellent', 'success', 'improved', 'better', 'solved', 'effective', 'efficient', 'reduced', 'saved', 'approved', 'win', 'positive', 'happy', 'love', 'amazing', 'fantastic', 'wonderful', 'good', 'best', 'perfect'];
+            const negativeWords = ['denied', 'rejection', 'failed', 'problem', 'issue', 'difficult', 'frustrating', 'delayed', 'chaos', 'burnout', 'lost', 'worse', 'terrible', 'awful', 'hate', 'angry', 'disappointed', 'bad', 'worst', 'pain', 'struggle'];
+            
+            const lowerText = text.toLowerCase();
+            let score = 0;
+            
+            positiveWords.forEach(word => {
+                if (lowerText.includes(word)) score += 1;
+            });
+            
+            negativeWords.forEach(word => {
+                if (lowerText.includes(word)) score -= 1;
+            });
+            
+            if (score > 0) return 'positive';
+            if (score < 0) return 'negative';
+            return 'neutral';
+        }
+
+        // Update sentiment chart
+        function updateSentimentChart() {
+            const ctx = document.getElementById('sentimentChart').getContext('2d');
+            
+            // Group posts by week and calculate sentiment
+            const weeklyData = {};
+            
+            filteredData.forEach(item => {
+                const date = new Date(item.date);
+                const weekStart = getWeekStart(date);
+                const weekKey = weekStart.toISOString().split('T')[0];
+                
+                if (!weeklyData[weekKey]) {
+                    weeklyData[weekKey] = { positive: 0, neutral: 0, negative: 0, total: 0 };
+                }
+                
+                const sentiment = analyzeSentiment(item.content);
+                weeklyData[weekKey][sentiment]++;
+                weeklyData[weekKey].total++;
+            });
+            
+            // Sort by date and calculate percentages
+            const sortedWeeks = Object.keys(weeklyData).sort();
+            const labels = sortedWeeks.map(week => formatWeekLabel(week));
+            
+            const positiveData = sortedWeeks.map(week => {
+                const data = weeklyData[week];
+                return data.total > 0 ? Math.round((data.positive / data.total) * 100) : 0;
+            });
+            
+            const neutralData = sortedWeeks.map(week => {
+                const data = weeklyData[week];
+                return data.total > 0 ? Math.round((data.neutral / data.total) * 100) : 0;
+            });
+            
+            const negativeData = sortedWeeks.map(week => {
+                const data = weeklyData[week];
+                return data.total > 0 ? Math.round((data.negative / data.total) * 100) : 0;
+            });
+            
+            // Destroy existing chart if it exists
+            if (sentimentChart) {
+                sentimentChart.destroy();
+            }
+            
+            // Create chart
+            sentimentChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Positive',
+                            data: positiveData,
+                            borderColor: '#4DAFA7',
+                            backgroundColor: 'rgba(77, 175, 167, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Neutral',
+                            data: neutralData,
+                            borderColor: '#95a5a6',
+                            backgroundColor: 'rgba(149, 165, 166, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Negative',
+                            data: negativeData,
+                            borderColor: '#E85D75',
+                            backgroundColor: 'rgba(232, 93, 117, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y + '%';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Percentage'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Date'
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        }
+
+        // Update payer mentions chart
+        function updatePayerChart() {
+            const canvas = document.getElementById('payerChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Define payers to track
+            const payers = [
+                'Medicare',
+                'Medicare Advantage',
+                'Cigna',
+                'Aetna',
+                'UnitedHealth',
+                'Blue Cross',
+                'Anthem',
+                'Humana'
+            ];
+            
+            // Count mentions for each payer
+            const payerCounts = {};
+            payers.forEach(payer => payerCounts[payer] = 0);
+            
+            filteredData.forEach(item => {
+                const content = item.content.toLowerCase();
+                payers.forEach(payer => {
+                    if (content.includes(payer.toLowerCase())) {
+                        payerCounts[payer]++;
+                    }
+                });
+            });
+            
+            // Sort by count and take top entries
+            const sortedPayers = Object.entries(payerCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8);
+            
+            const labels = sortedPayers.map(([payer]) => payer);
+            const data = sortedPayers.map(([, count]) => count);
+            
+            // Define colors for each payer
+            const colorMap = {
+                'Medicare': '#2E5C9A',
+                'Medicare Advantage': '#1e4278',
+                'Cigna': '#E85D75',
+                'Aetna': '#F08A9D',
+                'UnitedHealth': '#4DAFA7',
+                'Blue Cross': '#5B8DBE',
+                'Anthem': '#6BC4BC',
+                'Humana': '#d44a61'
+            };
+            
+            const colors = labels.map(label => colorMap[label] || '#2E5C9A');
+            
+            // Destroy existing chart
+            if (payerChart) {
+                payerChart.destroy();
+                payerChart = null;
+            }
+            
+            // Create chart
+            payerChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Mentions: ' + context.parsed.x;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 100
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update procedure mentions chart
+        function updateProcedureChart() {
+            const canvas = document.getElementById('procedureChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Define procedures/devices to track
+            const procedures = {
+                'SCS': ['scs', 'spinal cord stimulator', 'spinal cord stimulation'],
+                'SI Joint Fusion': ['si joint fusion', 'si fusion', 'sacroiliac'],
+                'Intracept': ['intracept'],
+                'Kyphoplasty': ['kyphoplasty'],
+                'PN3': ['pn3'],
+                'Radiofrequency Ablation': ['radiofrequency ablation', 'rfa', 'ablation'],
+                'Epidural Injections': ['epidural injection', 'epidural'],
+                'Facet Injections': ['facet injection', 'facet']
+            };
+            
+            // Count mentions for each procedure
+            const procedureCounts = {};
+            
+            Object.keys(procedures).forEach(proc => {
+                procedureCounts[proc] = 0;
+                const searchTerms = procedures[proc];
+                
+                filteredData.forEach(item => {
+                    const content = item.content.toLowerCase();
+                    if (searchTerms.some(term => content.includes(term))) {
+                        procedureCounts[proc]++;
+                    }
+                });
+            });
+            
+            // Sort by count and take top entries
+            const sortedProcedures = Object.entries(procedureCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8);
+            
+            const labels = sortedProcedures.map(([proc]) => proc);
+            const data = sortedProcedures.map(([, count]) => count);
+            
+            // All bars in teal color
+            const colors = labels.map(() => '#4DAFA7');
+            
+            // Destroy existing chart
+            if (procedureChart) {
+                procedureChart.destroy();
+                procedureChart = null;
+            }
+            
+            // Create chart
+            procedureChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Mentions: ' + context.parsed.x;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 100
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Get week start date (Monday)
+        function getWeekStart(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(d.setDate(diff));
+        }
+
+        // Format week label
+        function formatWeekLabel(weekKey) {
+            const date = new Date(weekKey);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        // AI-Powered Insights
+        function generateAIInsights() {
+            const container = document.getElementById('aiInsights');
+            
+            if (filteredData.length === 0) {
+                container.innerHTML = '<p style="color: #95a5a6; text-align: center; padding: 2rem;">No data available for analysis.</p>';
+                return;
+            }
+            
+            // Analyze trending topics
+            const trendingTopics = analyzeTrendingTopics();
+            
+            // Identify most frustrating payer
+            const frustratingPayer = identifyFrustratingPayer();
+            
+            // Identify most denied procedures
+            const deniedProcedures = identifyDeniedProcedures();
+            
+            // Generate executive summary
+            const executiveSummary = generateExecutiveSummary();
+            
+            container.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+                    <!-- Trending This Week -->
+                    <div style="background: #E0F2F1; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #4DAFA7;">
+                        <h4 style="color: #2E5C9A; margin-bottom: 0.8rem; font-size: 1rem;">📈 Trending This Week</h4>
+                        ${trendingTopics}
+                    </div>
+                    
+                    <!-- Most Frustrating Payer -->
+                    <div style="background: #FFE5E5; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #E85D75;">
+                        <h4 style="color: #2E5C9A; margin-bottom: 0.8rem; font-size: 1rem;">⚠️ Payer Causing Most Frustration</h4>
+                        ${frustratingPayer}
+                    </div>
+                    
+                    <!-- Most Denied Procedures -->
+                    <div style="background: #FFF4E5; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #f39c12;">
+                        <h4 style="color: #2E5C9A; margin-bottom: 0.8rem; font-size: 1rem;">🚫 Most Denied Procedures</h4>
+                        ${deniedProcedures}
+                    </div>
+                </div>
+                
+                <!-- Executive Summary -->
+                <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #2E5C9A;">
+                    <h4 style="color: #2E5C9A; margin-bottom: 0.8rem; font-size: 1rem;">📊 Executive Summary</h4>
+                    ${executiveSummary}
+                </div>
+            `;
+        }
+        
+        // Analyze trending topics
+        function analyzeTrendingTopics() {
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+            
+            const recentPosts = filteredData.filter(p => new Date(p.date) >= oneWeekAgo);
+            
+            if (recentPosts.length === 0) {
+                return '<p style="color: #6c757d; font-size: 0.9rem;">Not enough recent data</p>';
+            }
+            
+            // Count keyword mentions in recent posts
+            const keywords = {
+                'prior authorization': 0,
+                'denial': 0,
+                'appeal': 0,
+                'peer to peer': 0,
+                'billing': 0,
+                'reimbursement': 0,
+                'documentation': 0,
+                'audit': 0
+            };
+            
+            recentPosts.forEach(post => {
+                const content = post.content.toLowerCase();
+                Object.keys(keywords).forEach(keyword => {
+                    if (content.includes(keyword)) {
+                        keywords[keyword]++;
+                    }
+                });
+            });
+            
+            const sorted = Object.entries(keywords)
+                .filter(([, count]) => count > 0)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 3);
+            
+            if (sorted.length === 0) {
+                return '<p style="color: #6c757d; font-size: 0.9rem;">No clear trends detected</p>';
+            }
+            
+            return sorted.map(([keyword, count]) => 
+                `<div style="margin-bottom: 0.5rem;">
+                    <strong style="color: #2E5C9A; text-transform: capitalize;">${keyword}</strong>
+                    <span style="color: #6c757d; font-size: 0.9rem;"> - ${count} mentions</span>
+                </div>`
+            ).join('');
+        }
+        
+        // Identify most frustrating payer
+        function identifyFrustratingPayer() {
+            const payers = ['Medicare', 'UnitedHealth', 'Cigna', 'Aetna', 'Blue Cross', 'Anthem', 'Humana'];
+            const negativeWords = ['denied', 'rejection', 'failed', 'frustrating', 'delayed', 'difficult', 'problem', 'issue'];
+            
+            const payerScores = {};
+            payers.forEach(payer => payerScores[payer] = 0);
+            
+            filteredData.forEach(post => {
+                const content = post.content.toLowerCase();
+                payers.forEach(payer => {
+                    if (content.includes(payer.toLowerCase())) {
+                        // Check for negative sentiment
+                        negativeWords.forEach(word => {
+                            if (content.includes(word)) {
+                                payerScores[payer]++;
+                            }
+                        });
+                    }
+                });
+            });
+            
+            const sorted = Object.entries(payerScores)
+                .filter(([, score]) => score > 0)
+                .sort((a, b) => b[1] - a[1]);
+            
+            if (sorted.length === 0) {
+                return '<p style="color: #6c757d; font-size: 0.9rem;">No significant payer issues detected</p>';
+            }
+            
+            const [topPayer, score] = sorted[0];
+            const percentage = Math.round((score / filteredData.length) * 100);
+            
+            return `
+                <div style="margin-bottom: 0.8rem;">
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #E85D75; margin-bottom: 0.3rem;">${topPayer}</div>
+                    <div style="color: #6c757d; font-size: 0.9rem;">${score} negative mentions (${percentage}% of posts)</div>
+                </div>
+                ${sorted.slice(1, 3).map(([payer, s]) => 
+                    `<div style="font-size: 0.85rem; color: #6c757d; margin-top: 0.3rem;">
+                        ${payer}: ${s} mentions
+                    </div>`
+                ).join('')}
+            `;
+        }
+        
+        // Identify most denied procedures
+        function identifyDeniedProcedures() {
+            const procedures = {
+                'SCS': ['scs', 'spinal cord stimulator'],
+                'SI Joint Fusion': ['si joint fusion', 'si fusion'],
+                'Kyphoplasty': ['kyphoplasty'],
+                'Radiofrequency Ablation': ['rfa', 'radiofrequency ablation'],
+                'Epidural': ['epidural injection']
+            };
+            
+            const denialWords = ['denied', 'denial', 'rejected', 'rejection'];
+            const procedureScores = {};
+            
+            Object.keys(procedures).forEach(proc => procedureScores[proc] = 0);
+            
+            filteredData.forEach(post => {
+                const content = post.content.toLowerCase();
+                const hasDenial = denialWords.some(word => content.includes(word));
+                
+                if (hasDenial) {
+                    Object.entries(procedures).forEach(([procName, keywords]) => {
+                        if (keywords.some(kw => content.includes(kw))) {
+                            procedureScores[procName]++;
+                        }
+                    });
+                }
+            });
+            
+            const sorted = Object.entries(procedureScores)
+                .filter(([, score]) => score > 0)
+                .sort((a, b) => b[1] - a[1]);
+            
+            if (sorted.length === 0) {
+                return '<p style="color: #6c757d; font-size: 0.9rem;">No denial patterns detected</p>';
+            }
+            
+            return sorted.slice(0, 3).map(([proc, count]) => 
+                `<div style="margin-bottom: 0.5rem;">
+                    <strong style="color: #2E5C9A;">${proc}</strong>
+                    <span style="color: #6c757d; font-size: 0.9rem;"> - ${count} denial mentions</span>
+                </div>`
+            ).join('');
+        }
+        
+        // Generate executive summary
+        function generateExecutiveSummary() {
+            const totalPosts = filteredData.length;
+            const avgEngagement = Math.round(
+                filteredData.reduce((sum, p) => sum + (p.likes + p.comments + p.shares), 0) / totalPosts
+            );
+            
+            // Calculate sentiment distribution
+            const sentiments = { positive: 0, neutral: 0, negative: 0 };
+            filteredData.forEach(post => {
+                const sentiment = analyzeSentiment(post.content);
+                sentiments[sentiment]++;
+            });
+            
+            const negativePercent = Math.round((sentiments.negative / totalPosts) * 100);
+            const positivePercent = Math.round((sentiments.positive / totalPosts) * 100);
+            
+            // Identify key themes
+            const themes = [];
+            if (negativePercent > 40) themes.push('high frustration levels');
+            if (positivePercent > 30) themes.push('some positive outcomes');
+            
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+            const recentPosts = filteredData.filter(p => new Date(p.date) >= oneWeekAgo).length;
+            
+            return `
+                <p style="color: #2c3e50; line-height: 1.8; margin-bottom: 1rem;">
+                    <strong>Analysis of ${totalPosts} LinkedIn posts</strong> reveals ${themes.length > 0 ? themes.join(' and ') : 'mixed sentiment'} 
+                    in the pain management community. 
+                    ${negativePercent}% of conversations show negative sentiment, primarily around prior authorization challenges and payer denials.
+                </p>
+                <p style="color: #2c3e50; line-height: 1.8; margin-bottom: 1rem;">
+                    <strong>Activity:</strong> ${recentPosts} posts in the last 7 days (${Math.round((recentPosts/totalPosts)*100)}% of total volume).
+                    Average engagement per post: ${avgEngagement} interactions.
+                </p>
+                <p style="color: #2c3e50; line-height: 1.8;">
+                    <strong>Opportunity:</strong> High volume of frustration-related posts indicates strong market need for PA automation and billing support services.
+                    ${negativePercent > 40 ? 'Consider targeted outreach to practices expressing PA challenges.' : ''}
+                </p>
+            `;
+        }
+        
+        // Lead Scoring
+        function generateLeadScoring() {
+            const container = document.getElementById('leadScoring');
+            
+            if (filteredData.length === 0) {
+                container.innerHTML = '<p style="color: #95a5a6; text-align: center; padding: 2rem;">No data available for lead scoring.</p>';
+                return;
+            }
+            
+            // Score each post
+            const scoredPosts = filteredData.map(post => ({
+                ...post,
+                leadScore: calculateLeadScore(post)
+            }));
+            
+            // Get high-priority leads (score >= 7)
+            const highPriorityLeads = scoredPosts
+                .filter(p => p.leadScore >= 7)
+                .sort((a, b) => b.leadScore - a.leadScore)
+                .slice(0, 10);
+            
+            if (highPriorityLeads.length === 0) {
+                container.innerHTML = `
+                    <p style="color: #6c757d; text-align: center; padding: 2rem;">
+                        No high-priority sales opportunities detected in current data.
+                        <br><small>Try expanding your search keywords or date range.</small>
+                    </p>
+                `;
+                return;
+            }
+            
+            container.innerHTML = `
+                <div style="margin-bottom: 1rem; padding: 1rem; background: #E0F2F1; border-radius: 6px;">
+                    <strong style="color: #2E5C9A;">🎯 ${highPriorityLeads.length} High-Priority Opportunities Found</strong>
+                    <p style="color: #6c757d; font-size: 0.9rem; margin-top: 0.3rem;">
+                        Posts scored 7-10 indicate strong sales potential
+                    </p>
+                </div>
+                
+                <div style="max-height: 600px; overflow-y: auto;">
+                    ${highPriorityLeads.map((post, index) => {
+                        const date = new Date(post.date);
+                        const scoreColor = post.leadScore >= 9 ? '#E85D75' : post.leadScore >= 8 ? '#f39c12' : '#4DAFA7';
+                        const scoreLabel = post.leadScore >= 9 ? 'HOT LEAD' : post.leadScore >= 8 ? 'WARM LEAD' : 'QUALIFIED LEAD';
+                        
+                        return `
+                            <div style="border: 2px solid ${scoreColor}; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; background: white;">
+                                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.8rem;">
+                                    <div>
+                                        <span style="background: ${scoreColor}; color: white; padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">
+                                            ${scoreLabel} - Score: ${post.leadScore}/10
+                                        </span>
+                                    </div>
+                                    <span style="color: #6c757d; font-size: 0.85rem;">${date.toLocaleDateString()}</span>
+                                </div>
+                                
+                                <div style="margin-bottom: 0.8rem;">
+                                    <strong style="color: #2E5C9A;">
+                                        <a href="${post.authorUrl}" target="_blank" style="color: #2E5C9A; text-decoration: none;">
+                                            ${post.author}
+                                        </a>
+                                    </strong>
+                                    <span style="color: #6c757d; font-size: 0.85rem; margin-left: 0.5rem;">
+                                        • ${post.likes + post.comments + post.shares} engagement
+                                    </span>
+                                </div>
+                                
+                                <p style="color: #2c3e50; line-height: 1.6; margin-bottom: 0.8rem;">
+                                    ${post.content.substring(0, 200)}${post.content.length > 200 ? '...' : ''}
+                                </p>
+                                
+                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.8rem;">
+                                    ${getLeadScoreReasons(post).map(reason => 
+                                        `<span style="background: #f8f9fa; color: #6c757d; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.8rem;">
+                                            ${reason}
+                                        </span>`
+                                    ).join('')}
+                                </div>
+                                
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <a href="${post.url}" target="_blank" class="link-button" style="font-size: 0.9rem;">
+                                        View Post →
+                                    </a>
+                                    <a href="${post.authorUrl}" target="_blank" class="link-button" style="font-size: 0.9rem;">
+                                        View Profile →
+                                    </a>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+        
+        // Calculate lead score (1-10)
+        function calculateLeadScore(post) {
+            let score = 0;
+            const content = post.content.toLowerCase();
+            
+            // High-value indicators (+3 points each)
+            if (content.includes('switching') || content.includes('looking for') || content.includes('need help')) score += 3;
+            if (content.includes('frustrated') || content.includes('struggling')) score += 3;
+            if (content.includes('denied') || content.includes('rejection')) score += 2;
+            
+            // Pain points (+2 points each)
+            if (content.includes('prior authorization') || content.includes('prior auth')) score += 2;
+            if (content.includes('billing') || content.includes('rcm')) score += 2;
+            if (content.includes('appeal') || content.includes('peer to peer')) score += 2;
+            
+            // Urgency indicators (+1 point each)
+            if (content.includes('urgent') || content.includes('asap') || content.includes('immediately')) score += 1;
+            if (content.includes('deadline') || content.includes('time sensitive')) score += 1;
+            
+            // Engagement bonus (high engagement = more visibility)
+            const engagement = post.likes + post.comments + post.shares;
+            if (engagement > 100) score += 2;
+            else if (engagement > 50) score += 1;
+            
+            // Recent posts are more valuable
+            const daysOld = (Date.now() - new Date(post.date)) / (1000 * 60 * 60 * 24);
+            if (daysOld <= 7) score += 1;
+            
+            return Math.min(score, 10); // Cap at 10
+        }
+        
+        // Get reasons for lead score
+        function getLeadScoreReasons(post) {
+            const reasons = [];
+            const content = post.content.toLowerCase();
+            
+            if (content.includes('switching') || content.includes('looking for')) reasons.push('🔄 Considering switch');
+            if (content.includes('frustrated') || content.includes('struggling')) reasons.push('😤 Frustrated');
+            if (content.includes('denied') || content.includes('rejection')) reasons.push('🚫 Facing denials');
+            if (content.includes('prior authorization')) reasons.push('📋 PA challenges');
+            if (content.includes('billing') || content.includes('rcm')) reasons.push('💰 Billing issues');
+            if (content.includes('urgent') || content.includes('asap')) reasons.push('⚡ Urgent need');
+            
+            const engagement = post.likes + post.comments + post.shares;
+            if (engagement > 50) reasons.push(`🔥 High engagement (${engagement})`);
+            
+            const daysOld = Math.floor((Date.now() - new Date(post.date)) / (1000 * 60 * 60 * 24));
+            if (daysOld <= 7) reasons.push(`🆕 Recent (${daysOld}d ago)`);
+            
+            return reasons;
+        }
+        
+        // Generate Trending Keywords
+        function generateTrendingKeywords() {
+            const container = document.getElementById('trendingKeywords');
+            
+            if (filteredData.length === 0) {
+                container.innerHTML = '<p style="color: #95a5a6; text-align: center; padding: 2rem;">No data available for keyword analysis.</p>';
+                return;
+            }
+            
+            // Extract all words from content
+            const wordFrequency = {};
+            const stopWords = new Set([
+                'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'as', 'is', 'was', 'are', 'were', 'been', 'be', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'should', 'could', 'may', 'might', 'must', 'can', 'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'my', 'your', 'his', 'her', 'its', 'our', 'their', 'me', 'him', 'us', 'them', 'what', 'which', 'who', 'when', 'where', 'why', 'how', 'all', 'each', 'every', 'both', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'just', 'about', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'up', 'down', 'out', 'off', 'over', 'under', 'again', 'further', 'then', 'once'
+            ]);
+            
+            // Count word frequencies
+            filteredData.forEach(post => {
+                const words = post.content.toLowerCase()
+                    .replace(/[^\w\s]/g, ' ')
+                    .split(/\s+/)
+                    .filter(word => word.length > 3 && !stopWords.has(word));
+                
+                words.forEach(word => {
+                    wordFrequency[word] = (wordFrequency[word] || 0) + 1;
+                });
+            });
+            
+            // Extract common phrases (2-3 words)
+            const phraseFrequency = {};
+            filteredData.forEach(post => {
+                const text = post.content.toLowerCase();
+                
+                // Common pain management phrases
+                const phrases = [
+                    'prior authorization', 'prior auth', 'pa denial', 'pa denied',
+                    'insurance denial', 'insurance rejected', 'claim denied', 'claim rejection',
+                    'peer to peer', 'peer review', 'appeal process', 'appeal denied',
+                    'billing issues', 'billing problems', 'billing denial', 'billing errors',
+                    'rcm solution', 'rcm software', 'rcm system', 'revenue cycle',
+                    'pain management', 'pain clinic', 'pain practice', 'pain procedures',
+                    'interventional pain', 'chronic pain', 'pain medicine', 'pain specialist',
+                    'spinal cord stimulator', 'epidural injection', 'nerve block', 'radiofrequency ablation',
+                    'medicare denial', 'medicaid denial', 'commercial insurance', 'insurance company',
+                    'medical necessity', 'documentation requirements', 'clinical documentation',
+                    'switching providers', 'looking for solution', 'need help', 'frustrated with',
+                    'time consuming', 'administrative burden', 'staff hours', 'workflow issues'
+                ];
+                
+                phrases.forEach(phrase => {
+                    if (text.includes(phrase)) {
+                        phraseFrequency[phrase] = (phraseFrequency[phrase] || 0) + 1;
+                    }
+                });
+            });
+            
+            // Get top keywords
+            const topWords = Object.entries(wordFrequency)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 20);
+            
+            // Get top phrases
+            const topPhrases = Object.entries(phraseFrequency)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 15);
+            
+            // Calculate trending score (frequency + recency)
+            const now = Date.now();
+            const trendingPhrases = topPhrases.map(([phrase, count]) => {
+                // Find posts with this phrase
+                const postsWithPhrase = filteredData.filter(p => 
+                    p.content.toLowerCase().includes(phrase)
+                );
+                
+                // Calculate average recency (days ago)
+                const avgRecency = postsWithPhrase.reduce((sum, p) => {
+                    const daysAgo = (now - new Date(p.date)) / (1000 * 60 * 60 * 24);
+                    return sum + daysAgo;
+                }, 0) / postsWithPhrase.length;
+                
+                // Trending score: higher frequency + more recent = higher score
+                const trendingScore = count * (1 / (avgRecency + 1));
+                
+                return { phrase, count, avgRecency, trendingScore };
+            }).sort((a, b) => b.trendingScore - a.trendingScore);
+            
+            container.innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <!-- Trending Phrases -->
+                    <div>
+                        <h4 style="color: #2E5C9A; margin-bottom: 1rem; font-size: 1rem;">
+                            🔥 Hot Topics (Trending Now)
+                        </h4>
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            ${trendingPhrases.slice(0, 10).map((item, index) => {
+                                const isHot = index < 3;
+                                const bgColor = isHot ? '#FFE5E5' : '#f8f9fa';
+                                const textColor = isHot ? '#E85D75' : '#2E5C9A';
+                                const icon = isHot ? '🔥' : '📈';
+                                
+                                return `
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 1rem; background: ${bgColor}; border-radius: 6px; border-left: 3px solid ${textColor};">
+                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                            <span style="font-size: 1.2rem;">${icon}</span>
+                                            <span style="color: ${textColor}; font-weight: 600; text-transform: capitalize;">
+                                                ${item.phrase}
+                                            </span>
+                                        </div>
+                                        <div style="text-align: right;">
+                                            <div style="color: ${textColor}; font-weight: 600; font-size: 1.1rem;">
+                                                ${item.count}
+                                            </div>
+                                            <div style="color: #6c757d; font-size: 0.75rem;">
+                                                mentions
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        
+                        <div style="margin-top: 1rem; padding: 0.8rem; background: #E0F2F1; border-radius: 6px; font-size: 0.85rem; color: #2E5C9A;">
+                            <strong>💡 Tip:</strong> Use these trending phrases as keywords in your next search to find more relevant discussions!
+                        </div>
+                    </div>
+                    
+                    <!-- Top Keywords -->
+                    <div>
+                        <h4 style="color: #2E5C9A; margin-bottom: 1rem; font-size: 1rem;">
+                            📊 Most Mentioned Keywords
+                        </h4>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                            ${topWords.map(([word, count]) => {
+                                const size = Math.min(1.5, 0.8 + (count / topWords[0][1]) * 0.7);
+                                return `
+                                    <span style="
+                                        background: linear-gradient(135deg, #4DAFA7 0%, #2E5C9A 100%);
+                                        color: white;
+                                        padding: 0.4rem 0.8rem;
+                                        border-radius: 20px;
+                                        font-size: ${size}rem;
+                                        font-weight: 600;
+                                        display: inline-flex;
+                                        align-items: center;
+                                        gap: 0.3rem;
+                                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                                    ">
+                                        ${word}
+                                        <span style="
+                                            background: rgba(255,255,255,0.3);
+                                            padding: 0.1rem 0.4rem;
+                                            border-radius: 10px;
+                                            font-size: 0.7rem;
+                                        ">
+                                            ${count}
+                                        </span>
+                                    </span>
+                                `;
+                            }).join('')}
+                        </div>
+                        
+                        <div style="margin-top: 1.5rem;">
+                            <h4 style="color: #2E5C9A; margin-bottom: 0.8rem; font-size: 0.95rem;">
+                                📅 Trending Timeline
+                            </h4>
+                            ${trendingPhrases.slice(0, 5).map(item => `
+                                <div style="margin-bottom: 0.8rem;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
+                                        <span style="color: #2E5C9A; font-size: 0.85rem; font-weight: 600;">
+                                            ${item.phrase}
+                                        </span>
+                                        <span style="color: #6c757d; font-size: 0.8rem;">
+                                            ${Math.round(item.avgRecency)}d ago avg
+                                        </span>
+                                    </div>
+                                    <div style="background: #ecf0f1; height: 8px; border-radius: 4px; overflow: hidden;">
+                                        <div style="
+                                            background: linear-gradient(90deg, #4DAFA7 0%, #2E5C9A 100%);
+                                            height: 100%;
+                                            width: ${(item.count / trendingPhrases[0].count) * 100}%;
+                                            border-radius: 4px;
+                                        "></div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 1.5rem; padding: 1rem; background: #FFF9E6; border-radius: 6px; border-left: 4px solid #f39c12;">
+                    <strong style="color: #2E5C9A;">🎯 How to Use Trending Keywords:</strong>
+                    <ul style="margin: 0.5rem 0 0 1.5rem; padding: 0; color: #6c757d; font-size: 0.9rem;">
+                        <li>Copy hot topics and use them as search keywords</li>
+                        <li>Create content addressing trending pain points</li>
+                        <li>Target ads using popular phrases</li>
+                        <li>Monitor keyword frequency changes over time</li>
+                    </ul>
+                </div>
+            `;
+        }
+
+        // Open post URL
+        function openPost(url, index) {
+            console.log(`Opening post ${index + 1}:`, url);
+            
+            if (!url || url === '#' || url === '') {
+                alert('ERROR: No URL available for this post.');
+                return false;
+            }
+            
+            // Ensure URL is valid
+            let finalUrl = url;
+            if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+                finalUrl = 'https://' + finalUrl;
+            }
+            
+            console.log('Final URL:', finalUrl);
+            
+            // Create a temporary link and click it
+            const link = document.createElement('a');
+            link.href = finalUrl;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            return false;
+        }
+
+        // Update posts table
+        function updatePostsTable() {
+            const tbody = document.getElementById('postsTable');
+            
+            if (filteredData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem; color: #7f8c8d;">No posts match the selected filters.</td></tr>';
+                return;
+            }
+
+            // Sort by engagement (highest first)
+            const sortedData = [...filteredData].sort((a, b) => {
+                const engagementA = (a.likes || 0) + (a.comments || 0) + (a.shares || 0);
+                const engagementB = (b.likes || 0) + (b.comments || 0) + (b.shares || 0);
+                return engagementB - engagementA;
+            }).slice(0, 50); // Show top 50
+
+            tbody.innerHTML = sortedData.map(item => {
+                const date = new Date(item.date);
+                const engagement = (item.likes || 0) + (item.comments || 0) + (item.shares || 0);
+                const bookmarked = isBookmarked(item.url);
+                
+                // Platform badge with color
+                const platformBadges = {
+                    'linkedin': { icon: '🔗', name: 'LinkedIn', color: '#0077b5' },
+                    'twitter': { icon: '🐦', name: 'Twitter', color: '#1DA1F2' },
+                    'reddit': { icon: '🤖', name: 'Reddit', color: '#FF4500' }
+                };
+                const platform = platformBadges[item.platform] || { icon: '📱', name: 'Unknown', color: '#6c757d' };
+                
+                return `
+                    <tr>
+                        <td>
+                            <span class="badge" style="background: ${platform.color}; color: white;">
+                                ${platform.icon} ${platform.name}
+                            </span>
+                        </td>
+                        <td>${date.toLocaleDateString()}</td>
+                        <td>
+                            <a href="${escapeHtml(item.authorUrl)}" target="_blank" class="link-button">
+                                ${escapeHtml(item.author)}
+                            </a>
+                        </td>
+                        <td><span class="badge">${escapeHtml(item.topic)}</span></td>
+                        <td>${escapeHtml(item.content.substring(0, 80))}...</td>
+                        <td>
+                            <strong>${engagement.toLocaleString()}</strong>
+                            <br>
+                            <small style="color: #7f8c8d;">
+                                👍 ${item.likes} 💬 ${item.comments} 🔄 ${item.shares}
+                            </small>
+                        </td>
+                        <td>
+                            ${item.url && item.url !== '#' && item.url !== '' 
+                                ? `<a href="${item.url}" target="_blank" rel="noopener noreferrer" class="link-button">View →</a>`
+                                : `<span style="color: #95a5a6; font-size: 0.85rem;">-</span>`
+                            }
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 0.3rem;">
+                                <button onclick='toggleBookmark(${JSON.stringify(item).replace(/'/g, "\\'")}); event.stopPropagation();' 
+                                        style="background: ${bookmarked ? '#f39c12' : '#4DAFA7'}; color: white; border: none; padding: 0.4rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 1rem;"
+                                        title="${bookmarked ? 'Remove bookmark' : 'Save post'}">
+                                    ${bookmarked ? '⭐' : '☆'}
+                                </button>
+                                <button onclick='saveInfluencer("${escapeHtml(item.author).replace(/"/g, '&quot;')}", "${item.authorUrl}", "${item.platform}"); event.stopPropagation();' 
+                                        style="background: ${isInfluencerSaved(item.authorUrl) ? '#e74c3c' : '#ecf0f1'}; color: ${isInfluencerSaved(item.authorUrl) ? 'white' : '#2E5C9A'}; border: none; padding: 0.4rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 1rem;"
+                                        title="${isInfluencerSaved(item.authorUrl) ? 'Already saved' : 'Save as influencer'}">
+                                    👥
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Debug data function
+        function debugData() {
+            console.log('=== DEBUG DATA ===');
+            console.log('Total posts:', allData.length);
+            console.log('Filtered posts:', filteredData.length);
+            
+            if (allData.length > 0) {
+                console.log('\n--- First 3 Posts ---');
+                allData.slice(0, 3).forEach((post, i) => {
+                    console.log(`\nPost ${i + 1}:`);
+                    console.log('  URL:', post.url);
+                    console.log('  Author:', post.author);
+                    console.log('  Author URL:', post.authorUrl);
+                    console.log('  Content preview:', post.content.substring(0, 100));
+                    console.log('  Full post object:', post);
+                });
+                
+                // Check how many posts have valid URLs
+                const postsWithUrls = allData.filter(p => p.url && p.url !== '#').length;
+                const postsWithoutUrls = allData.length - postsWithUrls;
+                
+                console.log('\n--- URL Statistics ---');
+                console.log(`Posts with valid URLs: ${postsWithUrls}`);
+                console.log(`Posts without URLs: ${postsWithoutUrls}`);
+                
+                alert(`Debug info logged to console!\n\nPosts with URLs: ${postsWithUrls}\nPosts without URLs: ${postsWithoutUrls}\n\nCheck console (F12) for details.`);
+            } else {
+                alert('No data loaded yet. Fetch data first.');
+            }
+        }
+
+        // Initialize on load
+        init();
+        
+        // ============================================
+        // MULTI-PLATFORM FETCH FUNCTIONS
+        // ============================================
+        
+        // Main multi-platform fetch function
+        async function fetchMultiPlatformData() {
+            const token = document.getElementById('apifyToken').value.trim();
+            const keywordsText = document.getElementById('searchKeywords').value.trim();
+            const maxItems = parseInt(document.getElementById('maxItems').value);
+            
+            const linkedinEnabled = document.getElementById('platformLinkedIn').checked;
+            const twitterEnabled = document.getElementById('platformTwitter').checked;
+            const redditEnabled = document.getElementById('platformReddit').checked;
+
+            console.log('=== Starting Multi-Platform Fetch ===');
+            console.log('Platforms enabled:', { linkedinEnabled, twitterEnabled, redditEnabled });
+            console.log('Max items per platform:', maxItems);
+            console.log('Token present:', !!token);
+
+            // Validation
+            if (!linkedinEnabled && !twitterEnabled && !redditEnabled) {
+                alert('Please select at least one platform');
+                return;
+            }
+
+            if (IS_LOCAL_DEV) {
+                const isHealthy = await ensureLocalApiAvailable();
+                if (!isHealthy) {
+                    alert('Local server is not running. Start it with "npm run start" and open http://127.0.0.1:5173/pilot.html');
+                    return;
+                }
+            }
+            
+            // Require Apify token if LinkedIn or Twitter is selected
+            if (linkedinEnabled || twitterEnabled) {
+                if (!token) {
+                    alert('Please enter your Apify API token (required for LinkedIn/Twitter)');
+                    return;
+                }
+            }
+
+            if (linkedinEnabled) {
+                const cookie = document.getElementById('linkedinCookie').value.trim();
+                if (!cookie) {
+                    alert('LinkedIn cookie (li_at) is required when LinkedIn is selected');
+                    return;
+                }
+            }
+            
+            if (!keywordsText) {
+                alert('Please enter at least one keyword');
+                return;
+            }
+
+            // Parse keywords
+            const keywords = keywordsText.split('\n')
+                .map(k => k.trim())
+                .filter(k => k.length > 0);
+
+            if (keywords.length === 0) {
+                alert('Please enter at least one keyword');
+                return;
+            }
+
+            // Store keywords globally
+            searchKeywords = keywords;
+
+            // Show loading
+            document.getElementById('configPanel').style.display = 'none';
+            document.getElementById('loadingPanel').style.display = 'block';
+            updateLoadingStatus('Starting multi-platform data collection...');
+
+            try {
+                allData = [];
+                let platformResults = [];
+                
+                // Fetch from each enabled platform
+                if (linkedinEnabled) {
+                    updateLoadingStatus('💼 Fetching LinkedIn posts...');
+                    const linkedinData = await fetchLinkedInData(token, keywords, maxItems);
+                    platformResults.push({ platform: 'LinkedIn', count: linkedinData.length });
+                    allData = allData.concat(linkedinData);
+                }
+
+                if (twitterEnabled) {
+                    updateLoadingStatus('🐦 Fetching Twitter/X posts...');
+                    const twitterData = await fetchTwitterData(token, keywords, maxItems);
+                    platformResults.push({ platform: 'Twitter/X', count: twitterData.length });
+                    allData = allData.concat(twitterData);
+                }
+                
+                if (redditEnabled) {
+                    updateLoadingStatus('🤖 Fetching Reddit discussions...');
+                    const redditData = await fetchRedditData(keywords, maxItems);
+                    platformResults.push({ platform: 'Reddit', count: redditData.length });
+                    allData = allData.concat(redditData);
+                }
+
+                if (allData.length === 0) {
+                    if (twitterEnabled && !linkedinEnabled && !redditEnabled) {
+                        throw new Error('No Twitter/X posts found. Verify Twitter Actor ID, try broader keywords, and use Latest sort. If needed, test with Demo Mode first.');
+                    }
+                    if (redditEnabled && !linkedinEnabled) {
+                        const configuredSubs = document.getElementById('redditSubreddits').value.trim();
+                        if (!configuredSubs) {
+                            throw new Error('No Reddit posts found. Add 1-3 subreddits (e.g., healthcare, medicine, ChronicPain) or simplify keywords.');
+                        }
+                        throw new Error('No Reddit posts found for the current filters. Try broader keywords, change time range to "All Time", or use different subreddits.');
+                    }
+                    throw new Error('No data found. Try different keywords or check your settings.');
+                }
+
+                console.log('✓ Total items fetched:', allData.length);
+                platformResults.forEach(r => console.log(`  ${r.platform}: ${r.count} items`));
+                
+                // Save to cache
+                saveToCache(allData, keywords);
+                
+                // Show dashboard
+                document.getElementById('loadingPanel').style.display = 'none';
+                document.getElementById('filtersPanel').style.display = 'block';
+                
+                populateTopicFilter();
+                applyFilters();
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert(`Failed to fetch data: ${error.message}`);
+                document.getElementById('loadingPanel').style.display = 'none';
+                document.getElementById('configPanel').style.display = 'block';
+            }
+        }
+        
+        // Fetch Reddit data using Netlify Function (to avoid CORS)
+        async function fetchRedditData(keywords, maxItems) {
+            const sort = document.getElementById('redditSort').value || 'relevance';
+            const time = document.getElementById('redditTime').value || 'all';
+            const subreddits = document.getElementById('redditSubreddits').value.trim();
+            
+            const allResults = [];
+            
+            for (const keyword of keywords) {
+                try {
+                    console.log(`🤖 Fetching Reddit data for: "${keyword}"`);
+                    console.log(`   Settings: sort=${sort}, time=${time}, subreddits=${subreddits || 'all'}`);
+                    
+                    // Call Netlify Function instead of direct API
+                    const url = IS_LOCAL_DEV
+                        ? `${LOCAL_API_BASE}/api/reddit-search`
+                        : `/.netlify/functions/fetch-reddit`;
+                    
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            keyword: keyword,
+                            maxItems: Math.ceil(maxItems / keywords.length),
+                            sort: sort,
+                            time: time,
+                            subreddits: subreddits
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        console.error('   Reddit API Error Response:', errorData);
+                        throw new Error(`Reddit API Error: ${response.status} - ${errorData.error}`);
+                    }
+
+                    const rawData = await response.json();
+                    console.log(`   Retrieved ${rawData.length} posts from Reddit`);
+                    
+                    if (rawData.length > 0) {
+                        console.log('   Sample post title:', rawData[0].title);
+                        console.log('   Sample post subreddit:', rawData[0].subreddit);
+                    }
+                    
+                    // Normalize data
+                    const normalized = rawData.map(post => ({
+                        date: new Date(post.created_utc * 1000).toISOString(),
+                        author: post.author || 'Unknown',
+                        authorUrl: `https://reddit.com/user/${post.author}`,
+                        content: post.title + (post.selftext ? '\n\n' + post.selftext : ''),
+                        platform: 'reddit',
+                        likes: post.ups || 0,
+                        comments: post.num_comments || 0,
+                        shares: 0,
+                        url: post.url && post.url.includes('reddit.com') ? post.url : `https://reddit.com${post.permalink}`,
+                        topic: keyword,
+                        subreddit: post.subreddit
+                    }));
+                    
+                    allResults.push(...normalized);
+                    console.log(`   ✓ Added ${normalized.length} posts to results`);
+                    
+                    // Small delay to avoid rate limiting
+                    if (keywords.indexOf(keyword) < keywords.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
+                } catch (error) {
+                    console.error(`   ✗ Error fetching Reddit data for "${keyword}":`, error);
+                    console.error('   Error details:', error.message);
+                }
+            }
+            
+            console.log(`🤖 Total Reddit results: ${allResults.length}`);
+            return allResults;
+        }
+
+        // Fetch Twitter/X data using Apify actor
+        async function fetchTwitterData(token, keywords, maxItems) {
+            const actorIdInput = document.getElementById('twitterActorId').value.trim();
+            const actorId = actorIdInput || APIFY_CONFIG.twitter.defaultActorId;
+            const twitterSort = document.getElementById('twitterSort').value || 'Latest';
+            const allResults = [];
+            const errors = [];
+
+            for (const keyword of keywords) {
+                try {
+                    const perKeywordLimit = Math.max(5, Math.ceil(maxItems / keywords.length));
+                    const candidateInputs = buildTwitterCandidateInputs(keyword, perKeywordLimit, twitterSort);
+                    let matched = false;
+                    let lastError = '';
+
+                    for (const input of candidateInputs) {
+                        let result;
+                        try {
+                            result = await startApifyRun(actorId, token, input);
+                        } catch (error) {
+                            lastError = error.message || 'Apify run failed';
+                            continue;
+                        }
+                        const runId = result?.data?.id;
+                        const datasetId = result?.data?.defaultDatasetId;
+                        if (!runId || !datasetId) {
+                            lastError = 'Missing run/dataset id';
+                            continue;
+                        }
+
+                        await waitForRunCompletion(token, runId);
+                        const rawData = await fetchDataset(token, datasetId);
+                        const normalized = normalizeTwitterData(rawData, keyword);
+                        if (normalized.length > 0) {
+                            allResults.push(...normalized);
+                            matched = true;
+                            break;
+                        }
+                    }
+
+                    if (!matched) {
+                        errors.push(`"${keyword}" -> no rows (${lastError || 'input schema mismatch'})`);
+                    }
+                } catch (error) {
+                    console.error(`Twitter fetch failed for "${keyword}":`, error);
+                    errors.push(`"${keyword}" -> ${error.message}`);
+                }
+            }
+
+            if (!allResults.length && errors.length) {
+                console.warn('Twitter fetch summary:', errors.join('; '));
+            }
+            return allResults;
+        }
+
+        function buildTwitterCandidateInputs(keyword, perKeywordLimit, twitterSort) {
+            const encoded = encodeURIComponent(keyword);
+            return [
+                {
+                    searchTerms: [keyword],
+                    maxItems: perKeywordLimit,
+                    maxTweets: perKeywordLimit,
+                    sort: twitterSort,
+                    lang: 'en'
+                },
+                {
+                    queries: [keyword],
+                    maxItems: perKeywordLimit,
+                    sort: twitterSort,
+                    language: 'en'
+                },
+                {
+                    query: keyword,
+                    maxItems: perKeywordLimit,
+                    maxTweets: perKeywordLimit,
+                    sort: twitterSort
+                },
+                {
+                    searchQueries: [keyword],
+                    tweetsDesired: perKeywordLimit,
+                    sort: twitterSort
+                },
+                {
+                    searchTerm: keyword,
+                    tweetsLimit: perKeywordLimit,
+                    sort: twitterSort
+                },
+                {
+                    startUrls: [`https://x.com/search?q=${encoded}&src=typed_query&f=live`],
+                    maxItems: perKeywordLimit
+                }
+            ];
+        }
+
+        function normalizeTwitterData(rawData, keyword) {
+            if (!Array.isArray(rawData)) return [];
+            return rawData
+                .map((item) => {
+                    const text = item.full_text || item.text || item.tweetText || item.tweet || item.description || item.body || item.rawContent || '';
+                    const author = item.user?.name || item.author?.name || item.authorName || item.username || item.userName || item.screenName || item.handle || 'Unknown';
+                    const username = item.user?.screen_name || item.author?.userName || item.userName || item.username || item.screenName || item.handle || '';
+                    const createdAt = item.createdAt || item.created_at || item.date || item.timestamp || item.time || item.publishedAt || new Date().toISOString();
+                    const likes = Number(item.favorite_count ?? item.likeCount ?? item.likes ?? item.favorites ?? item.favoriteCount ?? 0);
+                    const comments = Number(item.reply_count ?? item.replyCount ?? item.replies ?? item.commentCount ?? 0);
+                    const shares = Number(item.retweet_count ?? item.retweetCount ?? item.retweets ?? item.shareCount ?? 0);
+                    const tweetId = item.id_str || item.id || item.tweetId || item.rest_id || '';
+                    const url = item.url || item.tweetUrl || item.permanentUrl || item.statusUrl || (tweetId && username ? `https://x.com/${username}/status/${tweetId}` : '#');
+                    const authorUrl = item.authorUrl || (username ? `https://x.com/${username}` : '#');
+                    const parsedDate = new Date(createdAt);
+
+                    return {
+                        date: Number.isNaN(parsedDate.getTime()) ? new Date().toISOString() : parsedDate.toISOString(),
+                        author,
+                        authorUrl,
+                        content: text,
+                        platform: 'twitter',
+                        likes,
+                        comments,
+                        shares,
+                        url,
+                        topic: keyword
+                    };
+                })
+                .filter((item) => item.content && item.content.trim().length > 0);
+        }
+        
+        // Fetch LinkedIn data
+        async function fetchLinkedInData(token, keywords, maxItems) {
+            const cookie = document.getElementById('linkedinCookie').value.trim();
+            const searchType = document.getElementById('linkedinSearchType').value;
+            const linkedinActorId = document.getElementById('linkedinActorId').value.trim() || APIFY_CONFIG.linkedin.actorId;
+            
+            const allResults = [];
+            
+            for (const keyword of keywords) {
+                try {
+                    const encodedKeyword = encodeURIComponent(keyword.trim());
+                    const searchUrl = `https://www.linkedin.com/search/results/${searchType}/?keywords=${encodedKeyword}&origin=GLOBAL_SEARCH_HEADER`;
+                    
+                    const input = {
+                        cookie: getCookieArray(cookie),
+                        userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+                        urls: [searchUrl],
+                        limitPerSource: Math.ceil(maxItems / keywords.length),
+                        deepScrape: false,
+                        rawData: false,
+                        minDelay: 2,
+                        maxDelay: 8,
+                        proxy: {
+                            useApifyProxy: true,
+                            apifyProxyCountry: "US"
+                        }
+                    };
+                    
+                    const result = await startApifyRun(linkedinActorId, token, input);
+                    const runId = result.data.id;
+                    
+                    // Wait for completion
+                    await waitForRunCompletion(token, runId);
+                    
+                    // Get results
+                    const datasetId = result.data.defaultDatasetId;
+                    const rawData = await fetchDataset(token, datasetId);
+                    
+                    // Normalize data
+                    const normalized = rawData.map(item => {
+                        const author = item.authorName || 'Unknown';
+                        const authorUrl = item.authorProfileUrl || '#';
+                        let postUrl = item.url || item.postUrl || '#';
+                        
+                        // Fix incomplete LinkedIn URLs
+                        if (postUrl && postUrl.includes('activity-') && !postUrl.match(/activity-\d+-\w{4}/)) {
+                            const activityMatch = postUrl.match(/activity-(\d+)/);
+                            if (activityMatch) {
+                                postUrl = `https://www.linkedin.com/feed/update/urn:li:activity:${activityMatch[1]}/`;
+                            }
+                        }
+                        
+                        return {
+                            date: item.postedAtISO || item.postedAt || new Date().toISOString(),
+                            author: author,
+                            authorUrl: authorUrl,
+                            content: item.text || item.content || '',
+                            platform: 'linkedin',
+                            likes: item.numLikes || 0,
+                            comments: item.numComments || 0,
+                            shares: item.numShares || 0,
+                            url: postUrl,
+                            topic: keyword
+                        };
+                    });
+                    
+                    allResults.push(...normalized);
+                } catch (error) {
+                    console.error(`Error fetching LinkedIn data for "${keyword}":`, error);
+                    if (String(error.message || '').includes('403')) {
+                        console.error('LinkedIn 403 usually means your Apify token cannot run this actor. Change LinkedIn Apify Actor ID to one your token can access.');
+                    }
+                }
+            }
+            
+            return allResults;
+        }
+        
+        // Get cookie array for LinkedIn
+        function getCookieArray(liAtValue) {
+            return [
+                {"domain": ".linkedin.com", "name": "lms_ads", "value": "AQFqpJug0ZkFJAAAAZwCHbmxN6xfF2RUbZhbkydXmHuX-lh8Ub4bNAFveAxMmm9TG8yW9IpGVUHzAT5N86PM5xIde2Dlh1KI", "path": "/", "secure": true, "httpOnly": false},
+                {"domain": ".linkedin.com", "name": "_guid", "value": "129ae7f6-79a8-45fd-a31d-0486f2decc26", "path": "/", "secure": true, "httpOnly": false},
+                {"domain": ".linkedin.com", "name": "bcookie", "value": "\"v=2&e54d18a5-c177-497e-8ab9-6c60bf330702\"", "path": "/", "secure": true, "httpOnly": false},
+                {"domain": ".linkedin.com", "name": "lms_analytics", "value": "AQFqpJug0ZkFJAAAAZwCHbmxN6xfF2RUbZhbkydXmHuX-lh8Ub4bNAFveAxMmm9TG8yW9IpGVUHzAT5N86PM5xIde2Dlh1KI", "path": "/", "secure": true, "httpOnly": false},
+                {"domain": ".www.linkedin.com", "name": "li_at", "value": liAtValue, "path": "/", "secure": true, "httpOnly": true},
+                {"domain": ".linkedin.com", "name": "lang", "value": "v=2&lang=en-us", "path": "/", "secure": true, "httpOnly": false},
+                {"domain": ".linkedin.com", "name": "lidc", "value": "\"b=OGST02:s=O:r=O:a=O:p=O:g=3724:u=1:x=1:i=1769562379:t=1769647549:v=2:sig=AQG0RRDY5TqhoUjOQT_-IuY4Q37uRTjd\"", "path": "/", "secure": true, "httpOnly": false},
+                {"domain": ".www.linkedin.com", "name": "bscookie", "value": "\"v=1&2026012801002105821962-8aa8-4867-8cc3-c2db0d4482dbAQGydB9VRRntWEP6EFWY9JA5yTx8duMh\"", "path": "/", "secure": true, "httpOnly": true},
+                {"domain": ".www.linkedin.com", "name": "JSESSIONID", "value": "\"ajax:7160386635290813687\"", "path": "/", "secure": true, "httpOnly": false},
+                {"domain": ".linkedin.com", "name": "li_sugr", "value": "cfbc4abf-f93d-4968-9024-c38b5c2e32d6", "path": "/", "secure": true, "httpOnly": false}
+            ];
+        }
+        
+        // ============================================
+        // DEMO DATA FUNCTION
+        // ============================================
+        
+        function loadDemoData() {
+            // Show loading
+            document.getElementById('configPanel').style.display = 'none';
+            document.getElementById('loadingPanel').style.display = 'block';
+            updateLoadingStatus('Loading demo data...');
+            
+            setTimeout(() => {
+                // Generate demo data for all platforms
+                const demoKeywords = ['prior authorization pain management', 'interventional pain billing', 'spinal cord stimulator denials'];
+                searchKeywords = demoKeywords;
+                
+                allData = generateDemoData(demoKeywords);
+                
+                console.log('✓ Demo data loaded:', allData.length, 'items');
+                
+                // Show dashboard
+                document.getElementById('loadingPanel').style.display = 'none';
+                document.getElementById('filtersPanel').style.display = 'block';
+                
+                populateTopicFilter();
+                applyFilters();
+            }, 1000);
+        }
+        
+        function generateDemoData(keywords) {
+            const data = [];
+            const now = new Date();
+            
+            // LinkedIn demo data
+            for (let i = 0; i < 25; i++) {
+                const keyword = keywords[i % keywords.length];
+                const daysAgo = Math.floor(Math.random() * 30);
+                const date = new Date(now);
+                date.setDate(date.getDate() - daysAgo);
+                
+                data.push({
+                    date: date.toISOString(),
+                    author: `Healthcare Professional ${i + 1}`,
+                    authorUrl: `https://linkedin.com/in/user${i}`,
+                    content: `Discussing ${keyword} challenges in our practice. The current process is frustrating and time-consuming for both staff and patients.`,
+                    platform: 'linkedin',
+                    likes: Math.floor(Math.random() * 50) + 10,
+                    comments: Math.floor(Math.random() * 20) + 5,
+                    shares: Math.floor(Math.random() * 10),
+                    url: `https://linkedin.com/posts/activity-${1000000 + i}`,
+                    topic: keyword
+                });
+            }
+            
+            // Reddit demo data
+            for (let i = 0; i < 25; i++) {
+                const keyword = keywords[i % keywords.length];
+                const daysAgo = Math.floor(Math.random() * 21);
+                const date = new Date(now);
+                date.setDate(date.getDate() - daysAgo);
+                const subreddits = ['medicine', 'healthcare', 'medicalbilling', 'ChronicPain'];
+                
+                data.push({
+                    date: date.toISOString(),
+                    author: `reddit_user_${i + 1}`,
+                    authorUrl: `https://reddit.com/user/reddit_user_${i + 1}`,
+                    content: `Question about ${keyword}: Has anyone found a solution to streamline this process? Our clinic is drowning in paperwork.`,
+                    platform: 'reddit',
+                    likes: Math.floor(Math.random() * 200) + 50,
+                    comments: Math.floor(Math.random() * 40) + 10,
+                    shares: 0,
+                    url: `https://reddit.com/r/${subreddits[i % subreddits.length]}/comments/abc${i}`,
+                    topic: keyword,
+                    subreddit: subreddits[i % subreddits.length]
+                });
+            }
+
+            // Twitter/X demo data
+            const twitterHandles = ['healthpolicynews', 'painclinicops', 'medbillingpro', 'rcminsights', 'carepathways'];
+            for (let i = 0; i < 25; i++) {
+                const keyword = keywords[i % keywords.length];
+                const hoursAgo = Math.floor(Math.random() * 240); // last ~10 days
+                const date = new Date(now);
+                date.setHours(date.getHours() - hoursAgo);
+                const handle = twitterHandles[i % twitterHandles.length];
+                const tweetId = `${1900000000000000000 + i}`;
+                
+                data.push({
+                    date: date.toISOString(),
+                    author: `@${handle}`,
+                    authorUrl: `https://x.com/${handle}`,
+                    content: `Seeing increased chatter about ${keyword}. Teams are asking for faster approvals, clearer payer rules, and better workflow automation. #healthcare #RCM`,
+                    platform: 'twitter',
+                    likes: Math.floor(Math.random() * 600) + 40,
+                    comments: Math.floor(Math.random() * 120) + 8,
+                    shares: Math.floor(Math.random() * 180) + 5,
+                    url: `https://x.com/${handle}/status/${tweetId}`,
+                    topic: keyword
+                });
+            }
+            
+            return data;
+        }
+    </script>
+</body>
+</html>

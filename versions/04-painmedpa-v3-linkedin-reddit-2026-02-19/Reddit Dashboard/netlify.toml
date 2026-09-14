@@ -1,0 +1,13 @@
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/api/reddit"
+  to = "/.netlify/functions/reddit"
+  status = 200
+
+[[redirects]]
+  from = "/api/suggest-subreddits"
+  to = "/.netlify/functions/suggest-subreddits"
+  status = 200

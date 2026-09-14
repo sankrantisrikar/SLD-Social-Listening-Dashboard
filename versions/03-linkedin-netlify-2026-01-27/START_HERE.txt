@@ -1,0 +1,128 @@
+═══════════════════════════════════════════════════════════════
+  LINKEDIN PAIN MANAGEMENT DASHBOARD - START HERE
+═══════════════════════════════════════════════════════════════
+
+🎯 WHAT YOU HAVE:
+
+  ✅ linkedin-pain-management-dashboard.html
+     → Demo with sample data (open and view immediately)
+  
+  ✅ linkedin-dashboard-auto.html
+     → Live LinkedIn search (enter keywords, get real data)
+  
+  ✅ SIMPLE_SETUP.md
+     → Step-by-step setup instructions
+  
+  ✅ HOW_TO_GET_COOKIE.txt
+     → Visual guide for getting LinkedIn cookie
+
+═══════════════════════════════════════════════════════════════
+  🚀 FASTEST WAY TO START
+═══════════════════════════════════════════════════════════════
+
+STEP 1: See the Demo (30 seconds)
+  
+  Double-click: linkedin-pain-management-dashboard.html
+  
+  This shows you what the dashboard looks like with sample data.
+  No setup required!
+
+───────────────────────────────────────────────────────────────
+
+STEP 2: Get Real LinkedIn Data (5 minutes)
+  
+  A) Get Apify Token:
+     → https://console.apify.com/sign-up (free trial)
+     → Copy your API token
+  
+  B) Get LinkedIn Cookie:
+     → Open linkedin.com (logged in)
+     → Press F12
+     → Application → Cookies → linkedin.com
+     → Copy "li_at" value
+  
+  C) Run Search:
+     → Open: linkedin-dashboard-auto.html
+     → Enter token + cookie
+     → Keywords are pre-filled!
+     → Click "Start Auto Search"
+     → Wait 30-60 seconds
+     → View results!
+
+═══════════════════════════════════════════════════════════════
+  💡 HOW IT WORKS
+═══════════════════════════════════════════════════════════════
+
+  1. You enter keywords:
+     "prior authorization pain management"
+     "spinal cord stimulator denials"
+     etc.
+  
+  2. System searches LinkedIn automatically
+  
+  3. Fetches all matching posts and profiles
+  
+  4. Displays in beautiful dashboard
+  
+  5. Click any link → Opens on LinkedIn
+
+═══════════════════════════════════════════════════════════════
+  🔑 GETTING LINKEDIN COOKIE (QUICK)
+═══════════════════════════════════════════════════════════════
+
+  Browser → F12 → Application → Cookies → linkedin.com → li_at
+  
+  Copy the entire value (long string starting with AQE...)
+  
+  See HOW_TO_GET_COOKIE.txt for visual guide
+
+═══════════════════════════════════════════════════════════════
+  📊 WHAT YOU'LL GET
+═══════════════════════════════════════════════════════════════
+
+  ✓ All LinkedIn posts matching your keywords
+  ✓ Author profiles and engagement metrics
+  ✓ Clickable links to view on LinkedIn
+  ✓ Top influencers ranked by engagement
+  ✓ CEO executive summary
+  ✓ Total engagement statistics
+
+═══════════════════════════════════════════════════════════════
+  💰 COST
+═══════════════════════════════════════════════════════════════
+
+  Free Trial: $5 Apify credit
+  
+  Typical Search: $0.50-2.50 for 100 posts
+  
+  Tip: Start with 50 posts to test!
+
+═══════════════════════════════════════════════════════════════
+  ❌ TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════
+
+  "Cookie required"
+  → You must enter your LinkedIn li_at cookie
+  
+  "Invalid cookie"
+  → Get fresh cookie (log into LinkedIn again)
+  
+  "No posts found"
+  → Try different keywords or check cookie
+  
+  "Insufficient credits"
+  → Add credits to Apify account
+
+═══════════════════════════════════════════════════════════════
+  📖 NEED MORE HELP?
+═══════════════════════════════════════════════════════════════
+
+  Read: SIMPLE_SETUP.md (complete instructions)
+  Read: HOW_TO_GET_COOKIE.txt (visual guide)
+  Read: README.md (overview)
+
+═══════════════════════════════════════════════════════════════
+
+  READY? → Open linkedin-dashboard-auto.html and start!
+
+═══════════════════════════════════════════════════════════════

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedIn Pain Management Intelligence Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 LinkedIn Pain Management Intelligence Dashboard</h1>
+        <p class="subtitle">
+            U.S. Interventional Pain Management | Keyword-Based Auto Search
+            <span class="live-indicator" id="liveIndicator">● READY</span>
+        </p>
+    </div>
+
+    <div class="container">
+        <!-- Configuration Panel -->
+        <div class="config-panel" id="configPanel">
+            <h3>⚙️ Setup - Enter Keywords to Auto-Search LinkedIn</h3>
+            
+            <div class="help-text">
+                <strong>How it works:</strong> Enter your credentials and keywords below. 
+                The system will automatically search LinkedIn for matching posts and profiles, 
+                then display the results in the dashboard.
+            </div>
+            
+            <div class="form-group">
+                <label>Apify API Token *</label>
+                <input type="password" id="apifyToken" placeholder="apify_api_xxxxxxxxxxxxx" />
+                <small>Get from: <a href="https://console.apify.com/account/integrations" target="_blank">Apify Console</a></small>
+            </div>
+            
+            <div class="form-group">
+                <label>LinkedIn Session Cookie (li_at) *</label>
+                <input type="password" id="linkedinCookie" placeholder="Your LinkedIn li_at cookie" />
+                <small>Login to LinkedIn → Press F12 → Application → Cookies → linkedin.com → Copy "li_at" value</small>
+            </div>
+            
+            <div class="form-group">
+                <label>Search Keywords (one per line) *</label>
+                <textarea id="searchKeywords" rows="8" placeholder="Enter keywords to search...">prior authorization pain management
+interventional pain billing
+spinal cord stimulator denials
+Medicare pain procedures
+RCM pain management
+peer to peer appeals pain
+WISeR automation
+pain management prior auth</textarea>
+                <small>System will search LinkedIn for posts containing these keywords.</small>
+            </div>
+            
+            <div class="form-group">
+                <label>Search Type</label>
+                <select id="searchType">
+                    <option value="content">Posts & Articles (Content)</option>
+                    <option value="people">People (Profiles)</option>
+                    <option value="companies">Companies</option>
+                </select>
+                <small>Choose what type of results to search for on LinkedIn</small>
+            </div>
+            
+            <div class="form-group">
+                <label>Maximum Posts to Fetch</label>
+                <input type="number" id="maxPosts" value="50" min="5" max="500" />
+                <small>Total posts across all keywords. More posts = more data but higher cost</small>
+            </div>
+            
+            <button class="btn btn-primary" onclick="startAutoSearch()">
+                🚀 Start Auto Search
+            </button>
+            
+            <button class="btn btn-secondary" onclick="useDemoData()">
+                📊 Use Demo Data
+            </button>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading" id="loadingState">
+            <div class="spinner"></div>
+            <p style="font-size: 1.2rem; color: #2c3e50; margin-bottom: 0.5rem;">Searching LinkedIn...</p>
+            <p id="loadingStatus" style="font-size: 0.9rem; color: #7f8c8d;">Initializing...</p>
+        </div>
+
+        <!-- Error Message -->
+        <div class="error-message" id="errorMessage"></div>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard-content" id="dashboardContent">
+            <div style="margin-bottom: 1.5rem;">
+                <button class="btn btn-secondary" onclick="resetToConfig()">
+                    ← Back to Search Configuration
+                </button>
+            </div>
+
+            <!-- CEO Summary -->
+            <div class="ceo-summary">
+                <h2>📊 Executive Summary</h2>
+                <div id="ceoSummaryContent">
+                    <p>Loading insights...</p>
+                </div>
+            </div>
+
+            <!-- Key Metrics -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Total Posts Found</div>
+                    <div class="metric-value" id="totalPosts">-</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">Unique Authors</div>
+                    <div class="metric-value" id="uniqueAuthors">-</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">Total Engagement</div>
+                    <div class="metric-value" id="totalEngagement">-</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">Avg Engagement</div>
+                    <div class="metric-value" id="avgEngagement">-</div>
+                </div>
+            </div>
+
+            <!-- Posts Table -->
+            <div class="table-card">
+                <h3>💬 LinkedIn Posts & Discussions</h3>
+                <p style="margin-bottom: 1rem; color: #7f8c8d; font-size: 0.9rem;">
+                    Click any link to open the post or profile directly on LinkedIn
+                </p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Author</th>
+                            <th>Content Preview</th>
+                            <th>Engagement</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="postsTableBody">
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 2rem; color: #7f8c8d;">
+                                No data loaded. Configure search above.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Top Authors Table -->
+            <div class="table-card">
+                <h3>👥 Top Influencers & Authors</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Author</th>
+                            <th>Posts</th>
+                            <th>Total Engagement</th>
+                            <th>Avg Engagement</th>
+                            <th>Profile</th>
+                        </tr>
+                    </thead>
+                    <tbody id="authorsTableBody">
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 2rem; color: #7f8c8d;">
+                                No data loaded. Configure search above.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

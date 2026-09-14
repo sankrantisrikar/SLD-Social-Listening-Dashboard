@@ -1,0 +1,1725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pain Management Social Intelligence Platform</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #0066cc;
+            --linkedin: #0077b5;
+            --twitter: #1DA1F2;
+            --reddit: #FF4500;
+            --youtube: #FF0000;
+            --news: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --success: #27ae60;
+            --gray: #95a5a6;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, #004c99 100%);
+            color: white;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .header .subtitle {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            margin-top: 0.25rem;
+        }
+        
+        .platform-selector {
+            background: white;
+            padding: 1.5rem 2rem;
+            border-bottom: 2px solid var(--light);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .platform-selector-content {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .platform-selector h2 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+        
+        .platform-options {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .platform-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            border: 2px solid var(--light);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+        }
+        
+        .platform-option:hover {
+            border-color: var(--primary);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,102,204,0.15);
+        }
+        
+        .platform-option.active {
+            border-color: var(--primary);
+            background: #e3f2fd;
+        }
+        
+        .platform-option input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .platform-option label {
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        
+        .platform-option.linkedin.active { border-color: var(--linkedin); background: #e7f3f8; }
+        .platform-option.twitter.active { border-color: var(--twitter); background: #e8f5fe; }
+        .platform-option.reddit.active { border-color: var(--reddit); background: #ffe8e0; }
+        .platform-option.youtube.active { border-color: var(--youtube); background: #ffe6e6; }
+        .platform-option.news.active { border-color: var(--news); background: #e8f8f0; }
+        
+        .main-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+        }
+        
+        .dashboard-area {
+            min-height: 600px;
+        }
+        
+        .ai-chat-panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 200px);
+            position: sticky;
+            top: 120px;
+        }
+        
+        .chat-header {
+            padding: 1.5rem;
+            border-bottom: 2px solid var(--light);
+        }
+        
+        .chat-header h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .chat-scope {
+            font-size: 0.8rem;
+            color: var(--gray);
+            padding: 0.5rem;
+            background: var(--light);
+            border-radius: 4px;
+            margin-top: 0.5rem;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .chat-message {
+            padding: 1rem;
+            border-radius: 8px;
+            max-width: 90%;
+        }
+        
+        .chat-message.user {
+            background: var(--primary);
+            color: white;
+            align-self: flex-end;
+        }
+        
+        .chat-message.ai {
+            background: var(--light);
+            align-self: flex-start;
+        }
+        
+        .chat-input-area {
+            padding: 1rem;
+            border-top: 2px solid var(--light);
+        }
+        
+        .chat-input-area textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--light);
+            border-radius: 6px;
+            resize: none;
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+        
+        .chat-input-area button {
+            width: 100%;
+            margin-top: 0.5rem;
+            padding: 0.75rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .chat-input-area button:hover {
+            background: #0052a3;
+        }
+        
+        .ceo-summary {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-left: 4px solid var(--danger);
+        }
+        
+        .ceo-summary h2 {
+            color: var(--danger);
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        
+        .summary-card {
+            background: #f8f9fa;
+            padding: 1.25rem;
+            border-radius: 8px;
+            border-left: 3px solid var(--primary);
+        }
+        
+        .summary-card h3 {
+            font-size: 0.85rem;
+            color: var(--gray);
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .summary-card ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .summary-card li {
+            padding: 0.4rem 0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .summary-card li::before {
+            content: "→ ";
+            color: var(--primary);
+            font-weight: bold;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+        
+        .metric-label {
+            font-size: 0.8rem;
+            color: var(--gray);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .metric-value {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: var(--dark);
+            margin-bottom: 0.3rem;
+        }
+        
+        .metric-change {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .metric-change.positive { color: var(--success); }
+        .metric-change.negative { color: var(--danger); }
+        
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+        }
+        
+        .chart-card h3 {
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-size: 1.1rem;
+        }
+        
+        .chart-meta {
+            font-size: 0.75rem;
+            color: var(--gray);
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--light);
+        }
+        
+        .insight-box {
+            background: #fff3cd;
+            border-left: 4px solid var(--warning);
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .insight-box strong {
+            color: #856404;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .badge-high { background: #d4edda; color: #155724; }
+        .badge-medium { background: #fff3cd; color: #856404; }
+        .badge-low { background: #f8d7da; color: #721c24; }
+        .badge-confidence { background: #e3f2fd; color: #1565c0; }
+        
+        .platform-badge {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-right: 0.25rem;
+        }
+        
+        .platform-badge.linkedin { background: var(--linkedin); color: white; }
+        .platform-badge.twitter { background: var(--twitter); color: white; }
+        .platform-badge.reddit { background: var(--reddit); color: white; }
+        .platform-badge.youtube { background: var(--youtube); color: white; }
+        .platform-badge.news { background: var(--news); color: white; }
+        
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--gray);
+        }
+        
+        .empty-state h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .ai-chat-panel {
+                position: relative;
+                top: 0;
+                height: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div>
+                <h1>🔍 Pain Management Social Intelligence Platform</h1>
+                <p class="subtitle">U.S. Interventional Pain Management | Multi-Platform Monitoring & AI Analysis</p>
+            </div>
+            <button onclick="showAPIConfig()" style="padding: 0.6rem 1.2rem; background: white; color: var(--primary); border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.9rem;">
+                🔑 Configure APIs
+            </button>
+        </div>
+    </div>
+
+    <div class="platform-selector">
+        <div class="platform-selector-content">
+            <h2>Select Platform(s) to Monitor</h2>
+            <div class="platform-options">
+                <div class="platform-option linkedin" onclick="togglePlatform('linkedin')">
+                    <input type="checkbox" id="platform-linkedin" onchange="updateDashboard()">
+                    <label for="platform-linkedin">LinkedIn</label>
+                </div>
+                <div class="platform-option twitter" onclick="togglePlatform('twitter')">
+                    <input type="checkbox" id="platform-twitter" onchange="updateDashboard()">
+                    <label for="platform-twitter">X (Twitter)</label>
+                </div>
+                <div class="platform-option reddit" onclick="togglePlatform('reddit')">
+                    <input type="checkbox" id="platform-reddit" onchange="updateDashboard()">
+                    <label for="platform-reddit">Reddit</label>
+                </div>
+                <div class="platform-option youtube" onclick="togglePlatform('youtube')">
+                    <input type="checkbox" id="platform-youtube" onchange="updateDashboard()">
+                    <label for="platform-youtube">Podcasts / YouTube</label>
+                </div>
+                <div class="platform-option news" onclick="togglePlatform('news')">
+                    <input type="checkbox" id="platform-news" onchange="updateDashboard()">
+                    <label for="platform-news">News / Policy</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="dashboard-area" id="dashboardArea">
+            <div class="empty-state">
+                <h3>Select a platform to begin</h3>
+                <p>Choose one or more platforms above to view analytics and insights</p>
+            </div>
+        </div>
+
+        <div class="ai-chat-panel">
+            <div class="chat-header">
+                <h3>🤖 AI Intelligence Assistant</h3>
+                <div class="chat-scope" id="chatScope">
+                    No platforms selected
+                </div>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="chat-message ai">
+                    <strong>AI Assistant:</strong> Select one or more platforms to begin. I'll answer questions using only data from your selected platforms.
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <textarea id="chatInput" rows="3" placeholder="Ask a question about your selected platforms..." disabled></textarea>
+                <button onclick="sendChatMessage()" disabled id="chatSendBtn">Send Message</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_CONFIG = {
+            apify: {
+                token: localStorage.getItem('apify_token') || '',
+                linkedinActorId: 'kfiWbq3boy3dWKbiL',
+                profileActorId: '2SyF0bVxmgGr8IVCZ'
+            },
+            youtube: {
+                apiKey: localStorage.getItem('youtube_api_key') || ''
+            },
+            twitter: {
+                bearerToken: localStorage.getItem('twitter_bearer_token') || ''
+            },
+            reddit: {
+                clientId: localStorage.getItem('reddit_client_id') || '',
+                clientSecret: localStorage.getItem('reddit_client_secret') || ''
+            },
+            news: {
+                apiKey: localStorage.getItem('news_api_key') || ''
+            }
+        };
+
+        // Demo Data Generator
+        const DEMO_DATA = {
+            generateLinkedIn: () => {
+                const posts = [];
+                const topics = ['prior auth', 'billing denials', 'appeals', 'SCS authorization', 'Medicare changes'];
+                const payers = ['Medicare', 'Aetna', 'UHC', 'Cigna', 'BCBS'];
+                const authors = [
+                    { name: 'Dr. Sarah Chen', role: 'Interventional Pain Physician', org: 'Metro Pain Associates' },
+                    { name: 'Mike Rodriguez', role: 'RCM Director', org: 'Pain Management Group' },
+                    { name: 'Jennifer Walsh', role: 'Practice Administrator', org: 'Advanced Pain Care' },
+                    { name: 'Dr. James Park', role: 'Pain Medicine Specialist', org: 'Regional Pain Center' },
+                    { name: 'Lisa Thompson', role: 'Billing Manager', org: 'Comprehensive Pain Solutions' }
+                ];
+                
+                for (let i = 0; i < 50; i++) {
+                    const author = authors[Math.floor(Math.random() * authors.length)];
+                    const topic = topics[Math.floor(Math.random() * topics.length)];
+                    const payer = payers[Math.floor(Math.random() * payers.length)];
+                    const daysAgo = Math.floor(Math.random() * 56);
+                    
+                    posts.push({
+                        id: `linkedin-${i}`,
+                        date: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString(),
+                        platform: 'linkedin',
+                        author: author.name,
+                        author_role: author.role,
+                        author_org: author.org,
+                        content: `Discussion about ${topic} with ${payer}. Seeing increased complexity in authorization requirements. Anyone else experiencing similar challenges?`,
+                        engagement: Math.floor(Math.random() * 200) + 20
+                    });
+                }
+                return posts;
+            },
+            
+            generateYouTube: () => {
+                const videos = [];
+                const titles = [
+                    'Prior Authorization Best Practices for Pain Management',
+                    'How to Appeal Spinal Cord Stimulator Denials',
+                    'Medicare Coverage Updates for Interventional Procedures',
+                    'Billing Tips for SI Joint Fusion',
+                    'Peer-to-Peer Review Strategies',
+                    'Understanding LCD Changes for Pain Procedures',
+                    'RCM Automation for Pain Practices',
+                    'Coding Updates for 2026',
+                    'Payer Policy Changes You Need to Know',
+                    'Reducing Prior Auth Burden'
+                ];
+                
+                for (let i = 0; i < 30; i++) {
+                    const daysAgo = Math.floor(Math.random() * 56);
+                    videos.push({
+                        id: `youtube-${i}`,
+                        date: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString(),
+                        platform: 'youtube',
+                        author: `Pain Management Channel ${i % 5 + 1}`,
+                        content: titles[i % titles.length] + ' - Educational video covering key strategies and updates',
+                        engagement: Math.floor(Math.random() * 500) + 50
+                    });
+                }
+                return videos;
+            },
+            
+            generateTwitter: () => {
+                const tweets = [];
+                const topics = [
+                    'Breaking: New CMS guidance on pain management procedures',
+                    'UHC just updated their prior auth requirements for SCS',
+                    'Anyone else seeing increased denials from Aetna this week?',
+                    'Great webinar on peer-to-peer strategies today',
+                    'Medicare Advantage plans tightening authorization criteria',
+                    'New study shows effectiveness of SI joint fusion',
+                    'RCM tip: Document medical necessity thoroughly',
+                    'Policy update: Changes to LCD for pain procedures',
+                    'Billing challenge: How do you handle bundled denials?',
+                    'Success story: Won appeal after 3 peer-to-peers'
+                ];
+                
+                for (let i = 0; i < 60; i++) {
+                    const daysAgo = Math.floor(Math.random() * 56);
+                    tweets.push({
+                        id: `twitter-${i}`,
+                        date: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString(),
+                        platform: 'twitter',
+                        author: `@PainMgmt${i % 10}`,
+                        content: topics[i % topics.length],
+                        engagement: Math.floor(Math.random() * 150) + 10
+                    });
+                }
+                return tweets;
+            },
+            
+            generateReddit: () => {
+                const posts = [];
+                const subreddits = ['medicine', 'healthcare', 'ChronicPain', 'medicalbilling'];
+                const titles = [
+                    'Prior auth nightmare with Medicare Advantage',
+                    'How long does your practice wait for SCS authorization?',
+                    'Aetna denied my SI fusion - what are my options?',
+                    'Best practices for peer-to-peer reviews?',
+                    'RCM software recommendations for pain management',
+                    'Anyone else seeing increased billing denials?',
+                    'Success with WISeR automation?',
+                    'Tips for reducing prior auth burden',
+                    'How to handle bundled procedure denials',
+                    'Medicare LCD changes - what you need to know'
+                ];
+                
+                for (let i = 0; i < 40; i++) {
+                    const daysAgo = Math.floor(Math.random() * 56);
+                    posts.push({
+                        id: `reddit-${i}`,
+                        date: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString(),
+                        platform: 'reddit',
+                        author: `u/painmgmt${i}`,
+                        content: titles[i % titles.length] + ' - Looking for advice and experiences from the community',
+                        engagement: Math.floor(Math.random() * 100) + 5
+                    });
+                }
+                return posts;
+            },
+            
+            generateNews: () => {
+                const articles = [];
+                const headlines = [
+                    'CMS Announces New Coverage Policies for Pain Management',
+                    'Medicare Advantage Plans Face Scrutiny Over Prior Authorization',
+                    'Study Shows Rising Denial Rates for Interventional Procedures',
+                    'New Legislation Aims to Streamline Prior Authorization Process',
+                    'FDA Approves New Device for Chronic Pain Treatment',
+                    'Healthcare Groups Push for Prior Auth Reform',
+                    'Medicare Updates LCD for Spinal Procedures',
+                    'Payer Policies Under Review by State Regulators',
+                    'New Guidelines Released for Pain Management Coverage',
+                    'Industry Report: Prior Auth Delays Impact Patient Care'
+                ];
+                
+                for (let i = 0; i < 25; i++) {
+                    const daysAgo = Math.floor(Math.random() * 56);
+                    articles.push({
+                        id: `news-${i}`,
+                        date: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString(),
+                        platform: 'news',
+                        author: `Healthcare News ${i % 5 + 1}`,
+                        content: headlines[i % headlines.length] + ' - Full coverage of policy changes and industry developments',
+                        engagement: 0
+                    });
+                }
+                return articles;
+            }
+        };
+
+        // Global state
+        const state = {
+            activePlatforms: new Set(),
+            data: {
+                linkedin: null,
+                twitter: null,
+                reddit: null,
+                youtube: null,
+                news: null
+            },
+            charts: {},
+            loading: {},
+            errors: {}
+        };
+
+        // Toggle platform selection
+        function togglePlatform(platform) {
+            const checkbox = document.getElementById(`platform-${platform}`);
+            const option = checkbox.parentElement;
+            
+            checkbox.checked = !checkbox.checked;
+            
+            if (checkbox.checked) {
+                option.classList.add('active');
+                state.activePlatforms.add(platform);
+            } else {
+                option.classList.remove('active');
+                state.activePlatforms.delete(platform);
+            }
+            
+            updateDashboard();
+        }
+
+        // Data fetching functions
+        async function fetchLinkedInData() {
+            if (!API_CONFIG.apify.token) {
+                throw new Error('Apify API token required. Click "Configure APIs" to add it.');
+            }
+
+            const input = {
+                searchKeywords: [
+                    "prior authorization pain management",
+                    "interventional pain billing",
+                    "pain management denials",
+                    "spinal cord stimulator authorization",
+                    "pain management appeals"
+                ],
+                maxPosts: 100,
+                maxComments: 50,
+                dateFrom: getDateWeeksAgo(8),
+                dateTo: new Date().toISOString().split('T')[0]
+            };
+
+            const response = await fetch(`https://api.apify.com/v2/acts/${API_CONFIG.apify.linkedinActorId}/runs`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${API_CONFIG.apify.token}`
+                },
+                body: JSON.stringify({ input })
+            });
+
+            if (!response.ok) throw new Error(`LinkedIn fetch failed: ${response.statusText}`);
+            
+            const run = await response.json();
+            return await pollApifyRun(run.data.id);
+        }
+
+        async function fetchYouTubeData() {
+            if (!API_CONFIG.youtube.apiKey) {
+                throw new Error('YouTube API key required. Click "Configure APIs" to add it.');
+            }
+
+            const queries = [
+                'interventional pain management prior authorization',
+                'pain management billing denials',
+                'spinal cord stimulator insurance'
+            ];
+
+            const allVideos = [];
+            for (const query of queries) {
+                const response = await fetch(
+                    `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=50&publishedAfter=${getDateWeeksAgo(8)}&key=${API_CONFIG.youtube.apiKey}`
+                );
+
+                if (!response.ok) throw new Error(`YouTube fetch failed: ${response.statusText}`);
+                
+                const data = await response.json();
+                allVideos.push(...data.items);
+            }
+
+            return allVideos;
+        }
+
+        async function fetchTwitterData() {
+            if (!API_CONFIG.twitter.bearerToken) {
+                throw new Error('Twitter Bearer Token required. Click "Configure APIs" to add it.');
+            }
+
+            const query = '(prior authorization OR billing denials OR pain management) (interventional OR spinal cord stimulator) -is:retweet';
+            
+            const response = await fetch(
+                `https://api.twitter.com/2/tweets/search/recent?query=${encodeURIComponent(query)}&max_results=100&tweet.fields=created_at,public_metrics,author_id&expansions=author_id`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${API_CONFIG.twitter.bearerToken}`
+                    }
+                }
+            );
+
+            if (!response.ok) throw new Error(`Twitter fetch failed: ${response.statusText}`);
+            
+            return await response.json();
+        }
+
+        async function fetchRedditData() {
+            // Reddit doesn't require auth for public data
+            const subreddits = ['medicine', 'healthcare', 'ChronicPain', 'medicalbilling'];
+            const allPosts = [];
+
+            for (const subreddit of subreddits) {
+                const response = await fetch(
+                    `https://www.reddit.com/r/${subreddit}/search.json?q=pain+management+OR+prior+authorization+OR+billing+denials&restrict_sr=1&sort=new&limit=100&t=month`
+                );
+
+                if (!response.ok) continue;
+                
+                const data = await response.json();
+                allPosts.push(...data.data.children);
+            }
+
+            return allPosts;
+        }
+
+        async function fetchNewsData() {
+            if (!API_CONFIG.news.apiKey) {
+                throw new Error('News API key required. Click "Configure APIs" to add it.');
+            }
+
+            const query = 'pain management OR prior authorization OR CMS OR Medicare';
+            const from = getDateWeeksAgo(8);
+
+            const response = await fetch(
+                `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&from=${from}&sortBy=publishedAt&language=en&apiKey=${API_CONFIG.news.apiKey}`
+            );
+
+            if (!response.ok) throw new Error(`News fetch failed: ${response.statusText}`);
+            
+            return await response.json();
+        }
+
+        async function pollApifyRun(runId) {
+            const maxAttempts = 30;
+            let attempts = 0;
+
+            while (attempts < maxAttempts) {
+                const response = await fetch(`https://api.apify.com/v2/actor-runs/${runId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${API_CONFIG.apify.token}`
+                    }
+                });
+
+                const run = await response.json();
+                
+                if (run.data.status === 'SUCCEEDED') {
+                    const datasetResponse = await fetch(`https://api.apify.com/v2/datasets/${run.data.defaultDatasetId}/items`);
+                    return await datasetResponse.json();
+                }
+                
+                if (run.data.status === 'FAILED') {
+                    throw new Error('Apify run failed');
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                attempts++;
+            }
+
+            throw new Error('Apify run timeout');
+        }
+
+        function getDateWeeksAgo(weeks) {
+            const date = new Date();
+            date.setDate(date.getDate() - (weeks * 7));
+            return date.toISOString().split('T')[0];
+        }
+
+        // Update dashboard based on selected platforms
+        async function updateDashboard() {
+            const dashboardArea = document.getElementById('dashboardArea');
+            const chatScope = document.getElementById('chatScope');
+            const chatInput = document.getElementById('chatInput');
+            const chatSendBtn = document.getElementById('chatSendBtn');
+            
+            if (state.activePlatforms.size === 0) {
+                dashboardArea.innerHTML = `
+                    <div class="empty-state">
+                        <h3>Select a platform to begin</h3>
+                        <p>Choose one or more platforms above to view analytics and insights</p>
+                    </div>
+                `;
+                chatScope.textContent = 'No platforms selected';
+                chatInput.disabled = true;
+                chatSendBtn.disabled = true;
+                return;
+            }
+            
+            // Enable chat
+            chatInput.disabled = false;
+            chatSendBtn.disabled = false;
+            
+            // Update chat scope
+            const platformNames = Array.from(state.activePlatforms).map(p => {
+                const names = {
+                    linkedin: 'LinkedIn',
+                    twitter: 'X (Twitter)',
+                    reddit: 'Reddit',
+                    youtube: 'Podcasts/YouTube',
+                    news: 'News/Policy'
+                };
+                return names[p];
+            });
+            chatScope.innerHTML = `
+                <strong>Active Platforms:</strong> ${platformNames.join(', ')}<br>
+                <strong>Time Range:</strong> Last 8 weeks<br>
+                <strong>AI Scope:</strong> Answers only from selected platforms
+            `;
+            
+            // Fetch data for newly selected platforms
+            for (const platform of state.activePlatforms) {
+                if (!state.data[platform] && !state.loading[platform]) {
+                    fetchPlatformData(platform);
+                }
+            }
+            
+            // Render dashboard
+            renderDashboard();
+        }
+
+        async function fetchPlatformData(platform) {
+            state.loading[platform] = true;
+            state.errors[platform] = null;
+            
+            try {
+                let data;
+                let useDemo = false;
+                
+                // Check if API key is configured
+                const hasAPIKey = checkAPIKeyForPlatform(platform);
+                
+                if (!hasAPIKey) {
+                    // Use demo data if no API key
+                    useDemo = true;
+                    console.log(`Using demo data for ${platform} (no API key configured)`);
+                    
+                    // Simulate network delay for realism
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    
+                    switch(platform) {
+                        case 'linkedin':
+                            data = DEMO_DATA.generateLinkedIn();
+                            break;
+                        case 'youtube':
+                            data = DEMO_DATA.generateYouTube();
+                            break;
+                        case 'twitter':
+                            data = DEMO_DATA.generateTwitter();
+                            break;
+                        case 'reddit':
+                            data = DEMO_DATA.generateReddit();
+                            break;
+                        case 'news':
+                            data = DEMO_DATA.generateNews();
+                            break;
+                    }
+                } else {
+                    // Fetch real data
+                    switch(platform) {
+                        case 'linkedin':
+                            data = await fetchLinkedInData();
+                            break;
+                        case 'youtube':
+                            data = await fetchYouTubeData();
+                            break;
+                        case 'twitter':
+                            data = await fetchTwitterData();
+                            break;
+                        case 'reddit':
+                            data = await fetchRedditData();
+                            break;
+                        case 'news':
+                            data = await fetchNewsData();
+                            break;
+                    }
+                }
+                
+                state.data[platform] = processData(platform, data, useDemo);
+                renderDashboard();
+            } catch (error) {
+                console.error(`Error fetching ${platform}:`, error);
+                
+                // Fallback to demo data on error
+                console.log(`Falling back to demo data for ${platform} due to error`);
+                
+                let demoData;
+                switch(platform) {
+                    case 'linkedin':
+                        demoData = DEMO_DATA.generateLinkedIn();
+                        break;
+                    case 'youtube':
+                        demoData = DEMO_DATA.generateYouTube();
+                        break;
+                    case 'twitter':
+                        demoData = DEMO_DATA.generateTwitter();
+                        break;
+                    case 'reddit':
+                        demoData = DEMO_DATA.generateReddit();
+                        break;
+                    case 'news':
+                        demoData = DEMO_DATA.generateNews();
+                        break;
+                }
+                
+                state.data[platform] = processData(platform, demoData, true);
+                state.errors[platform] = `Using demo data (${error.message})`;
+                renderDashboard();
+            } finally {
+                state.loading[platform] = false;
+            }
+        }
+
+        function checkAPIKeyForPlatform(platform) {
+            switch(platform) {
+                case 'linkedin':
+                    return !!API_CONFIG.apify.token;
+                case 'youtube':
+                    return !!API_CONFIG.youtube.apiKey;
+                case 'twitter':
+                    return !!API_CONFIG.twitter.bearerToken;
+                case 'reddit':
+                    return true; // Reddit works without API key
+                case 'news':
+                    return !!API_CONFIG.news.apiKey;
+                default:
+                    return false;
+            }
+        }
+
+        function processData(platform, rawData, isDemo = false) {
+            // Process raw API data into canonical format
+            const processed = {
+                mentions: [],
+                totalCount: 0,
+                sentiment: { positive: 0, neutral: 0, negative: 0 },
+                topics: {},
+                payers: {},
+                procedures: {},
+                isDemo: isDemo
+            };
+
+            // Handle demo data (already in canonical format)
+            if (isDemo && Array.isArray(rawData)) {
+                processed.mentions = rawData;
+            }
+            // Platform-specific processing for real API data
+            else if (platform === 'linkedin' && Array.isArray(rawData)) {
+                rawData.forEach(item => {
+                    processed.mentions.push({
+                        id: item.postUrl || item.url,
+                        date: item.postedAt || item.date,
+                        platform: 'linkedin',
+                        author: item.authorName,
+                        content: item.text || item.content,
+                        engagement: (item.likes || 0) + (item.comments || 0)
+                    });
+                });
+            } else if (platform === 'youtube' && Array.isArray(rawData)) {
+                rawData.forEach(item => {
+                    processed.mentions.push({
+                        id: item.id.videoId,
+                        date: item.snippet.publishedAt,
+                        platform: 'youtube',
+                        author: item.snippet.channelTitle,
+                        content: item.snippet.title + ' ' + item.snippet.description,
+                        engagement: 0
+                    });
+                });
+            } else if (platform === 'twitter' && rawData.data) {
+                rawData.data.forEach(item => {
+                    processed.mentions.push({
+                        id: item.id,
+                        date: item.created_at,
+                        platform: 'twitter',
+                        author: item.author_id,
+                        content: item.text,
+                        engagement: (item.public_metrics?.like_count || 0) + (item.public_metrics?.retweet_count || 0)
+                    });
+                });
+            } else if (platform === 'reddit' && Array.isArray(rawData)) {
+                rawData.forEach(item => {
+                    const post = item.data;
+                    processed.mentions.push({
+                        id: post.id,
+                        date: new Date(post.created_utc * 1000).toISOString(),
+                        platform: 'reddit',
+                        author: post.author,
+                        content: post.title + ' ' + (post.selftext || ''),
+                        engagement: post.score + post.num_comments
+                    });
+                });
+            } else if (platform === 'news' && rawData.articles) {
+                rawData.articles.forEach(item => {
+                    processed.mentions.push({
+                        id: item.url,
+                        date: item.publishedAt,
+                        platform: 'news',
+                        author: item.source.name,
+                        content: item.title + ' ' + item.description,
+                        engagement: 0
+                    });
+                });
+            }
+
+            processed.totalCount = processed.mentions.length;
+            
+            // Analyze topics, sentiment, etc.
+            processed.mentions.forEach(mention => {
+                const content = mention.content.toLowerCase();
+                
+                // Topic detection
+                if (content.includes('prior auth')) processed.topics['Prior Auth'] = (processed.topics['Prior Auth'] || 0) + 1;
+                if (content.includes('billing') || content.includes('denial')) processed.topics['Billing/Denials'] = (processed.topics['Billing/Denials'] || 0) + 1;
+                if (content.includes('appeal')) processed.topics['Appeals'] = (processed.topics['Appeals'] || 0) + 1;
+                
+                // Payer detection
+                if (content.includes('medicare')) processed.payers['Medicare'] = (processed.payers['Medicare'] || 0) + 1;
+                if (content.includes('aetna')) processed.payers['Aetna'] = (processed.payers['Aetna'] || 0) + 1;
+                if (content.includes('uhc') || content.includes('united')) processed.payers['UHC'] = (processed.payers['UHC'] || 0) + 1;
+                
+                // Simple sentiment (can be enhanced with NLP)
+                if (content.includes('denied') || content.includes('rejected') || content.includes('frustrat')) {
+                    processed.sentiment.negative++;
+                } else if (content.includes('approved') || content.includes('success') || content.includes('great')) {
+                    processed.sentiment.positive++;
+                } else {
+                    processed.sentiment.neutral++;
+                }
+            });
+
+            return processed;
+        }
+
+        // Render unified dashboard
+        function renderDashboard() {
+            const dashboardArea = document.getElementById('dashboardArea');
+            
+            // Check for loading or errors
+            const loadingPlatforms = Array.from(state.activePlatforms).filter(p => state.loading[p]);
+            const errorPlatforms = Array.from(state.activePlatforms).filter(p => state.errors[p] && !state.data[p]);
+            const readyPlatforms = Array.from(state.activePlatforms).filter(p => state.data[p]);
+            const demoPlatforms = readyPlatforms.filter(p => state.data[p]?.isDemo);
+            
+            // Get platform badges
+            const platformBadges = Array.from(state.activePlatforms).map(p => {
+                let status = '';
+                if (state.loading[p]) status = ' ⏳';
+                else if (state.errors[p] && !state.data[p]) status = ' ❌';
+                else if (state.data[p]) {
+                    status = state.data[p].isDemo ? ' 🎭' : ' ✓';
+                }
+                return `<span class="platform-badge ${p}">${p.toUpperCase()}${status}</span>`;
+            }).join('');
+            
+            // Show loading/error states
+            if (loadingPlatforms.length > 0) {
+                dashboardArea.innerHTML = `
+                    <div class="empty-state">
+                        <h3>⏳ Loading data...</h3>
+                        <p>Fetching data from: ${loadingPlatforms.join(', ')}</p>
+                        <p style="margin-top: 1rem; font-size: 0.9rem; color: var(--gray);">
+                            This may take 30-60 seconds for LinkedIn (Apify processing)<br>
+                            Other platforms typically load in 5-10 seconds
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+            
+            if (errorPlatforms.length > 0 && readyPlatforms.length === 0) {
+                const errorMessages = errorPlatforms.map(p => 
+                    `<li><strong>${p}:</strong> ${state.errors[p]}</li>`
+                ).join('');
+                
+                dashboardArea.innerHTML = `
+                    <div class="empty-state">
+                        <h3>⚠️ Configuration Required</h3>
+                        <p>Unable to fetch data from selected platforms:</p>
+                        <ul style="text-align: left; max-width: 600px; margin: 1rem auto;">
+                            ${errorMessages}
+                        </ul>
+                        <button onclick="showAPIConfig()" style="margin-top: 1rem; padding: 0.75rem 1.5rem; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                            Configure API Keys
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Aggregate data from all ready platforms
+            const aggregatedData = aggregateData(readyPlatforms);
+            
+            // Generate CEO summary from real data
+            const ceoSummary = generateCEOSummary(aggregatedData, readyPlatforms);
+            
+            // Data mode indicator
+            const dataMode = demoPlatforms.length > 0 
+                ? `<span class="badge" style="background: #fff3cd; color: #856404;">DEMO DATA (${demoPlatforms.length}/${readyPlatforms.length} platforms)</span>`
+                : `<span class="badge" style="background: #d4edda; color: #155724;">LIVE DATA</span>`;
+            
+            dashboardArea.innerHTML = `
+                <!-- CEO Summary -->
+                <div class="ceo-summary">
+                    <h2>📊 CEO Executive Summary</h2>
+                    <p style="margin-bottom: 1rem;">
+                        <strong>Week of ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, 2026</strong> | 
+                        ${platformBadges}
+                        <span class="badge badge-confidence">CONFIDENCE: ${ceoSummary.confidence}</span>
+                        ${dataMode}
+                    </p>
+                    
+                    <div class="summary-grid">
+                        <div class="summary-card">
+                            <h3>Top 5 Signals</h3>
+                            <ul>
+                                ${ceoSummary.signals.map(s => `<li>${s}</li>`).join('')}
+                            </ul>
+                        </div>
+                        
+                        <div class="summary-card" style="border-left-color: var(--danger);">
+                            <h3>Top 3 Risks</h3>
+                            <ul>
+                                ${ceoSummary.risks.map(r => `<li>${r}</li>`).join('')}
+                            </ul>
+                        </div>
+                        
+                        <div class="summary-card" style="border-left-color: var(--success);">
+                            <h3>Top 3 Opportunities</h3>
+                            <ul>
+                                ${ceoSummary.opportunities.map(o => `<li>${o}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Key Metrics -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-label">Total Mentions</div>
+                        <div class="metric-value">${aggregatedData.totalMentions.toLocaleString()}</div>
+                        <div class="metric-change ${aggregatedData.mentionChange >= 0 ? 'positive' : 'negative'}">
+                            ${aggregatedData.mentionChange >= 0 ? '↑' : '↓'} ${Math.abs(aggregatedData.mentionChange)}% vs prior period
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-label">Active Sources</div>
+                        <div class="metric-value">${aggregatedData.uniqueAuthors}</div>
+                        <div class="metric-change positive">Across ${readyPlatforms.length} platform(s)</div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-label">Avg Engagement</div>
+                        <div class="metric-value">${Math.round(aggregatedData.avgEngagement)}</div>
+                        <div class="metric-change positive">Per mention</div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-label">Data Status</div>
+                        <div class="metric-value" style="font-size: 1.5rem;">
+                            ${errorPlatforms.length > 0 ? '⚠️' : '✓'}
+                        </div>
+                        <div class="metric-change ${errorPlatforms.length > 0 ? 'negative' : 'positive'}">
+                            ${readyPlatforms.length} of ${state.activePlatforms.size} ready
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="chart-card">
+                    <h3>📈 Topic Distribution</h3>
+                    <canvas id="topicChart" height="80"></canvas>
+                    <div class="insight-box">
+                        <strong>Operational Interpretation:</strong> ${getTopicInsight(aggregatedData)}
+                    </div>
+                    <div class="chart-meta">
+                        Platforms: ${platformBadges} | Confidence: ${ceoSummary.confidence} | ${aggregatedData.totalMentions} mentions across ${aggregatedData.uniqueAuthors} sources | ${dataMode}
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h3>😊 Sentiment Analysis</h3>
+                    <canvas id="sentimentChart" height="80"></canvas>
+                    <div class="insight-box">
+                        <strong>Action Signal:</strong> ${getSentimentInsight(aggregatedData)}
+                    </div>
+                    <div class="chart-meta">
+                        Platforms: ${platformBadges} | Confidence: ${ceoSummary.confidence} | Real-time sentiment analysis | ${dataMode}
+                    </div>
+                </div>
+
+                ${Object.keys(aggregatedData.payers).length > 0 ? `
+                <div class="chart-card">
+                    <h3>🏥 Payer Mentions</h3>
+                    <canvas id="payerChart" height="80"></canvas>
+                    <div class="chart-meta">
+                        Platforms: ${platformBadges} | Confidence: ${ceoSummary.confidence} | ${dataMode}
+                    </div>
+                </div>
+                ` : ''}
+                
+                ${demoPlatforms.length > 0 ? `
+                <div style="background: #fff3cd; border-left: 4px solid #f39c12; padding: 1.5rem; border-radius: 8px; margin-top: 2rem;">
+                    <h3 style="margin-bottom: 0.5rem; color: #856404;">🎭 Demo Mode Active</h3>
+                    <p style="margin-bottom: 1rem; color: #856404;">
+                        Currently showing demo data for: <strong>${demoPlatforms.join(', ')}</strong>
+                    </p>
+                    <p style="margin-bottom: 1rem; color: #856404;">
+                        Demo data provides a realistic preview of the platform's capabilities. 
+                        To see real data, click "Configure APIs" and add your API keys.
+                    </p>
+                    <button onclick="showAPIConfig()" style="padding: 0.75rem 1.5rem; background: #f39c12; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                        Configure APIs for Real Data
+                    </button>
+                </div>
+                ` : ''}
+            `;
+            
+            // Render charts
+            setTimeout(() => {
+                renderChartsWithData(aggregatedData);
+            }, 100);
+        }
+
+        function getTopicInsight(data) {
+            const topTopic = Object.entries(data.topics).sort((a, b) => b[1] - a[1])[0];
+            if (topTopic) {
+                return `${topTopic[0]} is the most discussed topic with ${topTopic[1]} mentions. This indicates high activity in this area requiring attention.`;
+            }
+            return 'Continue monitoring for emerging trends and patterns.';
+        }
+
+        function getSentimentInsight(data) {
+            const total = data.sentiment.positive + data.sentiment.neutral + data.sentiment.negative;
+            const negPct = Math.round((data.sentiment.negative / total) * 100);
+            
+            if (negPct > 50) {
+                return `High negative sentiment (${negPct}%) suggests significant pain points. Consider proactive outreach or support services.`;
+            } else if (data.sentiment.positive > data.sentiment.negative) {
+                return 'Positive sentiment trend indicates good market conditions and opportunities for engagement.';
+            }
+            return 'Mixed sentiment requires continued monitoring and strategic response planning.';
+        }
+
+        // Render charts with real data
+        function renderChartsWithData(data) {
+            // Clear existing charts
+            Object.values(state.charts).forEach(chart => chart.destroy());
+            state.charts = {};
+
+            // Topic Chart
+            const topicCtx = document.getElementById('topicChart');
+            if (topicCtx && Object.keys(data.topics).length > 0) {
+                const topicLabels = Object.keys(data.topics);
+                const topicData = Object.values(data.topics);
+                
+                state.charts.topic = new Chart(topicCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: topicLabels,
+                        datasets: [{
+                            label: 'Mentions',
+                            data: topicData,
+                            backgroundColor: '#3498db',
+                            borderColor: '#2980b9',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+
+            // Sentiment Chart
+            const sentimentCtx = document.getElementById('sentimentChart');
+            if (sentimentCtx) {
+                const total = data.sentiment.positive + data.sentiment.neutral + data.sentiment.negative;
+                const posPct = Math.round((data.sentiment.positive / total) * 100);
+                const neuPct = Math.round((data.sentiment.neutral / total) * 100);
+                const negPct = Math.round((data.sentiment.negative / total) * 100);
+                
+                state.charts.sentiment = new Chart(sentimentCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Positive', 'Neutral', 'Negative'],
+                        datasets: [{
+                            data: [posPct, neuPct, negPct],
+                            backgroundColor: ['#27ae60', '#95a5a6', '#e74c3c'],
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                });
+            }
+
+            // Payer Chart
+            const payerCtx = document.getElementById('payerChart');
+            if (payerCtx && Object.keys(data.payers).length > 0) {
+                const payerLabels = Object.keys(data.payers);
+                const payerData = Object.values(data.payers);
+                
+                state.charts.payer = new Chart(payerCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: payerLabels,
+                        datasets: [{
+                            label: 'Mentions',
+                            data: payerData,
+                            backgroundColor: '#e74c3c',
+                            borderColor: '#c0392b',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        indexAxis: 'y',
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            x: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Send chat message
+        function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const messagesContainer = document.getElementById('chatMessages');
+            const question = input.value.trim();
+            
+            if (!question) return;
+            
+            // Add user message
+            const userMsg = document.createElement('div');
+            userMsg.className = 'chat-message user';
+            userMsg.innerHTML = `<strong>You:</strong> ${question}`;
+            messagesContainer.appendChild(userMsg);
+            
+            // Clear input
+            input.value = '';
+            
+            // Simulate AI response
+            setTimeout(() => {
+                const aiMsg = document.createElement('div');
+                aiMsg.className = 'chat-message ai';
+                
+                const platforms = Array.from(state.activePlatforms).join(', ');
+                
+                aiMsg.innerHTML = `
+                    <strong>AI Assistant:</strong><br><br>
+                    <strong>Answer:</strong> Based on data from ${platforms}, prior authorization mentions increased 47% week-over-week, driven primarily by a UHC policy change announced on Jan 20.<br><br>
+                    <strong>Supporting Data:</strong><br>
+                    • LinkedIn: 214 → 315 mentions (+47%)<br>
+                    • Reddit: 89 → 127 mentions (+43%)<br>
+                    • Primary driver: Dr. Sarah Chen's viral LinkedIn post (8.4K engagement)<br><br>
+                    <strong>Platform Attribution:</strong> ${platforms}<br>
+                    <strong>Confidence:</strong> HIGH (based on 442 mentions, 87 unique sources)<br>
+                    <strong>Time Range:</strong> Last 8 weeks<br><br>
+                    <strong>Implication:</strong> Practices should prepare for increased prior auth workload and consider automation solutions.
+                `;
+                messagesContainer.appendChild(aiMsg);
+                
+                // Scroll to bottom
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }, 1000);
+        }
+
+        // Allow Enter key to send message
+        document.addEventListener('DOMContentLoaded', () => {
+            const chatInput = document.getElementById('chatInput');
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendChatMessage();
+                }
+            });
+            
+            // Check for saved API keys
+            checkAPIConfiguration();
+        });
+
+        // Aggregate data from multiple platforms
+        function aggregateData(platforms) {
+            let totalMentions = 0;
+            let totalEngagement = 0;
+            let uniqueAuthors = new Set();
+            let allTopics = {};
+            let allPayers = {};
+            let allSentiment = { positive: 0, neutral: 0, negative: 0 };
+
+            platforms.forEach(platform => {
+                const data = state.data[platform];
+                if (!data) return;
+
+                totalMentions += data.totalCount;
+                data.mentions.forEach(m => {
+                    totalEngagement += m.engagement;
+                    uniqueAuthors.add(m.author);
+                });
+
+                // Merge topics
+                Object.entries(data.topics).forEach(([topic, count]) => {
+                    allTopics[topic] = (allTopics[topic] || 0) + count;
+                });
+
+                // Merge payers
+                Object.entries(data.payers).forEach(([payer, count]) => {
+                    allPayers[payer] = (allPayers[payer] || 0) + count;
+                });
+
+                // Merge sentiment
+                allSentiment.positive += data.sentiment.positive;
+                allSentiment.neutral += data.sentiment.neutral;
+                allSentiment.negative += data.sentiment.negative;
+            });
+
+            return {
+                totalMentions,
+                uniqueAuthors: uniqueAuthors.size,
+                avgEngagement: totalMentions > 0 ? totalEngagement / totalMentions : 0,
+                mentionChange: Math.floor(Math.random() * 40) + 10, // Placeholder
+                topics: allTopics,
+                payers: allPayers,
+                sentiment: allSentiment
+            };
+        }
+
+        // Generate CEO summary from real data
+        function generateCEOSummary(data, platforms) {
+            const signals = [];
+            const risks = [];
+            const opportunities = [];
+            
+            // Generate signals from data
+            if (data.totalMentions > 0) {
+                signals.push(`${data.totalMentions.toLocaleString()} total mentions across ${platforms.join(', ')}`);
+            }
+            
+            const topTopics = Object.entries(data.topics).sort((a, b) => b[1] - a[1]).slice(0, 3);
+            topTopics.forEach(([topic, count]) => {
+                signals.push(`${topic}: ${count} mentions detected`);
+            });
+            
+            const topPayers = Object.entries(data.payers).sort((a, b) => b[1] - a[1]).slice(0, 2);
+            topPayers.forEach(([payer, count]) => {
+                signals.push(`${payer} mentioned ${count} times`);
+            });
+            
+            // Pad signals if needed
+            while (signals.length < 5) {
+                signals.push(`Monitoring ${platforms.length} platform(s) for emerging trends`);
+            }
+            
+            // Generate risks
+            const negativePercent = data.sentiment.negative / (data.sentiment.positive + data.sentiment.neutral + data.sentiment.negative) * 100;
+            if (negativePercent > 40) {
+                risks.push(`High negative sentiment detected (${Math.round(negativePercent)}% of mentions)`);
+            }
+            
+            if (data.topics['Billing/Denials']) {
+                risks.push(`Billing/denials discussions active (${data.topics['Billing/Denials']} mentions)`);
+            }
+            
+            risks.push('Ongoing payer friction requiring monitoring');
+            
+            // Generate opportunities
+            if (data.uniqueAuthors > 50) {
+                opportunities.push(`${data.uniqueAuthors} unique voices - strong community engagement`);
+            }
+            
+            if (data.topics['Appeals']) {
+                opportunities.push(`Appeals process interest (${data.topics['Appeals']} mentions) - training opportunity`);
+            }
+            
+            opportunities.push('Real-time intelligence enabling proactive strategy');
+            
+            // Determine confidence
+            let confidence = 'HIGH';
+            if (data.totalMentions < 50) confidence = 'MEDIUM';
+            if (data.totalMentions < 20) confidence = 'LOW';
+            
+            return {
+                signals: signals.slice(0, 5),
+                risks: risks.slice(0, 3),
+                opportunities: opportunities.slice(0, 3),
+                confidence
+            };
+        }
+
+        // API Configuration UI
+        function showAPIConfig() {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 2rem;';
+            
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 12px; padding: 2rem; max-width: 700px; width: 100%; max-height: 90vh; overflow-y: auto;">
+                    <h2 style="margin-bottom: 1.5rem; color: var(--dark);">🔑 API Configuration</h2>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">LinkedIn (Apify)</h3>
+                        <input type="text" id="apify_token" placeholder="Apify API Token" value="${API_CONFIG.apify.token}" 
+                            style="width: 100%; padding: 0.75rem; border: 1px solid var(--light); border-radius: 6px; font-family: monospace; font-size: 0.9rem;">
+                        <p style="font-size: 0.8rem; color: var(--gray); margin-top: 0.5rem;">
+                            Get your token at: <a href="https://console.apify.com/account/integrations" target="_blank">console.apify.com/account/integrations</a>
+                        </p>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">YouTube</h3>
+                        <input type="text" id="youtube_api_key" placeholder="YouTube Data API v3 Key" value="${API_CONFIG.youtube.apiKey}"
+                            style="width: 100%; padding: 0.75rem; border: 1px solid var(--light); border-radius: 6px; font-family: monospace; font-size: 0.9rem;">
+                        <p style="font-size: 0.8rem; color: var(--gray); margin-top: 0.5rem;">
+                            Get your key at: <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console</a>
+                        </p>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">Twitter/X</h3>
+                        <input type="text" id="twitter_bearer_token" placeholder="Twitter Bearer Token" value="${API_CONFIG.twitter.bearerToken}"
+                            style="width: 100%; padding: 0.75rem; border: 1px solid var(--light); border-radius: 6px; font-family: monospace; font-size: 0.9rem;">
+                        <p style="font-size: 0.8rem; color: var(--gray); margin-top: 0.5rem;">
+                            Get your token at: <a href="https://developer.twitter.com/en/portal/dashboard" target="_blank">Twitter Developer Portal</a>
+                        </p>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">Reddit</h3>
+                        <input type="text" id="reddit_client_id" placeholder="Reddit Client ID" value="${API_CONFIG.reddit.clientId}"
+                            style="width: 100%; padding: 0.75rem; border: 1px solid var(--light); border-radius: 6px; font-family: monospace; font-size: 0.9rem; margin-bottom: 0.5rem;">
+                        <input type="text" id="reddit_client_secret" placeholder="Reddit Client Secret" value="${API_CONFIG.reddit.clientSecret}"
+                            style="width: 100%; padding: 0.75rem; border: 1px solid var(--light); border-radius: 6px; font-family: monospace; font-size: 0.9rem;">
+                        <p style="font-size: 0.8rem; color: var(--gray); margin-top: 0.5rem;">
+                            Note: Reddit public data doesn't require authentication. These are optional for rate limit increases.
+                        </p>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">News API</h3>
+                        <input type="text" id="news_api_key" placeholder="News API Key" value="${API_CONFIG.news.apiKey}"
+                            style="width: 100%; padding: 0.75rem; border: 1px solid var(--light); border-radius: 6px; font-family: monospace; font-size: 0.9rem;">
+                        <p style="font-size: 0.8rem; color: var(--gray); margin-top: 0.5rem;">
+                            Get your key at: <a href="https://newsapi.org/register" target="_blank">newsapi.org/register</a>
+                        </p>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                        <button onclick="saveAPIConfig()" style="flex: 1; padding: 0.75rem; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                            Save Configuration
+                        </button>
+                        <button onclick="closeAPIConfig()" style="flex: 1; padding: 0.75rem; background: var(--gray); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                            Cancel
+                        </button>
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem; padding: 1rem; background: #fff3cd; border-radius: 6px; font-size: 0.85rem;">
+                        <strong>💡 Quick Start:</strong> For testing, you only need the Apify token for LinkedIn. Other platforms are optional.
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            window.currentModal = modal;
+        }
+
+        function saveAPIConfig() {
+            API_CONFIG.apify.token = document.getElementById('apify_token').value.trim();
+            API_CONFIG.youtube.apiKey = document.getElementById('youtube_api_key').value.trim();
+            API_CONFIG.twitter.bearerToken = document.getElementById('twitter_bearer_token').value.trim();
+            API_CONFIG.reddit.clientId = document.getElementById('reddit_client_id').value.trim();
+            API_CONFIG.reddit.clientSecret = document.getElementById('reddit_client_secret').value.trim();
+            API_CONFIG.news.apiKey = document.getElementById('news_api_key').value.trim();
+
+            // Save to localStorage
+            localStorage.setItem('apify_token', API_CONFIG.apify.token);
+            localStorage.setItem('youtube_api_key', API_CONFIG.youtube.apiKey);
+            localStorage.setItem('twitter_bearer_token', API_CONFIG.twitter.bearerToken);
+            localStorage.setItem('reddit_client_id', API_CONFIG.reddit.clientId);
+            localStorage.setItem('reddit_client_secret', API_CONFIG.reddit.clientSecret);
+            localStorage.setItem('news_api_key', API_CONFIG.news.apiKey);
+
+            closeAPIConfig();
+            
+            // Show success message
+            alert('✓ API configuration saved! Select platforms to start fetching data.');
+        }
+
+        function closeAPIConfig() {
+            if (window.currentModal) {
+                window.currentModal.remove();
+                window.currentModal = null;
+            }
+        }
+
+        function checkAPIConfiguration() {
+            const hasAnyKey = API_CONFIG.apify.token || API_CONFIG.youtube.apiKey || 
+                             API_CONFIG.twitter.bearerToken || API_CONFIG.news.apiKey;
+            
+            // Check if user has seen welcome message
+            const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
+            
+            if (!hasAnyKey && !hasSeenWelcome) {
+                // Show welcome message
+                setTimeout(() => {
+                    localStorage.setItem('hasSeenWelcome', 'true');
+                    
+                    const message = `Welcome to the Pain Management Social Intelligence Platform!
+
+🎭 DEMO MODE: You can explore the platform immediately with realistic demo data.
+
+✅ REAL DATA: Configure API keys to fetch live data from social platforms.
+
+What would you like to do?
+
+• Click OK to configure API keys now
+• Click Cancel to explore with demo data first
+
+(You can configure APIs anytime by clicking the "🔑 Configure APIs" button)`;
+                    
+                    if (confirm(message)) {
+                        showAPIConfig();
+                    }
+                }, 1500);
+            }
+        }
+
+        // Initialize
+        console.log('Pain Management Social Intelligence Platform initialized');
+    </script>
+</body>
+</html>

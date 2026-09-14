@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unified Social Listening Suite</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --muted: #94a3b8;
+      --text: #e2e8f0;
+      --accent: #38bdf8;
+      --accent-2: #fb7185;
+      --border: #1f2937;
+      --btn: #1e293b;
+      --btn-active: #0ea5e9;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 10% 10%, rgba(56, 189, 248, 0.2), transparent 35%),
+        radial-gradient(circle at 90% 0%, rgba(251, 113, 133, 0.18), transparent 30%),
+        var(--bg);
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 1rem 1.2rem;
+      border-bottom: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(4px);
+    }
+
+    .title {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    .subtitle {
+      margin: 0.3rem 0 0;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0.6rem;
+      padding: 1rem 1.2rem;
+      border-bottom: 1px solid var(--border);
+      background: rgba(2, 6, 23, 0.7);
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      border: 1px solid var(--border);
+      background: var(--btn);
+      color: var(--text);
+      padding: 0.55rem 0.9rem;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .tab-btn.active {
+      background: var(--btn-active);
+      border-color: var(--btn-active);
+      color: white;
+    }
+
+    .view {
+      flex: 1;
+      min-height: 0;
+      padding: 0.8rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: calc(100vh - 170px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: white;
+    }
+
+    @media (max-width: 700px) {
+      iframe {
+        height: calc(100vh - 210px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 class="title">Unified Social Listening Suite</h1>
+    <p class="subtitle">Use both dashboards from one place.</p>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-target="social">Social Listening Dashboard</button>
+    <button class="tab-btn" data-target="reddit">Reddit Dashboard</button>
+  </nav>
+
+  <main class="view">
+    <iframe id="socialFrame" title="Social Listening Dashboard" src="./pilot.html"></iframe>
+    <iframe id="redditFrame" title="Reddit Dashboard" src="./Reddit%20Dashboard/index.html" style="display:none;"></iframe>
+  </main>
+
+  <script>
+    const buttons = document.querySelectorAll('.tab-btn');
+    const socialFrame = document.getElementById('socialFrame');
+    const redditFrame = document.getElementById('redditFrame');
+
+    buttons.forEach((button) => {
+      button.addEventListener('click', () => {
+        buttons.forEach((b) => b.classList.remove('active'));
+        button.classList.add('active');
+
+        const isSocial = button.dataset.target === 'social';
+        socialFrame.style.display = isSocial ? 'block' : 'none';
+        redditFrame.style.display = isSocial ? 'none' : 'block';
+      });
+    });
+  </script>
+</body>
+</html>

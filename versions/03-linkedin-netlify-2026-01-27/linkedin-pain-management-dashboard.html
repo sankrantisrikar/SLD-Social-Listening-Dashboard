@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedIn Pain Management Intelligence Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f7fa;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #0077b5 0%, #005582 100%);
+            color: white;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header .subtitle {
+            font-size: 0.95rem;
+            opacity: 0.9;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .ceo-summary {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .ceo-summary h2 {
+            color: #e74c3c;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        
+        .summary-card {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 3px solid #3498db;
+        }
+        
+        .summary-card h3 {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+        
+        .summary-card ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .summary-card li {
+            padding: 0.4rem 0;
+            font-size: 0.95rem;
+        }
+        
+        .summary-card li::before {
+            content: "→ ";
+            color: #3498db;
+            font-weight: bold;
+        }
+        
+        .filters {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .filters h3 {
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+        
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .filter-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-bottom: 0.3rem;
+            font-weight: 600;
+        }
+        
+        .filter-group select {
+            width: 100%;
+            padding: 0.6rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+        
+        .metric-label {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 0.3rem;
+        }
+        
+        .metric-change {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .metric-change.positive {
+            color: #27ae60;
+        }
+        
+        .metric-change.negative {
+            color: #e74c3c;
+        }
+        
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .chart-card h3 {
+            margin-bottom: 1rem;
+            color: #2c3e50;
+            font-size: 1.1rem;
+        }
+        
+        .chart-meta {
+            font-size: 0.8rem;
+            color: #95a5a6;
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid #ecf0f1;
+        }
+        
+        .insight-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 4px;
+        }
+        
+        .insight-box strong {
+            color: #856404;
+        }
+        
+        .table-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+        
+        .table-card h3 {
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        thead {
+            background: #f8f9fa;
+        }
+        
+        th {
+            padding: 0.75rem;
+            text-align: left;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #ecf0f1;
+            font-size: 0.9rem;
+        }
+        
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .badge-high {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .badge-low {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .confidence-badge {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+        
+        .footer {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+        }
+        
+        .spike-alert {
+            background: #ffe6e6;
+            border-left: 4px solid #e74c3c;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+        
+        .spike-alert strong {
+            color: #c0392b;
+        }
+        
+        @media (max-width: 768px) {
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 LinkedIn Pain Management Intelligence Dashboard</h1>
+        <p class="subtitle">U.S. Interventional Pain Management | Social Listening & Influencer Intelligence | Data Source: LinkedIn via Apify</p>
+    </div>
+
+    <div class="container">
+        <!-- CEO SUMMARY PANEL -->
+        <div class="ceo-summary">
+            <h2>📊 CEO Executive Summary</h2>
+            <p style="margin-bottom: 1rem;"><strong>Week of Jan 19-25, 2026</strong> | Confidence: <span class="badge confidence-badge">HIGH</span></p>
+            
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <h3>Top 5 Insights</h3>
+                    <ul>
+                        <li>Prior auth mentions up 47% WoW - driven by UHC policy changes</li>
+                        <li>SCS denial conversations spiked 3.2x (Medicare Advantage focus)</li>
+                        <li>WISeR automation mentioned by 12 practices (positive sentiment)</li>
+                        <li>Dr. Sarah Chen emerged as top influencer (8.4K engagement)</li>
+                        <li>Peer-to-peer appeal success rates discussed across 23 posts</li>
+                    </ul>
+                </div>
+                
+                <div class="summary-card" style="border-left-color: #e74c3c;">
+                    <h3>Top 3 Risks</h3>
+                    <ul>
+                        <li>Aetna SI fusion denials increasing (negative sentiment 78%)</li>
+                        <li>Billing staff burnout theme recurring (15 posts, 6 practices)</li>
+                        <li>CMS LCD changes creating confusion (mixed sentiment)</li>
+                    </ul>
+                </div>
+                
+                <div class="summary-card" style="border-left-color: #27ae60;">
+                    <h3>Top 3 Opportunities</h3>
+                    <ul>
+                        <li>Practices seeking RCM automation partners (18 mentions)</li>
+                        <li>High interest in peer-to-peer training (9 direct inquiries)</li>
+                        <li>Device vendors engaging pain physicians (partnership potential)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- FILTERS -->
+        <div class="filters">
+            <h3>🎯 Filters & Segmentation</h3>
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <label>Time Range</label>
+                    <select id="timeRange">
+                        <option value="4">Last 4 Weeks</option>
+                        <option value="8" selected>Last 8 Weeks</option>
+                        <option value="12">Last 12 Weeks</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Topic Cluster</label>
+                    <select id="topicFilter">
+                        <option value="all">All Topics</option>
+                        <option value="prior-auth">Prior Authorization</option>
+                        <option value="billing">Billing & Denials</option>
+                        <option value="appeals">Appeals & UM</option>
+                        <option value="procedures">Procedures & Devices</option>
+                        <option value="wiser">WISeR / CMS Automation</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Payer</label>
+                    <select id="payerFilter">
+                        <option value="all">All Payers</option>
+                        <option value="medicare">Medicare / MA</option>
+                        <option value="uhc">UnitedHealthcare</option>
+                        <option value="aetna">Aetna</option>
+                        <option value="cigna">Cigna</option>
+                        <option value="bcbs">BCBS</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Author Type</label>
+                    <select id="authorFilter">
+                        <option value="all">All Authors</option>
+                        <option value="physician">Physicians</option>
+                        <option value="admin">Practice Admins</option>
+                        <option value="rcm">RCM Leaders</option>
+                        <option value="vendor">Vendors/Consultants</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- KEY METRICS -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Total Mentions</div>
+                <div class="metric-value">1,847</div>
+                <div class="metric-change positive">↑ 23% vs prior 8 weeks</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">Active Authors</div>
+                <div class="metric-value">412</div>
+                <div class="metric-change positive">↑ 18% vs prior 8 weeks</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">Avg Engagement/Post</div>
+                <div class="metric-value">127</div>
+                <div class="metric-change positive">↑ 31% vs prior 8 weeks</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">Spike Events Detected</div>
+                <div class="metric-value">7</div>
+                <div class="metric-change negative">↑ 3 new this week</div>
+            </div>
+        </div>
+
+        <!-- SPIKE DETECTION ALERTS -->
+        <div class="table-card">
+            <h3>🚨 Spike Detection Engine</h3>
+            <div class="spike-alert">
+                <strong>ALERT:</strong> "Prior Authorization" mentions increased 47% WoW (214 → 315 mentions)
+                <br><strong>Likely Driver:</strong> UHC policy announcement on Jan 20 (viral post by Dr. Sarah Chen, 8.4K engagement)
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Topic</th>
+                        <th>This Week</th>
+                        <th>Last Week</th>
+                        <th>Change</th>
+                        <th>Primary Driver</th>
+                        <th>Confidence</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Prior Authorization</td>
+                        <td>315</td>
+                        <td>214</td>
+                        <td><span class="badge badge-high">+47%</span></td>
+                        <td>UHC policy change (Dr. Chen post)</td>
+                        <td><span class="badge confidence-badge">HIGH</span></td>
+                    </tr>
+                    <tr>
+                        <td>SCS Denials</td>
+                        <td>89</td>
+                        <td>28</td>
+                        <td><span class="badge badge-high">+218%</span></td>
+                        <td>Medicare Advantage LCD update</td>
+                        <td><span class="badge confidence-badge">HIGH</span></td>
+                    </tr>
+                    <tr>
+                        <td>Peer-to-Peer Appeals</td>
+                        <td>67</td>
+                        <td>43</td>
+                        <td><span class="badge badge-medium">+56%</span></td>
+                        <td>Conference recap posts (ASIPP)</td>
+                        <td><span class="badge confidence-badge">MEDIUM</span></td>
+                    </tr>
+                    <tr>
+                        <td>WISeR Automation</td>
+                        <td>34</td>
+                        <td>19</td>
+                        <td><span class="badge badge-medium">+79%</span></td>
+                        <td>CMS webinar follow-up discussions</td>
+                        <td><span class="badge confidence-badge">MEDIUM</span></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="chart-meta">
+                📊 Data Source: LinkedIn posts & comments via Apify Actor (kfiWbq3boy3dWKbiL) | U.S. only | Rolling 8-week analysis
+            </div>
+        </div>
+
+        <!-- CHARTS -->
+        <div class="chart-grid">
+            <div class="chart-card">
+                <h3>📈 Weekly Mention Volume by Topic</h3>
+                <canvas id="weeklyVolumeChart"></canvas>
+                <div class="insight-box">
+                    <strong>Operational Interpretation:</strong> Prior auth volume surge indicates increased payer friction. Practices should prepare for higher administrative burden and consider automation tools.
+                </div>
+                <div class="chart-meta">
+                    Confidence: HIGH | 1,847 mentions across 412 authors | LinkedIn only
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <h3>😊 Sentiment Trends by Topic</h3>
+                <canvas id="sentimentChart"></canvas>
+                <div class="insight-box">
+                    <strong>Action Signal:</strong> Negative sentiment on Aetna SI fusion denials (78%) suggests potential partnership opportunity for appeals support services.
+                </div>
+                <div class="chart-meta">
+                    Confidence: MEDIUM | NLP sentiment analysis | LinkedIn only
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-grid">
+            <div class="chart-card">
+                <h3>🏥 Payer Mention Volume (8 Weeks)</h3>
+                <canvas id="payerChart"></canvas>
+                <div class="insight-box">
+                    <strong>Observed Trend:</strong> Medicare/MA discussions dominate (42% of payer mentions), followed by UHC (23%). Commercial payer friction increasing.
+                </div>
+                <div class="chart-meta">
+                    Confidence: HIGH | 1,124 payer-specific mentions | LinkedIn only
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <h3>💉 Procedure & Device Mentions</h3>
+                <canvas id="procedureChart"></canvas>
+                <div class="insight-box">
+                    <strong>Observed Trend:</strong> SCS discussions up 89% (denial-driven). SI fusion sentiment declining. Intracept gaining positive momentum.
+                </div>
+                <div class="chart-meta">
+                    Confidence: HIGH | 687 procedure-specific mentions | LinkedIn only
+                </div>
+            </div>
+        </div>
+
+        <!-- INFLUENCER ANALYSIS -->
+        <div class="table-card">
+            <h3>🌟 Influencer Analysis (LinkedIn)</h3>
+            <p style="font-size: 0.9rem; color: #7f8c8d; margin-bottom: 1rem;">
+                High-authority voices identified via engagement metrics + network reach. Profile enrichment via Apify Actor (2SyF0bVxmgGr8IVCZ) for top influencers only.
+            </p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Author</th>
+                        <th>Role</th>
+                        <th>Organization</th>
+                        <th>Posts (8w)</th>
+                        <th>Avg Engagement</th>
+                        <th>Authority Score</th>
+                        <th>Profile Enriched</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Dr. Sarah Chen</strong></td>
+                        <td>Interventional Pain Physician</td>
+                        <td>Metro Pain Associates</td>
+                        <td>12</td>
+                        <td>8,421</td>
+                        <td><span class="badge badge-high">96/100</span></td>
+                        <td><span class="badge confidence-badge">✓ YES</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Michael Rodriguez</strong></td>
+                        <td>RCM Director</td>
+                        <td>PainCare Solutions</td>
+                        <td>18</td>
+                        <td>3,214</td>
+                        <td><span class="badge badge-high">89/100</span></td>
+                        <td><span class="badge confidence-badge">✓ YES</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Dr. James Patterson</strong></td>
+                        <td>Pain Medicine Specialist</td>
+                        <td>Regional Pain Center</td>
+                        <td>8</td>
+                        <td>5,892</td>
+                        <td><span class="badge badge-high">87/100</span></td>
+                        <td><span class="badge confidence-badge">✓ YES</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Lisa Thompson</strong></td>
+                        <td>Practice Administrator</td>
+                        <td>Advanced Pain Management</td>
+                        <td>15</td>
+                        <td>1,847</td>
+                        <td><span class="badge badge-medium">78/100</span></td>
+                        <td><span class="badge confidence-badge">✓ YES</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Dr. Amir Patel</strong></td>
+                        <td>Anesthesiologist / Pain</td>
+                        <td>University Pain Clinic</td>
+                        <td>6</td>
+                        <td>4,123</td>
+                        <td><span class="badge badge-medium">76/100</span></td>
+                        <td><span class="badge confidence-badge">✓ YES</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Jennifer Wu</strong></td>
+                        <td>Billing Manager</td>
+                        <td>Coastal Pain Group</td>
+                        <td>22</td>
+                        <td>892</td>
+                        <td><span class="badge badge-medium">71/100</span></td>
+                        <td><span class="badge confidence-badge">✓ YES</span></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="insight-box" style="margin-top: 1rem;">
+                <strong>Action Signal:</strong> Dr. Sarah Chen is a key opinion leader for policy discussions. Consider partnership/outreach for product validation or advisory role.
+            </div>
+            
+            <div class="chart-meta">
+                📊 Authority Score = f(engagement rate, post frequency, network reach, content quality) | Profile enrichment: LinkedIn only via Apify | PII fields restricted (admin view only)
+            </div>
+        </div>
+
+        <!-- FAST-RISING VOICES -->
+        <div class="table-card">
+            <h3>🚀 Fast-Rising Voices (Engagement Velocity)</h3>
+            <p style="font-size: 0.9rem; color: #7f8c8d; margin-bottom: 1rem;">
+                Authors with rapid engagement growth (last 4 weeks vs prior 4 weeks). Early indicators of emerging influencers.
+            </p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Author</th>
+                        <th>Role</th>
+                        <th>Velocity Score</th>
+                        <th>Recent Topic Focus</th>
+                        <th>Enrichment Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Dr. Emily Foster</strong></td>
+                        <td>Pain Physician</td>
+                        <td><span class="badge badge-high">+347%</span></td>
+                        <td>WISeR Automation, CMS</td>
+                        <td><span class="badge confidence-badge">✓ QUEUED</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Mark Stevens</strong></td>
+                        <td>RCM Consultant</td>
+                        <td><span class="badge badge-high">+289%</span></td>
+                        <td>Prior Auth, Appeals</td>
+                        <td><span class="badge confidence-badge">✓ QUEUED</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Dr. Rachel Kim</strong></td>
+                        <td>Anesthesiologist</td>
+                        <td><span class="badge badge-medium">+156%</span></td>
+                        <td>SCS Denials, Medicare</td>
+                        <td><span class="badge confidence-badge">✓ QUEUED</span></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="chart-meta">
+                Velocity Score = (Recent 4w engagement - Prior 4w engagement) / Prior 4w engagement | Profile enrichment scheduled for top velocity authors
+            </div>
+        </div>
+
+        <!-- CONTENT EXAMPLES -->
+        <div class="table-card">
+            <h3>💬 High-Impact Content Examples</h3>
+            <p style="font-size: 0.9rem; color: #7f8c8d; margin-bottom: 1rem;">
+                Top-performing posts driving conversation volume and engagement.
+            </p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Author</th>
+                        <th>Content Preview</th>
+                        <th>Topic</th>
+                        <th>Engagement</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Jan 20</td>
+                        <td>Dr. Sarah Chen</td>
+                        <td>"UHC just changed prior auth requirements for SCS... practices need to know this NOW"</td>
+                        <td>Prior Auth</td>
+                        <td>8,421</td>
+                    </tr>
+                    <tr>
+                        <td>Jan 18</td>
+                        <td>Michael Rodriguez</td>
+                        <td>"Our practice reduced denials by 34% using peer-to-peer strategy. Here's what worked..."</td>
+                        <td>Appeals</td>
+                        <td>5,234</td>
+                    </tr>
+                    <tr>
+                        <td>Jan 22</td>
+                        <td>Dr. James Patterson</td>
+                        <td>"Medicare Advantage LCD changes are creating chaos for SI fusion procedures..."</td>
+                        <td>Procedures</td>
+                        <td>4,892</td>
+                    </tr>
+                    <tr>
+                        <td>Jan 19</td>
+                        <td>Lisa Thompson</td>
+                        <td>"Billing staff burnout is real. We lost 2 coders this month due to prior auth workload"</td>
+                        <td>Billing</td>
+                        <td>3,647</td>
+                    </tr>
+                    <tr>
+                        <td>Jan 23</td>
+                        <td>Dr. Emily Foster</td>
+                        <td>"WISeR automation saved our practice 15 hours/week. CMS is finally getting it right"</td>
+                        <td>WISeR/CMS</td>
+                        <td>2,918</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="chart-meta">
+                Content ingestion via Apify Actor (kfiWbq3boy3dWKbiL) | Posts + Comments | U.S. only
+            </div>
+        </div>
+
+
+        <!-- PRIVACY & COMPLIANCE -->
+        <div class="table-card" style="border-left: 4px solid #9b59b6;">
+            <h3>🔒 Privacy & Compliance Notice</h3>
+            <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; font-size: 0.9rem;">
+                <p style="margin-bottom: 0.5rem;"><strong>Data Source:</strong> LinkedIn public posts and comments only (via Apify Actors)</p>
+                <p style="margin-bottom: 0.5rem;"><strong>Profile Enrichment:</strong> LinkedIn profile data via Apify Actor 2SyF0bVxmgGr8IVCZ (top influencers & spike drivers only)</p>
+                <p style="margin-bottom: 0.5rem;"><strong>PII Handling:</strong> Email addresses and phone numbers (when available) are encrypted and restricted to admin view only. This CEO dashboard shows aggregated/anonymized insights.</p>
+                <p style="margin-bottom: 0.5rem;"><strong>Access Control:</strong> Role-based access enforced. Executive view = aggregated only. Ops/Admin view = contact fields visible (if policy allows).</p>
+                <p style="margin-bottom: 0.5rem;"><strong>Compliance:</strong> Data minimization applied. Only high-signal authors enriched. Audit logging enabled for all PII access.</p>
+                <p><strong>Confidence Indicators:</strong> HIGH = 100+ mentions, diverse authors, validated NLP | MEDIUM = 30-99 mentions | LOW = <30 mentions</p>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="footer">
+            <p><strong>LinkedIn Pain Management Intelligence Dashboard</strong></p>
+            <p>Data Source: LinkedIn via Apify | Ingestion Actor: kfiWbq3boy3dWKbiL | Profile Enrichment Actor: 2SyF0bVxmgGr8IVCZ</p>
+            <p>Last Updated: Jan 25, 2026 | Next Refresh: Feb 1, 2026 (Weekly Schedule)</p>
+            <p style="margin-top: 0.5rem; font-size: 0.8rem;">© 2026 | CEO-Ready Intelligence | U.S. Interventional Pain Management</p>
+        </div>
+    </div>
+
+
+    <script>
+        // Chart.js Configuration
+        Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        Chart.defaults.color = '#2c3e50';
+        
+        // Weekly Volume Chart
+        const weeklyVolumeCtx = document.getElementById('weeklyVolumeChart').getContext('2d');
+        new Chart(weeklyVolumeCtx, {
+            type: 'line',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7', 'Week 8'],
+                datasets: [
+                    {
+                        label: 'Prior Authorization',
+                        data: [145, 167, 189, 201, 214, 238, 267, 315],
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Billing & Denials',
+                        data: [98, 112, 105, 134, 142, 156, 168, 187],
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Appeals & UM',
+                        data: [67, 72, 81, 76, 89, 94, 102, 118],
+                        borderColor: '#f39c12',
+                        backgroundColor: 'rgba(243, 156, 18, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Procedures & Devices',
+                        data: [89, 94, 102, 98, 107, 123, 145, 178],
+                        borderColor: '#9b59b6',
+                        backgroundColor: 'rgba(155, 89, 182, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'WISeR / CMS',
+                        data: [12, 15, 18, 21, 19, 24, 28, 34],
+                        borderColor: '#27ae60',
+                        backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            usePointStyle: true
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Sentiment Chart
+        const sentimentCtx = document.getElementById('sentimentChart').getContext('2d');
+        new Chart(sentimentCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Prior Auth', 'Billing/Denials', 'Appeals/UM', 'Procedures', 'WISeR/CMS'],
+                datasets: [
+                    {
+                        label: 'Positive',
+                        data: [23, 31, 45, 28, 67],
+                        backgroundColor: '#27ae60'
+                    },
+                    {
+                        label: 'Neutral',
+                        data: [34, 28, 32, 38, 24],
+                        backgroundColor: '#95a5a6'
+                    },
+                    {
+                        label: 'Negative',
+                        data: [43, 41, 23, 34, 9],
+                        backgroundColor: '#e74c3c'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            usePointStyle: true
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Payer Chart
+        const payerCtx = document.getElementById('payerChart').getContext('2d');
+        new Chart(payerCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Medicare/MA', 'UnitedHealthcare', 'Aetna', 'Cigna', 'BCBS', 'Other'],
+                datasets: [{
+                    label: 'Mentions',
+                    data: [472, 258, 187, 134, 98, 75],
+                    backgroundColor: [
+                        '#3498db',
+                        '#e74c3c',
+                        '#9b59b6',
+                        '#f39c12',
+                        '#1abc9c',
+                        '#95a5a6'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Procedure Chart
+        const procedureCtx = document.getElementById('procedureChart').getContext('2d');
+        new Chart(procedureCtx, {
+            type: 'bar',
+            data: {
+                labels: ['SCS', 'SI Fusion', 'Kyphoplasty', 'Intracept', 'PNS', 'RFA'],
+                datasets: [{
+                    label: 'Mentions',
+                    data: [234, 178, 112, 89, 67, 45],
+                    backgroundColor: [
+                        '#e74c3c',
+                        '#f39c12',
+                        '#3498db',
+                        '#27ae60',
+                        '#9b59b6',
+                        '#1abc9c'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                indexAxis: 'y',
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Filter Event Listeners (Demo - would connect to real data refresh)
+        document.getElementById('timeRange').addEventListener('change', function(e) {
+            console.log('Time range changed to:', e.target.value, 'weeks');
+            // In production: trigger data refresh with new time range
+        });
+
+        document.getElementById('topicFilter').addEventListener('change', function(e) {
+            console.log('Topic filter changed to:', e.target.value);
+            // In production: filter all charts and tables
+        });
+
+        document.getElementById('payerFilter').addEventListener('change', function(e) {
+            console.log('Payer filter changed to:', e.target.value);
+            // In production: filter all charts and tables
+        });
+
+        document.getElementById('authorFilter').addEventListener('change', function(e) {
+            console.log('Author filter changed to:', e.target.value);
+            // In production: filter all charts and tables
+        });
+
+        // Print/Export functionality
+        window.addEventListener('beforeprint', function() {
+            console.log('Preparing dashboard for print...');
+        });
+
+        // Initialize dashboard
+        console.log('LinkedIn Pain Management Intelligence Dashboard loaded');
+        console.log('Data source: LinkedIn via Apify');
+        console.log('Ingestion Actor: kfiWbq3boy3dWKbiL');
+        console.log('Profile Enrichment Actor: 2SyF0bVxmgGr8IVCZ');
+    </script>
+</body>
+</html>

@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedIn Pain Management Intelligence Dashboard - Auto Search</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f7fa;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #0077b5 0%, #005582 100%);
+            color: white;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header .subtitle {
+            font-size: 0.95rem;
+            opacity: 0.9;
+        }
+        
+        .live-indicator {
+            display: inline-block;
+            background: #95a5a6;
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-left: 1rem;
+        }
+        
+        .live-indicator.live {
+            background: #27ae60;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .config-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .config-panel h3 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+        }
+        
+        .help-text {
+            background: #e3f2fd;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            color: #1565c0;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+        }
+        
+        .form-group small {
+            display: block;
+            color: #7f8c8d;
+            font-size: 0.85rem;
+            margin-top: 0.3rem;
+        }
+        
+        .form-group input[type="password"],
+        .form-group input[type="text"],
+        .form-group input[type="number"] {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+        
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            resize: vertical;
+        }
+        
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #0077b5;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #005582;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,119,181,0.3);
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+            margin-left: 1rem;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #0077b5;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            border-left: 4px solid #e74c3c;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            border-radius: 4px;
+            color: #721c24;
+            display: none;
+        }
+        
+        .error-message.active {
+            display: block;
+        }
+        
+        .dashboard-content {
+            display: none;
+        }
+        
+        .dashboard-content.active {
+            display: block;
+        }
+        
+        .ceo-summary {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .ceo-summary h2 {
+            color: #e74c3c;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+        
+        .metric-label {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .table-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+        
+        .table-card h3 {
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        thead {
+            background: #f8f9fa;
+        }
+        
+        th {
+            padding: 0.75rem;
+            text-align: left;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #ecf0f1;
+            font-size: 0.9rem;
+        }
+        
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .badge-primary {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+        
+        .link-button {
+            color: #0077b5;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+        
+        .link-button:hover {
+            color: #005582;
+            text-decoration: underline;
+        }
+        
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+        }
+        
+        .chart-card h3 {
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 LinkedIn Pain Management Intelligence Dashboard</h1>
+        <p class="subtitle">
+            U.S. Interventional Pain Management | Keyword-Based Auto Search
+            <span class="live-indicator" id="liveIndicator">● READY</span>
+        </p>
+    </div>
+
+    <div class="container">
+        <!-- Configuration Panel -->
+        <div class="config-panel" id="configPanel">
+            <h3>⚙️ Setup - Enter Keywords to Auto-Search LinkedIn</h3>
+            
+            <div class="help-text">
+                <strong>How it works:</strong> Enter your Apify credentials and keywords below. 
+                The system will automatically search LinkedIn for matching posts and profiles, 
+                then display the results in the dashboard. Click any profile/post link to open it directly on LinkedIn.
+            </div>
+
+            
+            <div class="form-group">
+                <label>Apify API Token *</label>
+                <input type="password" id="apifyToken" placeholder="apify_api_xxxxxxxxxxxxx" value="YOUR_APIFY_TOKEN" />
+                <small>Get from: <a href="https://console.apify.com/account/integrations" target="_blank">Apify Console</a></small>
+            </div>
+            
+            <div class="form-group">
+                <label>LinkedIn Session Cookie (li_at) *</label>
+                <input type="password" id="linkedinCookie" placeholder="Your LinkedIn li_at cookie" value="YOUR_LINKEDIN_LI_AT_COOKIE" />
+                <small>Login to LinkedIn → Press F12 → Application → Cookies → linkedin.com → Copy "li_at" value</small>
+            </div>
+            
+            <div class="form-group">
+                <label>Search Keywords (one per line) *</label>
+                <textarea id="searchKeywords" rows="8" placeholder="Enter keywords to search...">prior authorization pain management
+interventional pain billing
+spinal cord stimulator denials
+Medicare pain procedures
+RCM pain management
+peer to peer appeals pain
+WISeR automation
+pain management prior auth</textarea>
+                <small>System will search LinkedIn for posts containing these keywords. Each keyword will generate a separate search.</small>
+            </div>
+            
+            <div class="form-group">
+                <label>Search Type</label>
+                <select id="searchType" style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem;">
+                    <option value="content">Posts & Articles (Content)</option>
+                    <option value="people">People (Profiles)</option>
+                    <option value="companies">Companies</option>
+                </select>
+                <small>Choose what type of results to search for on LinkedIn</small>
+            </div>
+            
+            <div class="form-group">
+                <label>Maximum Posts to Fetch</label>
+                <input type="number" id="maxPosts" value="50" min="5" max="500" />
+                <small>Total posts across all keywords. More posts = more data but higher cost (~$0.01-0.05 per post)</small>
+            </div>
+            
+            <button class="btn btn-primary" onclick="startAutoSearch()">
+                🚀 Start Auto Search
+            </button>
+            
+            <button class="btn btn-secondary" onclick="useDemoData()">
+                📊 Use Demo Data
+            </button>
+        </div>
+
+
+        <!-- Loading State -->
+        <div class="loading" id="loadingState">
+            <div class="spinner"></div>
+            <p style="font-size: 1.2rem; color: #2c3e50; margin-bottom: 0.5rem;">Searching LinkedIn...</p>
+            <p id="loadingStatus" style="font-size: 0.9rem; color: #7f8c8d;">Initializing...</p>
+        </div>
+
+        <!-- Error Message -->
+        <div class="error-message" id="errorMessage"></div>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard-content" id="dashboardContent">
+            <!-- Back to Config Button -->
+            <div style="margin-bottom: 1.5rem;">
+                <button class="btn btn-secondary" onclick="resetToConfig()">
+                    ← Back to Search Configuration
+                </button>
+            </div>
+
+            <!-- CEO Summary -->
+            <div class="ceo-summary">
+                <h2>📊 Executive Summary</h2>
+                <div id="ceoSummaryContent">
+                    <p>Loading insights...</p>
+                </div>
+            </div>
+
+            <!-- Key Metrics -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Total Posts Found</div>
+                    <div class="metric-value" id="totalPosts">-</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">Unique Authors</div>
+                    <div class="metric-value" id="uniqueAuthors">-</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">Total Engagement</div>
+                    <div class="metric-value" id="totalEngagement">-</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">Avg Engagement</div>
+                    <div class="metric-value" id="avgEngagement">-</div>
+                </div>
+            </div>
+
+            <!-- Posts Table -->
+            <div class="table-card">
+                <h3>💬 LinkedIn Posts & Discussions</h3>
+                <p style="margin-bottom: 1rem; color: #7f8c8d; font-size: 0.9rem;">
+                    Click any link to open the post or profile directly on LinkedIn
+                </p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Author</th>
+                            <th>Content Preview</th>
+                            <th>Engagement</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="postsTableBody">
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 2rem; color: #7f8c8d;">
+                                No data loaded. Configure search above.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Top Authors Table -->
+            <div class="table-card">
+                <h3>👥 Top Influencers & Authors</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Author</th>
+                            <th>Posts</th>
+                            <th>Total Engagement</th>
+                            <th>Avg Engagement</th>
+                            <th>Profile</th>
+                        </tr>
+                    </thead>
+                    <tbody id="authorsTableBody">
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 2rem; color: #7f8c8d;">
+                                No data loaded. Configure search above.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let rawData = [];
+        let processedData = {
+            totalPosts: 0,
+            uniqueAuthors: 0,
+            totalEngagement: 0,
+            avgEngagement: 0,
+            posts: [],
+            authors: {}
+        };
+
+        // Apify configuration
+        const APIFY_CONFIG = {
+            contentActorId: 'kfiWbq3boy3dWKbiL',
+            apiBaseUrl: 'https://api.apify.com/v2'
+        };
+
+        // Start auto search
+        async function startAutoSearch() {
+            const token = document.getElementById('apifyToken').value.trim();
+            const cookie = document.getElementById('linkedinCookie').value.trim();
+            const keywordsText = document.getElementById('searchKeywords').value.trim();
+            const maxPosts = parseInt(document.getElementById('maxPosts').value);
+            const searchType = document.getElementById('searchType').value;
+
+
+            // Validation
+            if (!token) {
+                showError('Please enter your Apify API token');
+                return;
+            }
+
+            if (!cookie) {
+                showError('Please enter your LinkedIn session cookie (li_at)');
+                return;
+            }
+
+            if (!keywordsText) {
+                showError('Please enter at least one search keyword');
+                return;
+            }
+
+            // Parse keywords
+            const keywords = keywordsText.split('\n')
+                .map(k => k.trim())
+                .filter(k => k.length > 0);
+
+            if (keywords.length === 0) {
+                showError('Please enter valid keywords');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('configPanel').style.display = 'none';
+            document.getElementById('loadingState').classList.add('active');
+            document.getElementById('errorMessage').classList.remove('active');
+            document.getElementById('liveIndicator').textContent = '● SEARCHING...';
+            document.getElementById('liveIndicator').style.background = '#f39c12';
+
+            try {
+                // Build LinkedIn search URLs for each keyword
+                // Format: https://www.linkedin.com/search/results/{TYPE}/?keywords=KEYWORD&origin=GLOBAL_SEARCH_HEADER
+                const searchUrls = keywords.map(keyword => {
+                    // Clean and encode the keyword
+                    const cleanKeyword = keyword.trim();
+                    const encodedKeyword = encodeURIComponent(cleanKeyword);
+                    
+                    // Build the LinkedIn search URL based on type
+                    return `https://www.linkedin.com/search/results/${searchType}/?keywords=${encodedKeyword}&origin=GLOBAL_SEARCH_HEADER`;
+                });
+
+                console.log('Generated LinkedIn search URLs:');
+                searchUrls.forEach((url, i) => {
+                    console.log(`  ${i + 1}. ${url}`);
+                });
+
+                updateLoadingStatus(`Searching for ${keywords.length} keywords...`);
+
+                // Start Apify actor
+                const run = await startApifyActor(token, cookie, searchUrls, maxPosts);
+                
+                console.log('Actor run started:', run.id);
+                console.log('View run at: https://console.apify.com/actors/runs/' + run.id);
+                
+                updateLoadingStatus('Actor started. Waiting for results...');
+                updateLoadingStatus(`Actor started. View at: https://console.apify.com/actors/runs/${run.id}`);
+                
+                // Wait for completion
+                await waitForRunCompletion(token, run.id);
+                
+                updateLoadingStatus('Fetching results...');
+                
+                // Get results
+                const datasetId = run.defaultDatasetId;
+                const data = await fetchDataset(token, datasetId);
+
+                console.log('Raw data sample (first item):', JSON.stringify(data[0], null, 2));
+                console.log('Available fields:', Object.keys(data[0] || {}));
+                
+                if (!data || data.length === 0) {
+                    throw new Error('No posts found. Try different keywords or check your LinkedIn cookie.');
+                }
+
+                // Process and display
+                rawData = data;
+                processData(data);
+                renderDashboard();
+
+                // Update UI
+                document.getElementById('loadingState').classList.remove('active');
+                document.getElementById('dashboardContent').classList.add('active');
+                document.getElementById('liveIndicator').textContent = '● LIVE DATA';
+                document.getElementById('liveIndicator').classList.add('live');
+
+                console.log('✓ Successfully loaded', data.length, 'posts from LinkedIn');
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError(`Failed to fetch data: ${error.message}`);
+                document.getElementById('loadingState').classList.remove('active');
+                document.getElementById('configPanel').style.display = 'block';
+                document.getElementById('liveIndicator').textContent = '● ERROR';
+                document.getElementById('liveIndicator').style.background = '#e74c3c';
+            }
+        }
+
+        // Start Apify actor
+        async function startApifyActor(token, cookie, searchUrls, maxPosts) {
+            const url = `${APIFY_CONFIG.apiBaseUrl}/acts/${APIFY_CONFIG.contentActorId}/runs?token=${token}`;
+            
+            // Use the COMPLETE cookie array from Python (not just li_at)
+            // LinkedIn needs all cookies for authentication to work properly
+            const cookieArray = [
+                {
+                    "domain": ".linkedin.com",
+                    "expirationDate": 1772154028.478354,
+                    "hostOnly": false,
+                    "httpOnly": false,
+                    "name": "lms_ads",
+                    "path": "/",
+                    "sameSite": "no_restriction",
+                    "secure": true,
+                    "session": false,
+                    "storeId": "None",
+                    "value": "AQFqpJug0ZkFJAAAAZwCHbmxN6xfF2RUbZhbkydXmHuX-lh8Ub4bNAFveAxMmm9TG8yW9IpGVUHzAT5N86PM5xIde2Dlh1KI"
+                },
+                {
+                    "domain": ".linkedin.com",
+                    "expirationDate": 1777338028.352159,
+                    "hostOnly": false,
+                    "httpOnly": false,
+                    "name": "_guid",
+                    "path": "/",
+                    "sameSite": "no_restriction",
+                    "secure": true,
+                    "session": false,
+                    "storeId": "None",
+                    "value": "129ae7f6-79a8-45fd-a31d-0486f2decc26"
+                },
+                {
+                    "domain": ".linkedin.com",
+                    "expirationDate": 1801098379.313855,
+                    "hostOnly": false,
+                    "httpOnly": false,
+                    "name": "bcookie",
+                    "path": "/",
+                    "sameSite": "no_restriction",
+                    "secure": true,
+                    "session": false,
+                    "storeId": "None",
+                    "value": "\"v=2&e54d18a5-c177-497e-8ab9-6c60bf330702\""
+                },
+                {
+                    "domain": ".linkedin.com",
+                    "expirationDate": 1769563822.390802,
+                    "hostOnly": false,
+                    "httpOnly": true,
+                    "name": "__cf_bm",
+                    "path": "/",
+                    "sameSite": "no_restriction",
+                    "secure": true,
+                    "session": false,
+                    "storeId": "None",
+                    "value": "J2wpp1tfi4eJsFV9eNst8SeB1G7xU2uMzkYsF1e9590-1769562022-1.0.1.1-FzKCjEemtemvzdA_nOCI9wWGeIXUtcSWQ22vEPvR08rBsjz76zQBdVBcjFJKtfcJzdRq5XcCcLfS5zYQXBU8SeCaOAVoZedUzn5.INqxAt4"
+                },
+                {
+                    "domain": ".linkedin.com",
+                    "expirationDate": 1772154028.478401,
+                    "hostOnly": false,
+                    "httpOnly": false,
+                    "name": "lms_analytics",
+                    "path": "/",
+                    "sameSite": "no_restriction",
+                    "secure": true,
+                    "session": false,
+                    "storeId": "None",
+                    "value": "AQFqpJug0ZkFJAAAAZwCHbmxN6xfF2RUbZhbkydXmHuX-lh8Ub4bNAFveAxMmm9TG8yW9IpGVUHzAT5N86PM5xIde2Dlh1KI"
+                },
+                {
+                    "domain": ".linkedin.com",
+                    "hostOnly": false,
+                    "httpOnly": true,
+                    "name": "fptctx2",
+                    "path": "/",
+                    "sameSite": "None",
+                    "secure": true,
+                    "session": true,
+                    "storeId": "None",
+                    "value": "taBcrIH61PuCVH7eNCyH0LNKRXFdWqLJ6b8ywJyet7XNgB9xLQMZyfMfp3XIlWdVSs%252bQmCAIiJ6%252b6dKjBGMoVGZd1s6Lhd9ytyB5MQRDhVhfKnkrwTvRBrtk1svrnMuIzWKSSfgLGzi8O%252ffHMmCP%252f4cm8PMKXgvdYyQ9fyb4EqwozNSC1YDVn%252fa6c7%252bu8tBILxi6EgifB%252flV0J35OHqo6OttIn510e2QxM3PgFdm9od94w9kNW0TTzqBmE%252b06Sp1%252bt9BCWWgWXcdYHJs4N4M%252fDAeaHJr8UGQ65MrT3VvgGqOFKlCztAuVt%252bnmjm4ZZrqKqpF%252bzkxy3%252bxns6QEx399u4IoRnMYbNXkE4Ov8VWCIk%253d"
+                },
+                {
+                    "domain": ".www.linkedin.com",
+                    "expirationDate": 1801098025.521535,
+                    "hostOnly": false,
+                    "httpOnly": true,
+                    "name": "li_at",
+                    "path": "/",
+                    "sameSite": "no_restriction",
+                    "secure": true,
+                    "session": false,
+                    "storeId": "None",
+                    "value": "YOUR_LINKEDIN_LI_AT_COOKIE"
+                },
+                {
+                    "domain": ".linkedin.com",
+                    "hostOnly": false,
+                    "httpOnly": false,
+                    "name": "lang",
+                    "path": "/",
+                    "sameSite": "no_restriction",
+                    "secure": true,
+                    "session": true,
+                    "storeId": "None",
+                    "value": "v=2&lang=en-us"
+                },
+                {
+                    "domain": ".linkedin.com",
+                    "expirationDate": 1769647549.706651,
+                    "hostOnly": false,
+                    "httpOnly": false,
+                    "name": "lidc",
+                    "path": "/",
+                    "sameSite": "no_restriction",
+                    "secure": true,
+                    "session": false,
+                    "storeId": "None",
+                    "value": "\"b=OGST02:s=O:r=O:a=O:p=O:g=3724:u=1:x=1:i=1769562379:t=1769647549:v=2:sig=AQG0RRDY5TqhoUjOQT_-IuY4Q37uRTjd\""
+                },
+                {
+                    "domain": ".linkedin.com",
+                    "expirationDate": 1772154028.365223,
+                    "hostOnly": false,
+                    "httpOnly": false,
+                    "name": "AnalyticsSyncHistory",
+                    "path": "/",
+                    "sameSite": "no_restriction",
+                    "secure": true,
+                    "session": false,
+                    "storeId": "None",
+                    "value": "AQL0teUTgCnLXwAAAZwCHbkaHoUVILq9AjU9oxG1qCx-Lej3bZDn2VYIwvcjw2gzZgDAiBY4A4z_-6ZfSk8bDA"
+                },
+                {
+                    "domain": ".www.linkedin.com",
+                    "expirationDate": 1801098378.158563,
+                    "hostOnly": false,
+                    "httpOnly": true,
+                    "name": "bscookie",
+                    "path": "/",
+                    "sameSite": "no_restriction",
+                    "secure": true,
+                    "session": false,
+                    "storeId": "None",
+                    "value": "\"v=1&2026012801002105821962-8aa8-4867-8cc3-c2db0d4482dbAQGydB9VRRntWEP6EFWY9JA5yTx8duMh\""
+                },
+                {
+                    "domain": ".linkedin.com",
+                    "expirationDate": 1801098029.711202,
+                    "hostOnly": false,
+                    "httpOnly": true,
+                    "name": "dfpfpt",
+                    "path": "/",
+                    "sameSite": "None",
+                    "secure": true,
+                    "session": false,
+                    "storeId": "None",
+                    "value": "93e76e02b4a04298bc18c8a9933bd660"
+                },
+                {
+                    "domain": ".www.linkedin.com",
+                    "expirationDate": 1777338025.521631,
+                    "hostOnly": false,
+                    "httpOnly": false,
+                    "name": "JSESSIONID",
+                    "path": "/",
+                    "sameSite": "no_restriction",
+                    "secure": true,
+                    "session": false,
+                    "storeId": "None",
+                    "value": "\"ajax:7160386635290813687\""
+                },
+                {
+                    "domain": ".linkedin.com",
+                    "expirationDate": 1777338379.313784,
+                    "hostOnly": false,
+                    "httpOnly": false,
+                    "name": "li_sugr",
+                    "path": "/",
+                    "sameSite": "no_restriction",
+                    "secure": true,
+                    "session": false,
+                    "storeId": "None",
+                    "value": "cfbc4abf-f93d-4968-9024-c38b5c2e32d6"
+                },
+                {
+                    "domain": ".www.linkedin.com",
+                    "expirationDate": 1785110778,
+                    "hostOnly": false,
+                    "httpOnly": false,
+                    "name": "li_theme",
+                    "path": "/",
+                    "sameSite": "None",
+                    "secure": true,
+                    "session": false,
+                    "storeId": "None",
+                    "value": "light"
+                },
+                {
+                    "domain": ".www.linkedin.com",
+                    "expirationDate": 1785110778,
+                    "hostOnly": false,
+                    "httpOnly": false,
+                    "name": "li_theme_set",
+                    "path": "/",
+                    "sameSite": "None",
+                    "secure": true,
+                    "session": false,
+                    "storeId": "None",
+                    "value": "app"
+                },
+                {
+                    "domain": ".linkedin.com",
+                    "expirationDate": 1777338025.521589,
+                    "hostOnly": false,
+                    "httpOnly": false,
+                    "name": "liap",
+                    "path": "/",
+                    "sameSite": "no_restriction",
+                    "secure": true,
+                    "session": false,
+                    "storeId": "None",
+                    "value": "True"
+                },
+                {
+                    "domain": ".www.linkedin.com",
+                    "expirationDate": 1770771978,
+                    "hostOnly": false,
+                    "httpOnly": false,
+                    "name": "timezone",
+                    "path": "/",
+                    "sameSite": "None",
+                    "secure": true,
+                    "session": false,
+                    "storeId": "None",
+                    "value": "America/Chicago"
+                },
+                {
+                    "domain": ".linkedin.com",
+                    "expirationDate": 1772154377.717623,
+                    "hostOnly": false,
+                    "httpOnly": true,
+                    "name": "UserMatchHistory",
+                    "path": "/",
+                    "sameSite": "no_restriction",
+                    "secure": true,
+                    "session": false,
+                    "storeId": "None",
+                    "value": "AQJOcD-evOyZ-AAAAZwCIw3eZmFkpVw1v6cS5e1U-DoudbFfX0SHZ9mT4iQJfTypPs-UrHK2NqLETRBinhyZmCQW7YOS4itqU-uw7RwCSPo4rrBnl7KloDHOQU7SqprzvFtPbsjk7uYUiSkQnP6wcQwbbXBQSNFHkheeNQKBDJ9znwhMAm8rm5DZQN_AUCD2bmv-82K7jc_y4fd2HcEqrReBwzHAzEAY2eL45u8MBVA13fhmW6kxvam94EQXObAeNdj0H4VnRZlVUwwED_boOweRZ6xAAHtGP39namqm801FhNjiBWgcnVjppQowtc9qazd3pkf-VWrQ5Qduio8VhDoFLbZNIyi8pLVmInaYLHs54QoUdw"
+                }
+            ];
+            
+            // Match the Python structure exactly
+            const input = {
+                cookie: cookieArray,
+                userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+                urls: searchUrls,
+                limitPerSource: Math.max(5, Math.ceil(maxPosts / searchUrls.length)), // At least 5 per URL
+                deepScrape: true,
+                rawData: false,
+                minDelay: 2,
+                maxDelay: 8,
+                proxy: {
+                    useApifyProxy: true,
+                    apifyProxyCountry: "US"
+                }
+            };
+
+            console.log('Starting actor with', searchUrls.length, 'URLs and', cookieArray.length, 'cookies');
+            console.log('Posts per keyword:', Math.max(5, Math.ceil(maxPosts / searchUrls.length)));
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(input)
+            });
+
+            const responseText = await response.text();
+            console.log('API Response:', responseText);
+
+            if (!response.ok) {
+                let error;
+                try {
+                    error = JSON.parse(responseText);
+                } catch (e) {
+                    throw new Error(`API Error: ${response.status} - ${responseText}`);
+                }
+                console.error('API Error:', error);
+                throw new Error(error.error?.message || `API Error: ${response.status}`);
+            }
+
+            const result = JSON.parse(responseText);
+            return result.data;
+        }
+
+
+        // Wait for actor run to complete
+        async function waitForRunCompletion(token, runId, maxWaitTime = 300000) {
+            const startTime = Date.now();
+            const pollInterval = 5000;
+
+            while (Date.now() - startTime < maxWaitTime) {
+                const url = `${APIFY_CONFIG.apiBaseUrl}/actor-runs/${runId}?token=${token}`;
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    throw new Error('Failed to check run status');
+                }
+
+                const result = await response.json();
+                const run = result.data;
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                
+                updateLoadingStatus(`Status: ${run.status} (${elapsed}s elapsed)`);
+                console.log('Run status:', run.status, 'Stats:', run.stats);
+
+                if (run.status === 'SUCCEEDED') {
+                    return run;
+                } else if (run.status === 'FAILED' || run.status === 'ABORTED') {
+                    // Get detailed error from the run log
+                    console.error('Run failed. Full run data:', run);
+                    
+                    // Try to get the log
+                    const logUrl = `${APIFY_CONFIG.apiBaseUrl}/actor-runs/${runId}/log?token=${token}`;
+                    try {
+                        const logResponse = await fetch(logUrl);
+                        if (logResponse.ok) {
+                            const logText = await logResponse.text();
+                            console.error('Actor log:', logText);
+                            
+                            // Extract error message from log
+                            const errorMatch = logText.match(/ERROR.*$/m);
+                            if (errorMatch) {
+                                throw new Error(`Actor failed: ${errorMatch[0]}`);
+                            }
+                        }
+                    } catch (logError) {
+                        console.error('Could not fetch log:', logError);
+                    }
+                    
+                    throw new Error(`Actor run ${run.status.toLowerCase()}. Check console for details.`);
+                }
+
+                await new Promise(resolve => setTimeout(resolve, pollInterval));
+            }
+
+            throw new Error('Timeout waiting for results. Try with fewer keywords.');
+        }
+
+        // Fetch dataset
+        async function fetchDataset(token, datasetId) {
+            const url = `${APIFY_CONFIG.apiBaseUrl}/datasets/${datasetId}/items?token=${token}&format=json`;
+            const response = await fetch(url);
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch results');
+            }
+
+            return await response.json();
+        }
+
+        // Process data
+        function processData(data) {
+            console.log('Processing', data.length, 'items');
+            
+            // Log first item to see engagement fields
+            if (data.length > 0) {
+                console.log('First item engagement fields:', {
+                    numLikes: data[0].numLikes,
+                    likes: data[0].likes,
+                    numComments: data[0].numComments,
+                    comments: data[0].comments,
+                    numShares: data[0].numShares,
+                    shares: data[0].shares
+                });
+            }
+            
+            processedData.posts = data.map((item, index) => {
+                // Extract author name - it's in authorName field at root level
+                const author = item.authorName || 
+                              (item.author ? `${item.author.firstName || ''} ${item.author.lastName || ''}`.trim() : '') ||
+                              item.author?.occupation ||
+                              'Unknown';
+                
+                // Extract author URL - it's in authorProfileUrl
+                const authorUrl = item.authorProfileUrl || 
+                                 item.author?.publicId ? `https://www.linkedin.com/in/${item.author.publicId}` : '#';
+                
+                // Content is in text field
+                const content = item.text || item.content || '';
+                
+                // Post URL
+                const postUrl = item.url || '#';
+                
+                // Date - use postedAtISO
+                const date = item.postedAtISO || item.postedAt || new Date().toISOString();
+                
+                // Engagement metrics - ensure they're numbers, not strings
+                // Use || 0 to default to 0 if undefined, and Number() to safely convert
+                const likes = Number(item.numLikes) || Number(item.likes) || 0;
+                const comments = Number(item.numComments) || Number(item.comments) || 0;
+                const shares = Number(item.numShares) || Number(item.shares) || 0;
+                
+                return {
+                    date: date,
+                    author: author,
+                    authorUrl: authorUrl,
+                    content: content,
+                    postUrl: postUrl,
+                    engagement: likes + comments + shares,
+                    likes: likes,
+                    comments: comments,
+                    shares: shares
+                };
+            });
+
+
+            // Calculate author stats
+            const authorMap = {};
+            processedData.posts.forEach(post => {
+                if (!authorMap[post.author]) {
+                    authorMap[post.author] = {
+                        name: post.author,
+                        url: post.authorUrl,
+                        posts: 0,
+                        totalEngagement: 0
+                    };
+                }
+                authorMap[post.author].posts++;
+                authorMap[post.author].totalEngagement += post.engagement;
+            });
+
+            processedData.authors = authorMap;
+            processedData.totalPosts = data.length;
+            processedData.uniqueAuthors = Object.keys(authorMap).length;
+            
+            const totalEng = processedData.posts.reduce((sum, p) => sum + p.engagement, 0);
+            processedData.totalEngagement = totalEng;
+            processedData.avgEngagement = processedData.posts.length > 0 
+                ? Math.round(totalEng / processedData.posts.length) 
+                : 0;
+        }
+
+        // Render dashboard
+        function renderDashboard() {
+            // Update metrics
+            document.getElementById('totalPosts').textContent = processedData.totalPosts.toLocaleString();
+            document.getElementById('uniqueAuthors').textContent = processedData.uniqueAuthors.toLocaleString();
+            document.getElementById('totalEngagement').textContent = processedData.totalEngagement.toLocaleString();
+            document.getElementById('avgEngagement').textContent = processedData.avgEngagement.toLocaleString();
+
+            // Render CEO summary
+            renderCEOSummary();
+
+            // Render tables
+            renderPostsTable();
+            renderAuthorsTable();
+        }
+
+        // Render CEO summary
+        function renderCEOSummary() {
+            const topPosts = [...processedData.posts]
+                .sort((a, b) => b.engagement - a.engagement)
+                .slice(0, 5);
+
+            const topAuthors = Object.values(processedData.authors)
+                .sort((a, b) => b.totalEngagement - a.totalEngagement)
+                .slice(0, 3);
+
+            const html = `
+                <p style="margin-bottom: 1rem;">
+                    <strong>Data Loaded:</strong> ${new Date().toLocaleString()} | 
+                    <span class="badge badge-primary">LIVE FROM LINKEDIN</span>
+                </p>
+                <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 6px;">
+                    <h4 style="margin-bottom: 1rem; color: #2c3e50;">Key Insights:</h4>
+                    <ul style="list-style: none; padding-left: 0;">
+                        <li style="padding: 0.4rem 0;">→ Found ${processedData.totalPosts} LinkedIn posts matching your keywords</li>
+                        <li style="padding: 0.4rem 0;">→ ${processedData.uniqueAuthors} unique authors identified</li>
+                        <li style="padding: 0.4rem 0;">→ ${processedData.totalEngagement.toLocaleString()} total engagement (likes + comments + shares)</li>
+                        <li style="padding: 0.4rem 0;">→ Top author: ${topAuthors[0]?.name || 'N/A'} (${topAuthors[0]?.totalEngagement || 0} engagement)</li>
+                        <li style="padding: 0.4rem 0;">→ Most engaging post: ${topPosts[0]?.engagement || 0} interactions</li>
+                    </ul>
+                </div>
+            `;
+
+            document.getElementById('ceoSummaryContent').innerHTML = html;
+        }
+
+        // Render posts table
+        function renderPostsTable() {
+            const tbody = document.getElementById('postsTableBody');
+            const sortedPosts = [...processedData.posts]
+                .sort((a, b) => b.engagement - a.engagement)
+                .slice(0, 50);
+
+            if (sortedPosts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem;">No posts found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = sortedPosts.map(post => {
+                const date = new Date(post.date);
+                const preview = post.content.substring(0, 120) + (post.content.length > 120 ? '...' : '');
+                
+                return `
+                    <tr>
+                        <td>${date.toLocaleDateString()}</td>
+                        <td>
+                            <a href="${escapeHtml(post.authorUrl)}" target="_blank" class="link-button">
+                                ${escapeHtml(post.author)}
+                            </a>
+                        </td>
+                        <td>${escapeHtml(preview)}</td>
+                        <td>
+                            <strong>${post.engagement.toLocaleString()}</strong>
+                            <br>
+                            <small style="color: #7f8c8d;">
+                                👍 ${post.likes} 💬 ${post.comments} 🔄 ${post.shares}
+                            </small>
+                        </td>
+                        <td>
+                            <a href="${escapeHtml(post.postUrl)}" target="_blank" class="link-button">
+                                View Post →
+                            </a>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+
+        // Render authors table
+        function renderAuthorsTable() {
+            const tbody = document.getElementById('authorsTableBody');
+            const topAuthors = Object.values(processedData.authors)
+                .sort((a, b) => b.totalEngagement - a.totalEngagement)
+                .slice(0, 30);
+
+            if (topAuthors.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem;">No authors found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = topAuthors.map(author => {
+                const avgEngagement = Math.round(author.totalEngagement / author.posts);
+                
+                return `
+                    <tr>
+                        <td><strong>${escapeHtml(author.name)}</strong></td>
+                        <td>${author.posts}</td>
+                        <td>${author.totalEngagement.toLocaleString()}</td>
+                        <td>${avgEngagement.toLocaleString()}</td>
+                        <td>
+                            <a href="${escapeHtml(author.url)}" target="_blank" class="link-button">
+                                View Profile →
+                            </a>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Use demo data
+        function useDemoData() {
+            document.getElementById('configPanel').style.display = 'none';
+            document.getElementById('dashboardContent').classList.add('active');
+            document.getElementById('liveIndicator').textContent = '● DEMO MODE';
+            document.getElementById('liveIndicator').style.background = '#95a5a6';
+
+            const demoData = generateDemoData();
+            rawData = demoData;
+            processData(demoData);
+            renderDashboard();
+        }
+
+        // Generate demo data
+        function generateDemoData() {
+            const authors = [
+                { name: 'Dr. Sarah Chen', url: 'https://linkedin.com/in/demo-sarah-chen' },
+                { name: 'Michael Rodriguez', url: 'https://linkedin.com/in/demo-michael-rodriguez' },
+                { name: 'Dr. James Patterson', url: 'https://linkedin.com/in/demo-james-patterson' },
+                { name: 'Lisa Thompson', url: 'https://linkedin.com/in/demo-lisa-thompson' },
+                { name: 'Dr. Amir Patel', url: 'https://linkedin.com/in/demo-amir-patel' }
+            ];
+
+
+            const topics = [
+                'UHC just changed prior auth requirements for SCS procedures - practices need to know this NOW',
+                'Our practice reduced denials by 34% using peer-to-peer strategy. Here\'s what worked for us...',
+                'Medicare Advantage LCD changes are creating chaos for SI fusion procedures. Anyone else seeing this?',
+                'Billing staff burnout is real. We lost 2 coders this month due to prior auth workload',
+                'WISeR automation saved our practice 15 hours per week. CMS is finally getting it right',
+                'Aetna denying more interventional procedures lately. What\'s your experience?',
+                'Anyone else seeing increased prior auth delays with commercial payers?',
+                'Best practices for appealing SCS denials? Looking for peer insights',
+                'New CMS guidelines for pain management procedures - what you need to know',
+                'Peer-to-peer calls are taking 2+ hours now. How are you managing this?'
+            ];
+
+            const data = [];
+            for (let i = 0; i < 60; i++) {
+                const author = authors[Math.floor(Math.random() * authors.length)];
+                const topic = topics[Math.floor(Math.random() * topics.length)];
+                const daysAgo = Math.floor(Math.random() * 30);
+                const date = new Date();
+                date.setDate(date.getDate() - daysAgo);
+
+                data.push({
+                    author: author.name,
+                    authorUrl: author.url,
+                    text: topic,
+                    publishedAt: date.toISOString(),
+                    likes: Math.floor(Math.random() * 500) + 50,
+                    comments: Math.floor(Math.random() * 100) + 10,
+                    shares: Math.floor(Math.random() * 50),
+                    url: `https://linkedin.com/posts/demo-post-${i}`
+                });
+            }
+
+            return data;
+        }
+
+        // Update loading status
+        function updateLoadingStatus(message) {
+            document.getElementById('loadingStatus').textContent = message;
+        }
+
+        // Show error
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = '❌ Error: ' + message;
+            errorDiv.classList.add('active');
+        }
+
+        // Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Reset to configuration panel
+        function resetToConfig() {
+            document.getElementById('dashboardContent').classList.remove('active');
+            document.getElementById('configPanel').style.display = 'block';
+            document.getElementById('liveIndicator').textContent = '● READY';
+            document.getElementById('liveIndicator').classList.remove('live');
+            document.getElementById('liveIndicator').style.background = '#95a5a6';
+        }
+
+        // Initialize
+        console.log('LinkedIn Pain Management Dashboard - Auto Search Version');
+        console.log('Ready to search LinkedIn with keywords');
+    </script>
+</body>
+</html>
