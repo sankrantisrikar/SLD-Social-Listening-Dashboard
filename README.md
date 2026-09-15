@@ -15,7 +15,9 @@ This repository is the **consolidated archive of the whole project**: the latest
 
 ---
 
-> **Interns start here:** [`docs/INTERN_PROJECT_BRIEF.md`](docs/INTERN_PROJECT_BRIEF.md) — problem statement, requirements, target architecture, data model, 10-week milestones and day-1 checklist.
+> **Interns, week 1:** [`docs/KICKOFF_THE_IDEA.md`](docs/KICKOFF_THE_IDEA.md) — the idea and what to bring to Friday. Research and sketch first; no code.
+>
+> **After week 1 (reference):** [`docs/INTERN_PROJECT_BRIEF.md`](docs/INTERN_PROJECT_BRIEF.md) — detailed requirements, target architecture, data model, milestones. Read this only after you have presented your own ideas.
 
 ---
 
