@@ -15,6 +15,10 @@ This repository is the **consolidated archive of the whole project**: the latest
 
 ---
 
+> **Interns start here:** [`docs/INTERN_PROJECT_BRIEF.md`](docs/INTERN_PROJECT_BRIEF.md) — problem statement, requirements, target architecture, data model, 10-week milestones and day-1 checklist.
+
+---
+
 ## 1. What is at the root (v4.0 "Final SLD", Feb 28 2026)
 
 Pure HTML/CSS/JS (no build step) plus optional Python or Netlify back-end proxies.
