@@ -21,6 +21,10 @@ This repository is the **consolidated archive of the whole project**: the latest
 
 ---
 
+> **New app (Sep 18 2026):** the lead-generation dashboard built on this idea lives in its own repo: [sankrantisrikar/sld-leads](https://github.com/sankrantisrikar/sld-leads) (Next.js + Neon Postgres + Vercel Cron; Reddit and Apify LinkedIn ingestion; rules classifier; ranked leads for Raj garu).
+
+---
+
 ## 1. What is at the root (v4.0 "Final SLD", Feb 28 2026)
 
 Pure HTML/CSS/JS (no build step) plus optional Python or Netlify back-end proxies.
