@@ -17,7 +17,7 @@ This repository is the **consolidated archive of the whole project**: the latest
 
 > **Interns, week 1:** [`docs/KICKOFF_THE_IDEA.md`](docs/KICKOFF_THE_IDEA.md) — the idea and what to bring to Friday. Research and sketch first; no code.
 >
-> **After week 1 (reference):** [`docs/INTERN_PROJECT_BRIEF.md`](docs/INTERN_PROJECT_BRIEF.md) — detailed requirements, target architecture, data model, milestones. Read this only after you have presented your own ideas.
+> **After week 1 (reference):** [`docs/INTERN_PROJECT_BRIEF.md`](docs/INTERN_PROJECT_BRIEF.md) — detailed requirements, target architecture, data model, milestones. Read this only after you have presented your own ideas. **Note (Sep 18 2026):** the brief was written when SLD was framed as market surveillance for practices. The agreed purpose is now lead generation for Raj garu (see the kickoff doc); the brief's architecture and data model still apply, but its personas and goals need revising.
 
 ---
 
