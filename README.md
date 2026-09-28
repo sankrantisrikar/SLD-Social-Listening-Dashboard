@@ -25,6 +25,10 @@ This repository is the **consolidated archive of the whole project**: the latest
 
 ---
 
+> **Intern build (Sep 2026):** the team shipped a new app, ProbePS Social Listening, at https://sld-dashboard.onrender.com (six sources, five-stage LLM analysis). Review and improvement plan: [`docs/REVIEW_PROBEPS_SOCIAL_LISTENING_2026-09-28.md`](docs/REVIEW_PROBEPS_SOCIAL_LISTENING_2026-09-28.md).
+
+---
+
 ## 1. What is at the root (v4.0 "Final SLD", Feb 28 2026)
 
 Pure HTML/CSS/JS (no build step) plus optional Python or Netlify back-end proxies.
